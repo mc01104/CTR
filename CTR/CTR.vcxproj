@@ -62,7 +62,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(SolutionDir)\Lib;$(SolutionDir)\lwpr-1.2.6\include;$(SolutionDir)\Utilities;$(ProjectDir)\include;$(SolutionDir)\Lib\Ascension;$(SolutionDir)\Lib\vtk\include\vtk-5.8;$(SolutionDir)\Lib\CopleyMotion\ChunCML\include;$(SolutionDir)\Lib\CopleyMotion\ChunCML\include\can;$(SolutionDir)\Lib\OpenHaptics\include;$(SolutionDir)\Lib\OpenHaptics\utilities\include</AdditionalIncludeDirectories>
-      <PrecompiledHeaderOutputFile>C:\Users\CTR\Dropbox\CTR Shared Folder\ctr\software\OnlineCalibLWPR\CTR\Debug\$(TargetName).pch</PrecompiledHeaderOutputFile>
+      <PrecompiledHeaderOutputFile>$(ProjectDir)\Debug\$(TargetName).pch</PrecompiledHeaderOutputFile>
       <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>

@@ -85,10 +85,10 @@ bool ChunTracker::GetTrackerMatrix(double pMat[4][4], unsigned short sNum)
 	//errCode = GetSynchronousRecord(sNum, &(m_pRecord[sNum]), sizeof(m_pRecord[sNum]));
 	//errCode = GetSynchronousRecord(sNum, m_pRecord+sNum, sizeof(m_pRecord[sNum]));
 	errCode = GetSynchronousRecord(ALL_SENSORS, m_pRecord, sizeof(m_pRecord[sNum])*m_trackerConfig.numberSensors);
-	::std::cout << "errCode=" << errCode << ::std::endl;
+	
 	if(errCode!=BIRD_ERROR_SUCCESS) {	
 		PrintTrackerError(errCode);
-		
+		::std::cout << "errCode=" << errCode << ::std::endl;	
 		return false;	
 	}
 	

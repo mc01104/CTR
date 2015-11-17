@@ -1,0 +1,172 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="01. VTK">
+      <UniqueIdentifier>{f045e80a-f81c-444c-aa4c-9ffe9efe2285}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="02. Haptic">
+      <UniqueIdentifier>{e2d086fa-5005-4f00-b6cd-60891039fad8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="03. CopleyMotion">
+      <UniqueIdentifier>{7389ff0a-c48f-4e92-8651-5f58a9dc42c7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="04. Kinematics">
+      <UniqueIdentifier>{f3954f04-6303-4fb9-8ffd-f264f7d57fda}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="05. EM_Tracker">
+      <UniqueIdentifier>{367348db-aebf-4ea8-ae3b-1b64ec60306a}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ReadMe.txt" />
+    <None Include="res\CTR.rc2">
+      <Filter>Resource Files</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\ChunTimer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CTR.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CTRDoc.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CTRView.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\MainFrm.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ChunKinematics.cpp">
+      <Filter>01. VTK</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ChunVtkDlg.cpp">
+      <Filter>01. VTK</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ChunHaptic.cpp">
+      <Filter>02. Haptic</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ChunMotion.cpp">
+      <Filter>03. CopleyMotion</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rcvPdo.cpp">
+      <Filter>03. CopleyMotion</Filter>
+    </ClCompile>
+    <ClCompile Include="src\xmitPdo.cpp">
+      <Filter>03. CopleyMotion</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CTRKin.cpp">
+      <Filter>04. Kinematics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ChunTracker.cpp">
+      <Filter>05. EM_Tracker</Filter>
+    </ClCompile>
+    <ClCompile Include="src\TrjGenerator.cpp">
+      <Filter>05. EM_Tracker</Filter>
+    </ClCompile>
+    <ClCompile Include="src\stdafx.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\LWPRKinematics.cpp">
+      <Filter>04. Kinematics</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\ChunTimer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CTR.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CTR_Common.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CTRDoc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CTRView.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Header.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\MainFrm.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\targetver.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ChunKinematics.h">
+      <Filter>01. VTK</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ChunVtkDlg.h">
+      <Filter>01. VTK</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ChunHaptic.h">
+      <Filter>02. Haptic</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ChunMotion.h">
+      <Filter>03. CopleyMotion</Filter>
+    </ClInclude>
+    <ClInclude Include="include\rcvPdo.h">
+      <Filter>03. CopleyMotion</Filter>
+    </ClInclude>
+    <ClInclude Include="include\xmitPdo.h">
+      <Filter>03. CopleyMotion</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CTRKin.h">
+      <Filter>04. Kinematics</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ChunTracker.h">
+      <Filter>05. EM_Tracker</Filter>
+    </ClInclude>
+    <ClInclude Include="include\TrjGenerator.h">
+      <Filter>05. EM_Tracker</Filter>
+    </ClInclude>
+    <ClInclude Include="include\stdafx.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\LWPRKinematics.h">
+      <Filter>04. Kinematics</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="CTR.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="res\CTRDoc.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\CTR.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\CTR_Icon.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\CTR_Icon.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\..\..\..\..\..\..\..\01. ConcentricTubeRobots\CTR\res\CTR_Icon.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+  </ItemGroup>
+</Project>

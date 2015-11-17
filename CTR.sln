@@ -1,0 +1,36 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LWPR_static", "lwpr-1.2.6\VisualC\Express2008\libLWPR\libLWPR.vcxproj", "{EF294135-67D3-41E6-9B32-0C23E4DAFC10}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Utilities", "..\Utilities\Utilities.vcxproj", "{2075DDF7-11B0-4828-AAA4-49CD07360939}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CTR", "CTR\CTR.vcxproj", "{88EB9D4F-3635-45B8-9857-A816991005F3}"
+	ProjectSection(ProjectDependencies) = postProject
+		{EF294135-67D3-41E6-9B32-0C23E4DAFC10} = {EF294135-67D3-41E6-9B32-0C23E4DAFC10}
+		{2075DDF7-11B0-4828-AAA4-49CD07360939} = {2075DDF7-11B0-4828-AAA4-49CD07360939}
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{EF294135-67D3-41E6-9B32-0C23E4DAFC10}.Debug|Win32.ActiveCfg = Debug|Win32
+		{EF294135-67D3-41E6-9B32-0C23E4DAFC10}.Debug|Win32.Build.0 = Debug|Win32
+		{EF294135-67D3-41E6-9B32-0C23E4DAFC10}.Release|Win32.ActiveCfg = Release|Win32
+		{EF294135-67D3-41E6-9B32-0C23E4DAFC10}.Release|Win32.Build.0 = Release|Win32
+		{2075DDF7-11B0-4828-AAA4-49CD07360939}.Debug|Win32.ActiveCfg = Debug|Win32
+		{2075DDF7-11B0-4828-AAA4-49CD07360939}.Debug|Win32.Build.0 = Debug|Win32
+		{2075DDF7-11B0-4828-AAA4-49CD07360939}.Release|Win32.ActiveCfg = Release|Win32
+		{2075DDF7-11B0-4828-AAA4-49CD07360939}.Release|Win32.Build.0 = Release|Win32
+		{88EB9D4F-3635-45B8-9857-A816991005F3}.Debug|Win32.ActiveCfg = Debug|Win32
+		{88EB9D4F-3635-45B8-9857-A816991005F3}.Debug|Win32.Build.0 = Debug|Win32
+		{88EB9D4F-3635-45B8-9857-A816991005F3}.Release|Win32.ActiveCfg = Release|Win32
+		{88EB9D4F-3635-45B8-9857-A816991005F3}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

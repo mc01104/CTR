@@ -143,16 +143,16 @@ void CCTRView::OnInitialUpdate()
 	this->SetDlgItemTextA(m_idCmdJang[2],"43");			this->SetDlgItemTextA(m_idCmdJang[3],"0");			this->SetDlgItemTextA(m_idCmdJang[4],"0");
 	
 	// CKim - Open the graphics dialog
-	if(!m_vtkDlg)
-	{
-		// CKim - This creates modeless dialog using ChunVtkDlg class
-		m_vtkDlg = new ChunVtkDlg();		m_vtkDlg->Create(ChunVtkDlg::IDD);		
-		
-		// CKim - Move to (640,480) and don't change size. Show window and draw
-		m_vtkDlg->SetWindowPos(&CWnd::wndTop,900,200,0,0,SWP_NOSIZE);		
-		m_vtkDlg->ShowWindow(SW_SHOW);
-		m_vtkDlg->Invalidate();
-	}
+	//if(!m_vtkDlg)
+	//{
+	//	// CKim - This creates modeless dialog using ChunVtkDlg class
+	//	m_vtkDlg = new ChunVtkDlg();		m_vtkDlg->Create(ChunVtkDlg::IDD);		
+	//	
+	//	// CKim - Move to (640,480) and don't change size. Show window and draw
+	//	m_vtkDlg->SetWindowPos(&CWnd::wndTop,900,200,0,0,SWP_NOSIZE);		
+	//	m_vtkDlg->ShowWindow(SW_SHOW);
+	//	m_vtkDlg->Invalidate();
+	//}
 
 	this->SetTimer(100,30,NULL);
 	QueryPerformanceFrequency(&m_Freq);

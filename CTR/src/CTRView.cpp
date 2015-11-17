@@ -142,7 +142,7 @@ void CCTRView::OnInitialUpdate()
 	this->SetDlgItemTextA(m_idCmdJang[0],"180");		this->SetDlgItemTextA(m_idCmdJang[1],"180");	
 	this->SetDlgItemTextA(m_idCmdJang[2],"43");			this->SetDlgItemTextA(m_idCmdJang[3],"0");			this->SetDlgItemTextA(m_idCmdJang[4],"0");
 	
-	// CKim - Open the graphics dialog
+	//// CKim - Open the graphics dialog
 	//if(!m_vtkDlg)
 	//{
 	//	// CKim - This creates modeless dialog using ChunVtkDlg class
@@ -371,7 +371,8 @@ void CCTRView::OnClickedBtnMove()
 			this->GetDocument()->SendCommand(1,p);
 	}
 
-	m_vtkDlg->ResetCam();
+	if(m_vtkDlg)
+		m_vtkDlg->ResetCam();
 }
 
 

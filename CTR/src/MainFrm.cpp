@@ -55,8 +55,11 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 		return -1;      // fail to create
 	}
 	m_wndStatusBar.SetIndicators(indicators, sizeof(indicators)/sizeof(UINT));
+
+	// these three lines allocate a console where standard output is redirected
 	AllocConsole();
 	*stdout = *_tfdopen(_open_osfhandle((intptr_t) GetStdHandle(STD_OUTPUT_HANDLE), _O_APPEND), _T("a"));
+	::std::cout << "console is ready for streaming data" << ::std::endl;
 
 	return 0;
 }

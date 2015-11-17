@@ -153,7 +153,6 @@ LWPRKinematics::SaveModel()
 
 void LWPRKinematics::EvalF_LSQ(const double* jAng, const double* tgtPosOrt, const Eigen::MatrixXd& Coeff, Eigen::Matrix<double,4,1>& F)
 {
-	//::std::cout << "george evalQ" << ::std::endl;
 	double posOrt[6];
 	double pmax = m_MaxPosErr;		
 	double thmax = m_MaxOrtErr*3.141592/180.0;		
@@ -178,9 +177,9 @@ LWPRKinematics::TipFwdKinInv(const double* jAng, double* posOrt)
 
 	this->CheckJointLimits(inputData);
 
-	//WaitForSingleObject(this->m_hLWPRInvMutex,INFINITE);
+	WaitForSingleObject(this->m_hLWPRInvMutex,INFINITE);
 	::std::vector<double> outputData = this->forwardModelforInverse.predict(inputData, 0.001);
-	//ReleaseMutex(this->m_hLWPRInvMutex);
+	ReleaseMutex(this->m_hLWPRInvMutex);
 
 	::std::vector<double> orientation = ::std::vector<double> (outputData.begin() + 3, outputData.end());
 	
@@ -188,10 +187,3 @@ LWPRKinematics::TipFwdKinInv(const double* jAng, double* posOrt)
 		
 }
 
-//void
-//LWPRKinematics::InverseKinematicsLSQ(const double* tgtPosOrt, const double* init, double* jAng, double* Err, int& exitCond)
-//{
-//	WaitForSingleObject(this->m_hLWPRInvMutex,INFINITE);
-//	CTRKin::InverseKinematicsLSQ(tgtPosOrt, init, jAng, Err, exitCond);
-//	ReleaseMutex(this->m_hLWPRInvMutex);
-//}

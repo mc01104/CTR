@@ -419,6 +419,11 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 	while(mySelf->m_teleOpMode)
 	{
 
+		int flag = WaitForSingleObject(mySelf->m_hEMevent,1000);
+		if(flag == WAIT_TIMEOUT)	
+		{
+				AfxMessageBox("No event from EM Loop!");	return 0;
+		}
 		// CKim - Read the shared variable (current cnt, jAng, .. ) that is used in this loop. 
 		EnterCriticalSection(&m_cSection);
 		for(int i=0; i<7; i++)	{	localStat.currMotorCnt[i] = mySelf->m_Status.currMotorCnt[i];	}
@@ -502,6 +507,8 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 			// CKim - In teleop mode, command comes as a desired tip position and orientation, 
 			// defined in Haptic device system, transform haptic device input into the 
 			// target position and direction of the robot
+	
+
 			mySelf->MasterToSlave(localStat, scl);		// Updates robotStat.tgtTipPosDir
 			
 			// CKim - Update proxy location from current tip position.....
@@ -1002,7 +1009,7 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 			mySelf->ProcessCommand(localStat);	
 		}
 
-		for(int i=0; i<7; i++)	vel[i] *= 0.0;	
+		for(int i=0; i<7; i++)	vel[i] *= 0.3;	
 		// ----------------------------------------------------- //
 		// CKim - Command joint velocity, update shared variable
 		// ----------------------------------------------------- //

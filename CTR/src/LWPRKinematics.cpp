@@ -178,9 +178,9 @@ LWPRKinematics::TipFwdKinInv(const double* jAng, double* posOrt)
 
 	this->CheckJointLimits(inputData);
 
-	WaitForSingleObject(this->m_hLWPRInvMutex,INFINITE);
+	//WaitForSingleObject(this->m_hLWPRInvMutex,INFINITE);
 	::std::vector<double> outputData = this->forwardModelforInverse.predict(inputData, 0.001);
-	ReleaseMutex(this->m_hLWPRInvMutex);
+	//ReleaseMutex(this->m_hLWPRInvMutex);
 
 	::std::vector<double> orientation = ::std::vector<double> (outputData.begin() + 3, outputData.end());
 	

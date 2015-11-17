@@ -88,7 +88,7 @@ private:
 	LWPRKinematics(LWPRKinematics& lwprKinematics);
 	
 	// Neither copy through assignment
-	LWPRKinematics& operator = (const LWPRKinematics& rhs);
+	//LWPRKinematics& operator = (const LWPRKinematics& rhs);
 	
 	/**
 	  *@brief adapt the model based on input-output data samples

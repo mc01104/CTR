@@ -29,7 +29,7 @@ protected: // create from serialization only
 // Attributes
 public:
 	::std::queue<::std::string, ::std::deque< ::std::string> > setPointsQ;
-
+	double durationLWPR;
 
 private:
 

@@ -85,11 +85,15 @@ bool ChunTracker::GetTrackerMatrix(double pMat[4][4], unsigned short sNum)
 	//errCode = GetSynchronousRecord(sNum, &(m_pRecord[sNum]), sizeof(m_pRecord[sNum]));
 	//errCode = GetSynchronousRecord(sNum, m_pRecord+sNum, sizeof(m_pRecord[sNum]));
 	errCode = GetSynchronousRecord(ALL_SENSORS, m_pRecord, sizeof(m_pRecord[sNum])*m_trackerConfig.numberSensors);
-	//::std::cout << "errCode=" << errCode << ::std::endl;
-	if(errCode!=BIRD_ERROR_SUCCESS) {	PrintTrackerError(errCode);		return false;	}
+	::std::cout << "errCode=" << errCode << ::std::endl;
+	if(errCode!=BIRD_ERROR_SUCCESS) {	
+		PrintTrackerError(errCode);
+		
+		return false;	
+	}
 	
 	unsigned int status = GetSensorStatus(sNum);
-
+	//::std::cout << "problem" << ::std::endl;
 	// CKim - Each 'row' of s corresponds to the direction of sensor's x,y,z axis
 	if( status == VALID_STATUS)
 	{
@@ -101,7 +105,9 @@ bool ChunTracker::GetTrackerMatrix(double pMat[4][4], unsigned short sNum)
 		for(int i=0; i<4; i++)	{
 			for(int j=0; j<4; j++)	{	pMat[i][j] = m_trackerMat(i,j);	}	}
 	}
-	else {	AfxMessageBox("!!");	}
+	else {	::std::cout<< "error!!" << std::endl;
+			AfxMessageBox("!!");	
+	}
 }
 
 

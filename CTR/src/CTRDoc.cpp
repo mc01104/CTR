@@ -86,8 +86,8 @@ CCTRDoc::CCTRDoc()
 	::std::string pathToForwardModel("../models/model_ct_2015_11_9_14_0_40.bin");
 	
 	m_kinLWPR = new LWPRKinematics(pathToForwardModel);
-	//double forgettingFactor[3] = {0.99, 0.99, 0.99};
-	//dynamic_cast<LWPRKinematics*> (m_kinLWPR)->SetForgettingFactor(forgettingFactor);
+	double forgettingFactor[3] = {0.99, 0.99, 0.8};
+	dynamic_cast<LWPRKinematics*> (m_kinLWPR)->SetForgettingFactor(forgettingFactor);
 
 	m_Tracker = new ChunTracker;
 	m_TrjGen = new TrjGenerator;
@@ -513,6 +513,11 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 			// if least square error is larger than 1 and if joints has been limited. 
 
 			mySelf->SolveInverseKin(localStat);			// Updates localStat.tgtMotorCnt, tgtJang
+
+			int flag = WaitForSingleObject(mySelf->m_hEMevent,1000);
+			if(flag == WAIT_TIMEOUT)	{
+				AfxMessageBox("No event from EM Loop!");	return 0;
+			}
 
 			if (mySelf->m_adapt_LWPR)
 				dynamic_cast<LWPRKinematics*> (mySelf->m_kinLWPR)->AdaptForwardModel(localStat.sensedTipPosDir, localStat.currJang);
@@ -1698,12 +1703,12 @@ void CCTRDoc::SolveInverseKin(CTR_status& stat)
 	for(int i=0; i<5; i++)	{	stat.initJang[i] = stat.currJang[i];		}
 
 	// ------------------------------------------------------------------------------------------ //
-	m_kinLib->InverseKinematicsLSQ(stat.tgtTipPosDir, stat.initJang, jAng, Err, exitCond);
+	//m_kinLib->InverseKinematicsLSQ(stat.tgtTipPosDir, stat.initJang, jAng, Err, exitCond);
 
 
 	/*stat.condNum = Err[0];		stat.invKinErr[0] = Err[1];		stat.invKinErr[1] = Err[2];*/
 	
-	//m_kinLWPR->InverseKinematicsLSQ(stat.tgtTipPosDir, stat.initJang, jAng, Err, exitCond);
+	m_kinLWPR->InverseKinematicsLSQ(stat.tgtTipPosDir, stat.initJang, jAng, Err, exitCond);
 
 	stat.condNum = Err[0];		stat.invKinErr[0] = Err[1];		stat.invKinErr[1] = Err[2];
 

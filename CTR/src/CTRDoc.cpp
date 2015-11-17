@@ -86,7 +86,7 @@ CCTRDoc::CCTRDoc()
 	::std::string pathToForwardModel("../models/model_ct_2015_11_9_14_0_40.bin");
 	
 	m_kinLWPR = new LWPRKinematics(pathToForwardModel);
-	double forgettingFactor[3] = {0.99, 0.99, 0.8};
+	double forgettingFactor[3] = {0.99, 0.99, 0.99};
 	dynamic_cast<LWPRKinematics*> (m_kinLWPR)->SetForgettingFactor(forgettingFactor);
 
 	m_Tracker = new ChunTracker;

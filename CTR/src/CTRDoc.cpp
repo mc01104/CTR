@@ -87,7 +87,7 @@ CCTRDoc::CCTRDoc()
 	
 	m_kinLWPR = new LWPRKinematics(pathToForwardModel);
 	double forgettingFactor[3] = {0.99, 0.99, 0.8};
-	m_kinLWPR->SetForgettingFactor(forgettingFactor);
+	dynamic_cast<LWPRKinematics*> (m_kinLWPR)->SetForgettingFactor(forgettingFactor);
 
 	m_Tracker = new ChunTracker;
 	m_TrjGen = new TrjGenerator;
@@ -124,7 +124,7 @@ CCTRDoc::~CCTRDoc()
 
 void CCTRDoc::SaveModel()
 {
-	this->m_kinLWPR->SaveModel();
+	dynamic_cast<LWPRKinematics*> (this->m_kinLWPR)->SaveModel();
 }
 
 BOOL CCTRDoc::OnNewDocument()
@@ -520,7 +520,7 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 			}
 
 			if (mySelf->m_adapt_LWPR)
-				mySelf->m_kinLWPR->AdaptForwardModel(localStat.sensedTipPosDir, localStat.currJang);
+				dynamic_cast<LWPRKinematics*> (mySelf->m_kinLWPR)->AdaptForwardModel(localStat.sensedTipPosDir, localStat.currJang);
 
 
 			// CKim - Teleoperation safety check - gradually increase the resistance and decrease controller gain

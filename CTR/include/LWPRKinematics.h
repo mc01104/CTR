@@ -16,6 +16,8 @@
 
 #include "lwpr.hh"
 
+#define _SCALED_
+
 class LWPRKinematics : public CTRKin
 {
 	LWPR_Object* forwardModel;
@@ -90,13 +92,6 @@ private:
 	// Neither copy through assignment
 	//LWPRKinematics& operator = (const LWPRKinematics& rhs);
 	
-	/**
-	  *@brief adapt the model based on input-output data samples
-	  *@param model to be adapted
-	  *@param[in] input data
-	  *@param[in] output data
-	  */
-	void AdaptModel(LWPR_Object& model, const ::std::vector< double>& input_data, const ::std::vector< double>& output_data);
 
 	/**
 	  *@brief base rotation and translation in forward kinematics computation

@@ -38,6 +38,10 @@ LWPRKinematics::TipFwdKin(const double* jAng, double* posOrt)
 
 	this->CheckJointLimits(inputData);
 
+#ifdef _SCALED_
+	inputData[2] = inputData[2]/L31_MAX * 0.5 * M_PI;
+#endif
+
 	WaitForSingleObject(this->m_hLWPRMutex,INFINITE);
 	::std::vector<double> outputData = this->forwardModel->predict(inputData, 0.001);
 	ReleaseMutex(this->m_hLWPRMutex);
@@ -54,17 +58,19 @@ LWPRKinematics::TipFwdKin(const double* jAng, double* posOrt)
 void 
 LWPRKinematics::AdaptForwardModel(const double* posOrt, const double* jAng)
 {
-	::std::vector<double> input_data(jAng, jAng + this->forwardModel->nIn());
-		
+	::std::vector<double> inputData(jAng, jAng + this->forwardModel->nIn());
+
+#ifdef _SCALED_
+	inputData[2] = inputData[2]/L31_MAX * 0.5 * M_PI;
+#endif
+
 	double posOrtFinal[6] = {0};
 	this->CompensateForRigidBodyMotionInverse(jAng, posOrt, posOrtFinal);
 
 	::std::vector<double> output_data(posOrtFinal, posOrtFinal + this->forwardModel->nOut());
 
-	int iter = 1;
-
 	WaitForSingleObject(this->m_hLWPRMutex,INFINITE);
-	this->forwardModel->update(input_data, output_data);
+	this->forwardModel->update(inputData, output_data);
 	ReleaseMutex(this->m_hLWPRMutex);
 
 	//WaitForSingleObject(this->m_hLWPRInvMutex,INFINITE);
@@ -72,15 +78,6 @@ LWPRKinematics::AdaptForwardModel(const double* posOrt, const double* jAng)
 	//for (int i = 0; i < 10; ++i)
 	//	this->forwardModelforInverse.update(input_data, output_data);
 	//ReleaseMutex(this->m_hLWPRInvMutex);
-}
-
-
-void
-LWPRKinematics::AdaptModel(LWPR_Object& model, const ::std::vector< double>& input_data, const ::std::vector< double>& output_data)
-{
-
-		model.update(input_data, output_data);
-
 }
 
 
@@ -185,6 +182,10 @@ LWPRKinematics::TipFwdKinInv(const double* jAng, double* posOrt)
 	::std::vector< double> inputData(jAng, jAng + this->forwardModel->nIn());
 
 	this->CheckJointLimits(inputData);
+
+#ifdef _SCALED_
+	inputData[2] = inputData[2]/L31_MAX * 0.5 * M_PI;
+#endif
 
 	//WaitForSingleObject(this->m_hLWPRInvMutex,INFINITE);
 	::std::vector<double> outputData = this->forwardModelforInverse.predict(inputData, 0.00001);

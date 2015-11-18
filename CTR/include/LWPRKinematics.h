@@ -21,7 +21,7 @@
 class LWPRKinematics : public CTRKin
 {
 	LWPR_Object* forwardModel;
-
+	
 	//this is ugly --> FIX IT
 	LWPR_Object* forwardModelforInverse;
 	

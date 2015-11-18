@@ -83,7 +83,8 @@ CCTRDoc::CCTRDoc()
 	m_kinLib = new CTRKin;
 
 	// paths for LWPR models
-	::std::string pathToForwardModel("../models/model_ct_2015_11_9_14_0_40.bin");
+	//::std::string pathToForwardModel("../models/model_ct_2015_11_9_14_0_40.bin");
+	::std::string pathToForwardModel("../models/model_ct_2015_11_18_9_14_32.bin");
 	
 	m_kinLWPR = new LWPRKinematics(pathToForwardModel);
 	double forgettingFactor[3] = {0.99, 0.99, 0.99};

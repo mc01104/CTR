@@ -23,7 +23,7 @@ class LWPRKinematics : public CTRKin
 	LWPR_Object* forwardModel;
 
 	//this is ugly --> FIX IT
-	LWPR_Object forwardModelforInverse;
+	LWPR_Object* forwardModelforInverse;
 	
 	HANDLE m_hLWPRMutex;	
 	HANDLE m_hLWPRInvMutex;	

@@ -11,10 +11,10 @@
 
 
 LWPRKinematics::LWPRKinematics(const ::std::string& pathToForwardModel):
-	CTRKin(),
-	forwardModelforInverse(pathToForwardModel.c_str())
+	CTRKin()
 {
 	this->forwardModel = new LWPR_Object(pathToForwardModel.c_str());
+	this->forwardModelforInverse = new LWPR_Object(pathToForwardModel.c_str());
 
 	this->m_hLWPRMutex = CreateMutex(NULL,false,"LWPR_Mutex");
 	this->m_hLWPRInvMutex = CreateMutex(NULL,false,"LWPRInv_Mutex");
@@ -35,6 +35,7 @@ LWPRKinematics::LWPRKinematics(const ::std::string& pathToForwardModel):
 
 LWPRKinematics::~LWPRKinematics()
 {
+	delete this->forwardModel;
 }
 
 bool
@@ -49,7 +50,7 @@ LWPRKinematics::TipFwdKin(const double* jAng, double* posOrt)
 #endif
 	
 	WaitForSingleObject(this->m_hLWPRMutex,INFINITE);
-	::std::vector<double> outputData = this->forwardModel->predict(inputData, 0.001);
+	::std::vector<double> outputData = this->forwardModel->predict(inputData, 0.00001);
 	ReleaseMutex(this->m_hLWPRMutex);
 
 	::std::vector<double> orientation = ::std::vector<double> (outputData.begin() + 3, outputData.end());
@@ -194,7 +195,7 @@ LWPRKinematics::TipFwdKinInv(const double* jAng, double* posOrt)
 #endif
 
 	//WaitForSingleObject(this->m_hLWPRInvMutex,INFINITE);
-	::std::vector<double> outputData = this->forwardModelforInverse.predict(inputData, 0.00001);
+	::std::vector<double> outputData = this->forwardModelforInverse->predict(inputData, 0.00001);
 	//ReleaseMutex(this->m_hLWPRInvMutex);
 
 	::std::vector<double> orientation = ::std::vector<double> (outputData.begin() + 3, outputData.end());

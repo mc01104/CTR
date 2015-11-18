@@ -19,10 +19,10 @@ LWPRKinematics::LWPRKinematics(const ::std::string& pathToForwardModel):
 	this->m_hLWPRMutex = CreateMutex(NULL,false,"LWPR_Mutex");
 	this->m_hLWPRInvMutex = CreateMutex(NULL,false,"LWPRInv_Mutex");
 
-	//forwardModel.updateD(true);
+	//forwardModel->updateD(true);
 	//forwardModelforInverse.updateD(true);
-
-	//forwardModel.useMeta(true);
+	//forwardModel->metaRate(2);
+	//forwardModel->useMeta(true);
 	//forwardModelforInverse.useMeta(true);
 }
 
@@ -37,11 +37,11 @@ LWPRKinematics::TipFwdKin(const double* jAng, double* posOrt)
 	::std::vector< double> inputData(jAng, jAng + this->forwardModel->nIn());
 
 	this->CheckJointLimits(inputData);
-
+	
 #ifdef _SCALED_
-	inputData[2] = inputData[2]/L31_MAX * 0.5 * M_PI;
+	inputData[2] = inputData[2]/L31_MAX ;
 #endif
-
+	
 	WaitForSingleObject(this->m_hLWPRMutex,INFINITE);
 	::std::vector<double> outputData = this->forwardModel->predict(inputData, 0.001);
 	ReleaseMutex(this->m_hLWPRMutex);
@@ -61,7 +61,7 @@ LWPRKinematics::AdaptForwardModel(const double* posOrt, const double* jAng)
 	::std::vector<double> inputData(jAng, jAng + this->forwardModel->nIn());
 
 #ifdef _SCALED_
-	inputData[2] = inputData[2]/L31_MAX * 0.5 * M_PI;
+	inputData[2] = inputData[2]/L31_MAX;
 #endif
 
 	double posOrtFinal[6] = {0};
@@ -184,7 +184,7 @@ LWPRKinematics::TipFwdKinInv(const double* jAng, double* posOrt)
 	this->CheckJointLimits(inputData);
 
 #ifdef _SCALED_
-	inputData[2] = inputData[2]/L31_MAX * 0.5 * M_PI;
+	inputData[2] = inputData[2]/L31_MAX;
 #endif
 
 	//WaitForSingleObject(this->m_hLWPRInvMutex,INFINITE);

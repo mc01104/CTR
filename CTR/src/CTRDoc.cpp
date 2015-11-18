@@ -556,6 +556,7 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 				for(int i=0; i<5; i++)	{	ofstr<<localStat.currJang[i]<<" ";	}
 				for(int i=0; i<6; i++)	{	ofstr<<localStat.sensedTipPosDir[i]<<" ";	}
 				for(int i=0; i<6; i++)	{	ofstr<<localStat.currTipPosDir[i]<<" ";	}
+				ofstr << mySelf->m_adapt_LWPR;
 				//for(int i = 0; i < 6; ++i) { ofstr << localStat.currTipPosDirLWPR[i] << " ";}
 				//for(int i=0; i<7; i++)	{	ofstr<<robotStat.tgtMotorCnt[i]<<" ";	}
 //				ofstr<<localStat.condNum<<" ";

@@ -12,11 +12,18 @@
 
 LWPRKinematics::LWPRKinematics(const ::std::string& pathToForwardModel):
 	CTRKin(),
-	forwardModel(pathToForwardModel.c_str()),
 	forwardModelforInverse(pathToForwardModel.c_str())
 {
+	this->forwardModel = new LWPR_Object(pathToForwardModel.c_str());
+
 	this->m_hLWPRMutex = CreateMutex(NULL,false,"LWPR_Mutex");
 	this->m_hLWPRInvMutex = CreateMutex(NULL,false,"LWPRInv_Mutex");
+
+	//forwardModel.updateD(true);
+	//forwardModelforInverse.updateD(true);
+
+	//forwardModel.useMeta(true);
+	//forwardModelforInverse.useMeta(true);
 }
 
 
@@ -27,12 +34,12 @@ LWPRKinematics::~LWPRKinematics()
 bool
 LWPRKinematics::TipFwdKin(const double* jAng, double* posOrt)
 {
-	::std::vector< double> inputData(jAng, jAng + this->forwardModel.nIn());
+	::std::vector< double> inputData(jAng, jAng + this->forwardModel->nIn());
 
 	this->CheckJointLimits(inputData);
 
 	WaitForSingleObject(this->m_hLWPRMutex,INFINITE);
-	::std::vector<double> outputData = this->forwardModel.predict(inputData, 0.001);
+	::std::vector<double> outputData = this->forwardModel->predict(inputData, 0.001);
 	ReleaseMutex(this->m_hLWPRMutex);
 
 	::std::vector<double> orientation = ::std::vector<double> (outputData.begin() + 3, outputData.end());
@@ -47,22 +54,24 @@ LWPRKinematics::TipFwdKin(const double* jAng, double* posOrt)
 void 
 LWPRKinematics::AdaptForwardModel(const double* posOrt, const double* jAng)
 {
-	::std::vector<double> input_data(jAng, jAng + this->forwardModel.nIn());
+	::std::vector<double> input_data(jAng, jAng + this->forwardModel->nIn());
 		
 	double posOrtFinal[6] = {0};
 	this->CompensateForRigidBodyMotionInverse(jAng, posOrt, posOrtFinal);
 
-	::std::vector<double> output_data(posOrtFinal, posOrtFinal + this->forwardModel.nOut());
+	::std::vector<double> output_data(posOrtFinal, posOrtFinal + this->forwardModel->nOut());
+
+	int iter = 1;
 
 	WaitForSingleObject(this->m_hLWPRMutex,INFINITE);
-	//this->AdaptModel(this->forwardModel, input_data, output_data);
-	this->forwardModel.update(input_data, output_data);
+	this->forwardModel->update(input_data, output_data);
 	ReleaseMutex(this->m_hLWPRMutex);
 
-	WaitForSingleObject(this->m_hLWPRInvMutex,INFINITE);
-	//this->AdaptModel(this->forwardModelforInverse, input_data, output_data);
-	this->forwardModelforInverse.update(input_data, output_data);
-	ReleaseMutex(this->m_hLWPRInvMutex);
+	//WaitForSingleObject(this->m_hLWPRInvMutex,INFINITE);
+	////this->AdaptModel(this->forwardModelforInverse, input_data, output_data);
+	//for (int i = 0; i < 10; ++i)
+	//	this->forwardModelforInverse.update(input_data, output_data);
+	//ReleaseMutex(this->m_hLWPRInvMutex);
 }
 
 
@@ -78,12 +87,12 @@ LWPRKinematics::AdaptModel(LWPR_Object& model, const ::std::vector< double>& inp
 void
 LWPRKinematics::SetForgettingFactor(double* ffactor)
 {
-	this->forwardModel.initLambda(ffactor[0]);
-	this->forwardModel.finalLambda(ffactor[1]);
-	this->forwardModel.tauLambda(ffactor[2]);
-	this->forwardModelforInverse.initLambda(ffactor[0]);
-	this->forwardModelforInverse.finalLambda(ffactor[1]);
-	this->forwardModelforInverse.tauLambda(ffactor[2]);
+	//this->forwardModel.initLambda(ffactor[0]);
+	//this->forwardModel.finalLambda(ffactor[1]);
+	//this->forwardModel.tauLambda(ffactor[2]);
+	//this->forwardModelforInverse.initLambda(ffactor[0]);
+	//this->forwardModelforInverse.finalLambda(ffactor[1]);
+	//this->forwardModelforInverse.tauLambda(ffactor[2]);
 }
 
 
@@ -142,7 +151,7 @@ LWPRKinematics::SaveModel()
 	
 	try
 	{
-		this->forwardModel.writeBinary(filename.c_str());
+		this->forwardModel->writeBinary(filename.c_str());
 	}
 	catch(LWPR_Exception& e)
 	{
@@ -173,13 +182,13 @@ void LWPRKinematics::EvalF_LSQ(const double* jAng, const double* tgtPosOrt, cons
 void
 LWPRKinematics::TipFwdKinInv(const double* jAng, double* posOrt)
 {
-	::std::vector< double> inputData(jAng, jAng + this->forwardModel.nIn());
+	::std::vector< double> inputData(jAng, jAng + this->forwardModel->nIn());
 
 	this->CheckJointLimits(inputData);
 
-	WaitForSingleObject(this->m_hLWPRInvMutex,INFINITE);
-	::std::vector<double> outputData = this->forwardModelforInverse.predict(inputData, 0.001);
-	ReleaseMutex(this->m_hLWPRInvMutex);
+	//WaitForSingleObject(this->m_hLWPRInvMutex,INFINITE);
+	::std::vector<double> outputData = this->forwardModelforInverse.predict(inputData, 0.00001);
+	//ReleaseMutex(this->m_hLWPRInvMutex);
 
 	::std::vector<double> orientation = ::std::vector<double> (outputData.begin() + 3, outputData.end());
 	

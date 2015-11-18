@@ -18,7 +18,7 @@
 
 class LWPRKinematics : public CTRKin
 {
-	LWPR_Object forwardModel;
+	LWPR_Object* forwardModel;
 
 	//this is ugly --> FIX IT
 	LWPR_Object forwardModelforInverse;
@@ -60,7 +60,7 @@ public:
 	/**
 	  *@brief returns a copy of the LWPR model foe the forward kinematics
 	  */
-	const LWPR_Object& GetForwardModel() { return forwardModel;};
+	const LWPR_Object* GetForwardModel() { return forwardModel;};
 
 	/**
 	  *@brief this is used to save the model after online adaptation fore future use
@@ -70,12 +70,12 @@ public:
 	/**
 	  *@brief returns the dimension of the tip's workspace
 	  */
-	int GetWorkspaceDim() {return this->forwardModel.nOut();};
+	int GetWorkspaceDim() {return this->forwardModel->nOut();};
 
 	/**
 	  *@brief returns the dimension of the full jointspace (including rigid body transformation)
 	  */
-	int GetJoinspaceDim() {return this->forwardModel.nIn() + 2;};
+	int GetJoinspaceDim() {return this->forwardModel->nIn() + 2;};
 
 	//HACK - currently only used because of thread safety -> CHANGE
 	void TipFwdKinInv(const double* jAng, double* posOrt);

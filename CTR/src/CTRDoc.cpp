@@ -419,11 +419,11 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 	while(mySelf->m_teleOpMode)
 	{
 
-		int flag = WaitForSingleObject(mySelf->m_hEMevent,1000);
-		if(flag == WAIT_TIMEOUT)	
-		{
-				AfxMessageBox("No event from EM Loop!");	return 0;
-		}
+		//int flag = WaitForSingleObject(mySelf->m_hEMevent,1000);
+		//if(flag == WAIT_TIMEOUT)	
+		//{
+		//		AfxMessageBox("No event from EM Loop!");	return 0;
+		//}
 		// CKim - Read the shared variable (current cnt, jAng, .. ) that is used in this loop. 
 		EnterCriticalSection(&m_cSection);
 		for(int i=0; i<7; i++)	{	localStat.currMotorCnt[i] = mySelf->m_Status.currMotorCnt[i];	}
@@ -431,7 +431,8 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 		for(int i=0; i<6; i++)	{	localStat.currTipPosDir[i] = mySelf->m_Status.currTipPosDir[i];	}
 		for(int i=0; i<6; i++)  {   localStat.sensedTipPosDir[i] = mySelf->m_Status.sensedTipPosDir[i]; }
 		LeaveCriticalSection(&m_cSection);
-		
+		//mySelf->m_kinLWPR->TipFwdKin(localStat.currJang, localStat.currTipPosDir);
+
 		// CKim - Synch with haptic device by executing function in haptic device scheduler
 		// Exchange state with the device
 		mySelf->m_Omni->SynchState(localStat);
@@ -521,11 +522,6 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 
 			mySelf->SolveInverseKin(localStat);			// Updates localStat.tgtMotorCnt, tgtJang
 
-			int flag = WaitForSingleObject(mySelf->m_hEMevent,1000);
-			if(flag == WAIT_TIMEOUT)	{
-				AfxMessageBox("No event from EM Loop!");	return 0;
-			}
-
 			if (mySelf->m_adapt_LWPR)
 				dynamic_cast<LWPRKinematics*> (mySelf->m_kinLWPR)->AdaptForwardModel(localStat.sensedTipPosDir, localStat.currJang);
 
@@ -596,6 +592,7 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 			mySelf->m_Status.tgtJang[i] = localStat.tgtJang[i];		}
 		for(int i=0; i<7; i++)	{
 			mySelf->m_Status.tgtMotorCnt[i] = localStat.tgtMotorCnt[i];		}
+	//	for(int i = 0; i < 6; i++) {mySelf->m_Status.currTipPosDir[i] = localStat.currTipPosDir[i];}
 
 		mySelf->m_Status.invKinOK = localStat.invKinOK;
 		mySelf->m_Status.limitOK = localStat.limitOK;
@@ -1009,7 +1006,7 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 			mySelf->ProcessCommand(localStat);	
 		}
 
-		for(int i=0; i<7; i++)	vel[i] *= 0.3;	
+		for(int i=0; i<7; i++)	vel[i] *= 0.5;	
 		// ----------------------------------------------------- //
 		// CKim - Command joint velocity, update shared variable
 		// ----------------------------------------------------- //
@@ -1710,12 +1707,12 @@ void CCTRDoc::SolveInverseKin(CTR_status& stat)
 	for(int i=0; i<5; i++)	{	stat.initJang[i] = stat.currJang[i];		}
 
 	// ------------------------------------------------------------------------------------------ //
-	//m_kinLib->InverseKinematicsLSQ(stat.tgtTipPosDir, stat.initJang, jAng, Err, exitCond);
+	m_kinLib->InverseKinematicsLSQ(stat.tgtTipPosDir, stat.initJang, jAng, Err, exitCond);
 
 
 	/*stat.condNum = Err[0];		stat.invKinErr[0] = Err[1];		stat.invKinErr[1] = Err[2];*/
 	
-	m_kinLWPR->InverseKinematicsLSQ(stat.tgtTipPosDir, stat.initJang, jAng, Err, exitCond);
+	//m_kinLWPR->InverseKinematicsLSQ(stat.tgtTipPosDir, stat.initJang, jAng, Err, exitCond);
 
 	stat.condNum = Err[0];		stat.invKinErr[0] = Err[1];		stat.invKinErr[1] = Err[2];
 

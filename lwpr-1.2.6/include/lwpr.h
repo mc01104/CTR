@@ -77,7 +77,7 @@ Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #include <lwpr_config.h>
 
 #ifndef NUM_THREADS 
-#define NUM_THREADS   4
+#define NUM_THREADS   1
 #endif
 
 #if NUM_THREADS < 1 || NUM_THREADS > 32

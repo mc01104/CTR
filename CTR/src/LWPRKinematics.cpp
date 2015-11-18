@@ -21,8 +21,14 @@ LWPRKinematics::LWPRKinematics(const ::std::string& pathToForwardModel):
 
 	//forwardModel->updateD(true);
 	//forwardModelforInverse.updateD(true);
-	//forwardModel->metaRate(2);
-	//forwardModel->useMeta(true);
+	forwardModel->metaRate(2);
+	forwardModel->useMeta(true);
+	forwardModel->diagOnly(false);
+	forwardModel->initLambda(0.95);
+	forwardModel->finalLambda(0.9995);
+	forwardModel->tauLambda(0.90);
+	forwardModel->setInitAlpha(2.0);
+	
 	//forwardModelforInverse.useMeta(true);
 }
 

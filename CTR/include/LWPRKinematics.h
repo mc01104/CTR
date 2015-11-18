@@ -129,7 +129,7 @@ private:
 		inputData[1] = 0.98 * atan2(sin(inputData[1]), cos(inputData[1]));
 
 		if (inputData[2] < 0) {inputData[2] = 1;}
-		if (abs(inputData[2]) > 80) {inputData[2] = 80;}
+		if (abs(inputData[2]) > L31_MAX) {inputData[2] = L31_MAX;}
 	}
 
 };

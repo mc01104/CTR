@@ -357,9 +357,9 @@ class LWPR_Object {
       if (y.size()!=(unsigned) model.nOut) {
          throw LWPR_Exception(LWPR_Exception::BAD_OUTPUT_DIM);
       }
-	  double wge[6] = {0.00001, 0.01, 0.8, 0.01, 0.01, 0.01};
+	  //double wge[6] = {0.00001, 0.01, 0.8, 0.01, 0.01, 0.01};
 
-      if (!lwpr_update(&model, &x[0], &y[0], &yp[0], wge)) {
+      if (!lwpr_update(&model, &x[0], &y[0], &yp[0], NULL)) {
          throw LWPR_Exception(LWPR_Exception::OUT_OF_MEMORY);
       }
       return yp;

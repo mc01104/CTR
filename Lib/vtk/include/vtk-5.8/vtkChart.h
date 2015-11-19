@@ -24,11 +24,12 @@
 #include "vtkContextItem.h"
 #include "vtkRect.h"        // For vtkRectf
 #include "vtkStdString.h"   // For vtkStdString ivars
+#include "vtkAxis.h"
 
 class vtkTransform2D;
 class vtkContextScene;
 class vtkPlot;
-class vtkAxis;
+//class vtkAxis;
 class vtkTextProperty;
 class vtkChartLegend;
 

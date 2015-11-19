@@ -25,7 +25,9 @@ class VtkOnLinePlot : public CDialog
 	vtkWin32OpenGLRenderWindow*		m_renWin;
 	vtkRenderer*					m_Renderer;
 	vtkWin32RenderWindowInteractor*	m_iren;
-
+	vtkSmartPointer<vtkContextView> m_view;
+	vtkSmartPointer<vtkChartXY>		m_chart;
+	vtkPlot*						m_line;
 	int timeWindowSize;
 	double* dataBuffer;
 

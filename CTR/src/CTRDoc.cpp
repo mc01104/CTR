@@ -245,7 +245,8 @@ void CCTRDoc::OnViewPlot()
 	if(!m_vtkPlot)
 	{
 		// CKim - This creates modeless dialog using ChunVtkDlg class
-		m_vtkPlot = new VtkOnLinePlot();		m_vtkPlot->Create(VtkOnLinePlot::IDD);		
+		m_vtkPlot = new VtkOnLinePlot();
+		m_vtkPlot->Create(VtkOnLinePlot::IDD);		
 		
 		// CKim - Move to (640,480) and don't change size. Show window and draw
 		m_vtkPlot->SetWindowPos(&CWnd::wndTop,640,200,0,0,SWP_NOSIZE);		

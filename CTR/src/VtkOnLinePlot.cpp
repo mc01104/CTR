@@ -19,6 +19,21 @@ VtkOnLinePlot::VtkOnLinePlot(CWnd* pParent /*=NULL*/)
 	m_renWin = vtkWin32OpenGLRenderWindow::New();
 	m_Renderer = vtkRenderer::New();
 	m_iren = vtkWin32RenderWindowInteractor::New();
+	m_view = vtkSmartPointer<vtkContextView>::New();
+
+	m_view->GetRenderer()->SetBackground(1.0, 1.0, 1.0);
+ 
+  // Add multiple line plots, setting the colors etc
+    m_chart = vtkSmartPointer<vtkChartXY>::New();
+	m_chart->AutoAxesOff();
+
+	m_chart->GetAxis(vtkAxis::LEFT)->SetRange(0,200);	
+	m_chart->GetAxis(vtkAxis::LEFT)->SetBehavior(vtkAxis::FIXED);
+	m_chart->GetAxis(vtkAxis::BOTTOM)->SetRange(0,200);	
+	m_chart->GetAxis(vtkAxis::BOTTOM)->SetBehavior(vtkAxis::FIXED);
+
+	m_view->GetScene()->AddItem(m_chart);
+	m_line = m_chart->AddPlot(vtkChart::LINE);
 
 	this->dataBuffer = new double[timeWindowSize];
 
@@ -61,7 +76,10 @@ int VtkOnLinePlot::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	m_renWin->AddRenderer(m_Renderer);
 	m_renWin->SetParentId(this->GetSafeHwnd());
 	m_iren->SetRenderWindow(m_renWin);
-	
+
+	m_view->GetInteractor()->Initialize();
+	m_view->GetInteractor()->Start();
+
 	return 0;
 }
 
@@ -114,11 +132,12 @@ void VtkOnLinePlot::OnDestroy()
 
 void VtkOnLinePlot::PlotData(const double* sensorData, const double* predictionData)
 {
+
+	::std::cout << "predicted z = "<< predictionData[2] << ::std::endl;
 	// update the dataBuffer
 	memmove(this->dataBuffer, this->dataBuffer + 1, (this->timeWindowSize - 1) * sizeof(double));
-	this->dataBuffer[this->timeWindowSize - 1] = sensorData[2];
-
-
+	this->dataBuffer[this->timeWindowSize - 1] = predictionData[2];
+	//this->dataBuffer[this->timeWindowSize - 1] = 10;
 	vtkSmartPointer<vtkTable> table = vtkSmartPointer<vtkTable>::New();
 	vtkSmartPointer<vtkFloatArray> arrX =  vtkSmartPointer<vtkFloatArray>::New();
 
@@ -128,54 +147,26 @@ void VtkOnLinePlot::PlotData(const double* sensorData, const double* predictionD
 	vtkSmartPointer<vtkFloatArray> arrC =  vtkSmartPointer<vtkFloatArray>::New();
 	arrC->SetName("Position Error");
 	table->AddColumn(arrC);
- 
-  // Fill in the table with some example values
 
-  table->SetNumberOfRows(timeWindowSize);
-  // find a way to maintain this data as a member variable and remove the buffer
-  for (int i = 0; i < timeWindowSize; ++i)
-  {
-    table->SetValue(i, 0, i);
-    table->SetValue(i, 1, this->dataBuffer[i]);
-  }
+	table->SetNumberOfRows(timeWindowSize);
+	// find a way to maintain this data as a member variable and remove the buffer
+	for (int i = 0; i < timeWindowSize; ++i)
+	{
+		table->SetValue(i, 0, i);
+		table->SetValue(i, 1, this->dataBuffer[i]);
+	}
  
-  // Set up the view
-  vtkSmartPointer<vtkContextView> view = vtkSmartPointer<vtkContextView>::New();
-  view->GetRenderer()->SetBackground(1.0, 1.0, 1.0);
- 
-  // Add multiple line plots, setting the colors etc
-  vtkSmartPointer<vtkChartXY> chart = vtkSmartPointer<vtkChartXY>::New();
-  view->GetScene()->AddItem(chart);
-  vtkPlot *line = chart->AddPlot(vtkChart::LINE);
-#if VTK_MAJOR_VERSION <= 5
-  line->SetInput(table, 0, 1);
-#else
-  line->SetInputData(table, 0, 1);
-#endif
-  line->SetColor(0, 255, 0, 255);
-  line->SetWidth(1.0);
-//  line = chart->AddPlot(vtkChart::LINE);
-//#if VTK_MAJOR_VERSION <= 5
-//  //line->SetInput(table, 0, 2);
-//#else
-//  line->SetInputData(table, 0, 2);
-//#endif
-//  line->SetColor(255, 0, 0, 255);
-//  line->SetWidth(5.0);
- 
-  // For dotted line, the line type can be from 2 to 5 for different dash/dot
-  // patterns (see enum in vtkPen containing DASH_LINE, value 2):
-#ifndef WIN32
-  line->GetPen()->SetLineType(vtkPen::DASH_LINE);
-#endif
-  // (ifdef-ed out on Windows because DASH_LINE does not work on Windows
-  //  machines with built-in Intel HD graphics card...)
- 
-  //view->GetRenderWindow()->SetMultiSamples(0);
- 
-  // Start interactor
-  view->GetInteractor()->Initialize();
-  view->GetInteractor()->Start();
- 
+	// Set up the view
+  
+	#if VTK_MAJOR_VERSION <= 5
+		m_line->SetInput(table, 0, 1);
+	#else
+		line->SetInputData(table, 0, 1);
+	#endif
+
+	m_line->SetColor(0, 255, 0, 255);
+	m_line->SetWidth(1.0);
+
+  	//m_view->GetInteractor()->Initialize();
 }
 // VtkOnLinePlot message handlers

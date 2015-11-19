@@ -322,6 +322,7 @@ void CCTRView::OnTimer(UINT_PTR nIDEvent)
 
 	}
 	
+	
 	if (this->GetDocument()->GetVtkPlot()) 
 		this->GetDocument()->GetVtkPlot()->PlotData(stat.sensedTipPosDir, stat.currTipPosDir);
 

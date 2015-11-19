@@ -19,12 +19,12 @@ LWPRKinematics::LWPRKinematics(const ::std::string& pathToForwardModel):
 	this->m_hLWPRMutex = CreateMutex(NULL,false,"LWPR_Mutex");
 	this->m_hLWPRInvMutex = CreateMutex(NULL,false,"LWPRInv_Mutex");
 
-	forwardModel->updateD(true);
-	forwardModel->setInitAlpha(0.01);
-	forwardModel->wPrune(0.8);
-	forwardModel->initLambda(0.999);
-	forwardModel->finalLambda(0.999);
-	forwardModel->tauLambda(0.9999);
+	//forwardModel->updateD(true);
+	//forwardModel->setInitAlpha(0.01);
+	forwardModel->wPrune(0.9);
+	forwardModel->initLambda(0.999999);
+	forwardModel->finalLambda(0.995);
+	forwardModel->tauLambda(0.1);
 
 }
 

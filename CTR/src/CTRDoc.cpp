@@ -84,7 +84,7 @@ CCTRDoc::CCTRDoc()
 
 	// paths for LWPR models
 	//::std::string pathToForwardModel("../models/model_ct_2015_11_9_14_0_40.bin");
-	::std::string pathToForwardModel("../models/model_ct_2015_11_18_9_14_32.bin");
+	::std::string pathToForwardModel("../models/model_ct_2015_11_19_9_17_44.bin");
 	
 	m_kinLWPR = new LWPRKinematics(pathToForwardModel);
 	double forgettingFactor[3] = {0.99, 0.99, 0.99};
@@ -445,7 +445,7 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 				mySelf->m_motionCtrl->StopMotion();			teleOpCtrl = false;		}
 		}
 	
-		//mySelf->m_kinLWPR->TipFwdKin(localStat.currJang, localStat.currTipPosDirLWPR);
+		//mySelf->m_kinLWPR->TipFwdKin(localStat.currJang, localStat.currTipPosDir);
 
 		// --------------------------------------------------------------- //
 		// CKim - Handle haptic device events. 
@@ -601,7 +601,7 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 			mySelf->m_Status.tgtJang[i] = localStat.tgtJang[i];		}
 		for(int i=0; i<7; i++)	{
 			mySelf->m_Status.tgtMotorCnt[i] = localStat.tgtMotorCnt[i];		}
-	//	for(int i = 0; i < 6; i++) {mySelf->m_Status.currTipPosDir[i] = localStat.currTipPosDir[i];}
+		//for(int i = 0; i < 6; i++) {mySelf->m_Status.currTipPosDir[i] = localStat.currTipPosDir[i];}
 
 		mySelf->m_Status.invKinOK = localStat.invKinOK;
 		mySelf->m_Status.limitOK = localStat.limitOK;

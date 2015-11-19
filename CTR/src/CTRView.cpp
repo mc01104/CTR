@@ -45,10 +45,10 @@ BEGIN_MESSAGE_MAP(CCTRView, CFormView)
 	ON_WM_CREATE()
 
 	ON_COMMAND(ID_VIEW_GRAPHICWIN, &CCTRView::OnViewGraphicwin)
-	ON_COMMAND(ID_VIEW_PLOT, &CCTRView::OnViewGraphicwin)
+	//ON_COMMAND(ID_VIEW_PLOT, &CCTRView::OnViewGraphicwin)
 	
 	ON_UPDATE_COMMAND_UI(ID_VIEW_GRAPHICWIN, &CCTRView::OnUpdateViewGraphicwin)
-	ON_UPDATE_COMMAND_UI(ID_VIEW_PLOT, &CCTRView::OnUpdateViewGraphicwin)
+	//ON_UPDATE_COMMAND_UI(ID_VIEW_PLOT, &CCTRView::OnUpdateViewGraphicwin)
 
 	ON_BN_CLICKED(IDC_RADIO_JA, &CCTRView::OnBnClickedRadioModes)
 	ON_BN_CLICKED(IDC_RADIO_TIP, &CCTRView::OnBnClickedRadioModes)

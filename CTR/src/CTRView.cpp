@@ -15,7 +15,6 @@
 #include "ChunHaptic.h"
 #include "ChunMotion.h"
 
-
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -44,8 +43,13 @@ BEGIN_MESSAGE_MAP(CCTRView, CFormView)
 	ON_MESSAGE(WM_USER+2,OnUserMsg2)
 	ON_BN_CLICKED(IDC_BTN_MOVE, &CCTRView::OnClickedBtnMove)
 	ON_WM_CREATE()
+
 	ON_COMMAND(ID_VIEW_GRAPHICWIN, &CCTRView::OnViewGraphicwin)
+	ON_COMMAND(ID_VIEW_PLOT, &CCTRView::OnViewGraphicwin)
+	
 	ON_UPDATE_COMMAND_UI(ID_VIEW_GRAPHICWIN, &CCTRView::OnUpdateViewGraphicwin)
+	ON_UPDATE_COMMAND_UI(ID_VIEW_PLOT, &CCTRView::OnUpdateViewGraphicwin)
+
 	ON_BN_CLICKED(IDC_RADIO_JA, &CCTRView::OnBnClickedRadioModes)
 	ON_BN_CLICKED(IDC_RADIO_TIP, &CCTRView::OnBnClickedRadioModes)
 	ON_BN_CLICKED(IDC_RADIO_TELE, &CCTRView::OnBnClickedRadioModes)
@@ -289,9 +293,9 @@ void CCTRView::OnTimer(UINT_PTR nIDEvent)
 	// CKim - Update 3D graphics
 	if(m_vtkDlg)
 	{
-		m_vtkDlg->RenderBalancedPair(stat.bpTipPosDir);
-		m_vtkDlg->RenderTip(stat.bpTipPosDir,stat.currTipPosDir);
-		m_vtkDlg->RenderProxy(stat.tgtTipPosDir);
+		//m_vtkDlg->RenderBalancedPair(stat.bpTipPosDir);
+		//m_vtkDlg->RenderTip(stat.bpTipPosDir,stat.currTipPosDir);
+		//m_vtkDlg->RenderProxy(stat.tgtTipPosDir);
 			
 		//m_vtkDlg->MoveCursor(stat.bpTipPosDir[0], stat.bpTipPosDir[1], stat.bpTipPosDir[2]);
 		//if(stat.mode ==1)	// CKim - under teleop
@@ -317,6 +321,9 @@ void CCTRView::OnTimer(UINT_PTR nIDEvent)
 			//m_vtkDlg->MovePointer(stat.currOmniInput);//		}
 
 	}
+	
+	if (this->GetDocument()->GetVtkPlot()) 
+		this->GetDocument()->GetVtkPlot()->PlotData(stat.sensedTipPosDir, stat.currTipPosDir);
 
 }
 

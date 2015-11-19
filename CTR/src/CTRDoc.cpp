@@ -25,6 +25,8 @@
 #include <fstream>
 #include <math.h>
 
+#include "VtkOnLinePlot.h"
+
 // CKim - Eigen Header. Located at "C:\Chun\ChunLib"
 #include <Eigen/Dense>
 #include "Utilities.h"
@@ -40,7 +42,11 @@ IMPLEMENT_DYNCREATE(CCTRDoc, CDocument)
 BEGIN_MESSAGE_MAP(CCTRDoc, CDocument)
 	ON_COMMAND(ID_VIEW_STATUS_BAR, &CCTRDoc::OnViewStatusBar)
 	ON_COMMAND(ID_VIEW_TELEOP, &CCTRDoc::OnViewTeleop)
+	ON_COMMAND(ID_VIEW_PLOT, &CCTRDoc::OnViewPlot)
+
+	ON_UPDATE_COMMAND_UI(ID_VIEW_PLOT, &CCTRDoc::OnUpdateViewPlot)
 	ON_UPDATE_COMMAND_UI(ID_VIEW_TELEOP, &CCTRDoc::OnUpdateViewTeleop)
+
 	ON_BN_CLICKED(IDC_INIT_EM, &CCTRDoc::OnBnClickedInitEm)
 	ON_BN_CLICKED(IDC_REGST, &CCTRDoc::OnBnClickedRegst)
 	ON_BN_CLICKED(IDC_CHK_ADAPT, &CCTRDoc::OnBnClickedChkAdapt)
@@ -49,6 +55,7 @@ BEGIN_MESSAGE_MAP(CCTRDoc, CDocument)
 	ON_BN_CLICKED(IDC_BTN_MDLRESET, &CCTRDoc::OnBnClickedBtnMdlreset)
 	ON_BN_CLICKED(IDC_CHK_FEEDBACK, &CCTRDoc::OnBnClickedChkFeedback)
 	ON_BN_CLICKED(IDC_CHK_INVKINON, &CCTRDoc::OnBnClickedChkInvkinon)
+	
 END_MESSAGE_MAP()
 
 
@@ -65,6 +72,7 @@ CCTRDoc::CCTRDoc()
 {
 	// TODO: add one-time construction code here
 	m_ioRunning = false;		m_teleOpMode = false;
+	
 	m_date = GetDateString();
 	// CKim - Initialize critical section
 	// Initializes a critical section object and sets the spin count for the critical section.
@@ -94,6 +102,8 @@ CCTRDoc::CCTRDoc()
 	m_Tracker = new ChunTracker;
 	m_TrjGen = new TrjGenerator;
 	
+	m_vtkPlot = NULL;
+
 	m_hWndView = NULL;
 	m_AdaptiveOn = false;
 	m_FeedbackOn = false;
@@ -107,6 +117,7 @@ CCTRDoc::CCTRDoc()
 	m_bDoUpdate = false;
 	m_jointPlayback = false;
 	m_adapt_LWPR = false;
+	m_plotData = false;
 }
 
 CCTRDoc::~CCTRDoc()
@@ -228,6 +239,31 @@ void CCTRDoc::OnViewStatusBar()
 {
 }
 
+void CCTRDoc::OnViewPlot()
+{
+	
+	if(!m_vtkPlot)
+	{
+		// CKim - This creates modeless dialog using ChunVtkDlg class
+		m_vtkPlot = new VtkOnLinePlot();		m_vtkPlot->Create(VtkOnLinePlot::IDD);		
+		
+		// CKim - Move to (640,480) and don't change size. Show window and draw
+		m_vtkPlot->SetWindowPos(&CWnd::wndTop,640,200,0,0,SWP_NOSIZE);		
+		m_vtkPlot->ShowWindow(SW_SHOW);
+		m_vtkPlot->Invalidate();
+	}
+	else
+	{
+		m_vtkPlot->DestroyWindow();		delete m_vtkPlot;		m_vtkPlot = NULL;
+	}
+}
+
+
+void CCTRDoc::OnUpdateViewPlot(CCmdUI *pCmdUI)
+{
+	if(m_plotData)		{	pCmdUI->SetCheck(1);	}
+	else				{	pCmdUI->SetCheck(0);	}
+}
 
 void CCTRDoc::OnViewTeleop()
 {

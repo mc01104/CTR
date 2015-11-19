@@ -84,6 +84,9 @@
     <ClCompile Include="src\LWPRKinematics.cpp">
       <Filter>04. Kinematics</Filter>
     </ClCompile>
+    <ClCompile Include="src\VtkOnLinePlot.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\ChunTimer.h">
@@ -145,6 +148,9 @@
     </ClInclude>
     <ClInclude Include="include\LWPRKinematics.h">
       <Filter>04. Kinematics</Filter>
+    </ClInclude>
+    <ClInclude Include="include\VtkOnLinePlot.h">
+      <Filter>01. VTK</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

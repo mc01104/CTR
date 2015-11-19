@@ -100,7 +100,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>$(SolutionDir)$(Configuration);$(SolutionDir)\Lib\Ascension;$(SolutionDir)\Lib\vtk\lib\vtk-5.8;$(SolutionDir)\Lib\CopleyMotion\ChunCML\lib\$(Configuration);$(SolutionDir)Lib\OpenHaptics\lib\$(Platform)\$(Configuration)AcademicEdition;$(SolutionDir)\Lib\OpenHaptics\utilities\lib\$(Platform)\$(Configuration)AcademicEdition</AdditionalLibraryDirectories>
-      <AdditionalDependencies>Utilities.lib;lwpr.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Utilities.lib;lwpr.lib;vtkCharts.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
@@ -136,6 +136,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="src\TrjGenerator.cpp" />
+    <ClCompile Include="src\VtkOnLinePlot.cpp" />
     <ClCompile Include="src\xmitPdo.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -157,6 +158,7 @@
     <ClInclude Include="include\stdafx.h" />
     <ClInclude Include="include\targetver.h" />
     <ClInclude Include="include\TrjGenerator.h" />
+    <ClInclude Include="include\VtkOnLinePlot.h" />
     <ClInclude Include="include\xmitPdo.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>

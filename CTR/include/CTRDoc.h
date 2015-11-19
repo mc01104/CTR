@@ -10,6 +10,9 @@
 #include <fstream>
 #include <Eigen/Dense>
 
+
+#include "VtkOnLinePlot.h"
+
 // CKim - Declare the classes that will be maintained inside the 'Doc' class
 // They are the classes that encapsulates functionalities of the robot software
 class ChunHaptic;
@@ -74,7 +77,8 @@ private:
 	HANDLE				m_hMtrCtrl;
 	double				m_SetPt[6];
 	double				m_measPosforRec[6];
-
+	bool				m_plotData;
+	VtkOnLinePlot*		m_vtkPlot;
 //	bool				
 	std::ofstream		m_fStr;
 
@@ -103,6 +107,8 @@ public:
 
 	// CKim - Get thread safe copy of the robot status
 	void	GetCurrentStatus(CTR_status& stat);
+
+	VtkOnLinePlot*	GetVtkPlot(){return this->m_vtkPlot;};
 
 	// CKim - Send command to robot
 	void	SendCommand(int type, const double* para);
@@ -204,4 +210,8 @@ public:
 	afx_msg void OnBnClickedBtnMdlreset();
 	afx_msg void OnBnClickedChkFeedback();
 	afx_msg void OnBnClickedChkInvkinon();
+
+	afx_msg void OnViewPlot();
+	afx_msg void OnUpdateViewPlot(CCmdUI *pCmdUI);
+
 };

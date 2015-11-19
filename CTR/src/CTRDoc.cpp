@@ -65,7 +65,7 @@ CCTRDoc::CCTRDoc()
 {
 	// TODO: add one-time construction code here
 	m_ioRunning = false;		m_teleOpMode = false;
-
+	m_date = GetDateString();
 	// CKim - Initialize critical section
 	// Initializes a critical section object and sets the spin count for the critical section.
 	// When a thread tries to acquire a critical section that is locked, the thread spins: 
@@ -408,7 +408,8 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 	mySelf->m_hWndView = pFrame->GetActiveView()->m_hWnd;
 
 	// CKim - Log files
-	::std::string fileName = "ExperimentData/" + GetDateString() + "-Teleop.txt";
+	//::std::string fileName = "ExperimentData/" + GetDateString() + "-Teleop.txt";
+	::std::string fileName = "ExperimentData/" + mySelf->m_date + "-Teleop.txt";
 	//std::ofstream ofstr;	ofstr.open("TeleOpLog.txt");
 	//std::ofstream ofstrLWPR;	ofstrLWPR.open("TeleOpLogLPWR.txt");
 	std::ofstream ofstr;	ofstr.open(fileName.c_str());

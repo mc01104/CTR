@@ -50,8 +50,6 @@ private:
 	LWPRKinematics*		m_kinLWPR;
 	ChunTracker*		m_Tracker;
 	TrjGenerator*		m_TrjGen;
-	
-	::std::string		m_date;
 
 	// CKim - Variables for threads
 	bool				m_ioRunning;
@@ -88,6 +86,7 @@ private:
 // Operations
 public:
 	bool				m_adapt_LWPR;
+	::std::string		m_date;
 // Overrides
 public:
 	virtual BOOL OnNewDocument();

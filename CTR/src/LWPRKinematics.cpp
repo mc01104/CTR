@@ -19,34 +19,34 @@ LWPRKinematics::LWPRKinematics(const ::std::string& pathToForwardModel):
 	this->m_hLWPRMutex = CreateMutex(NULL,false,"LWPR_Mutex");
 	this->m_hLWPRInvMutex = CreateMutex(NULL,false,"LWPRInv_Mutex");
 
-	::std::ofstream metaData;
-	::std::string name = GetDateString() + "Adapt_Parameters.txt";
-	metaData.open(name);
+	//::std::ofstream metaData;
+	//::std::string name = GetDateString() + "-Adapt_Parameters.txt";
+	//metaData.open(name);
 
 	forwardModel->updateD(true);
 	forwardModel->useMeta(true);
 	forwardModel->metaRate(0.1);
 	forwardModel->setInitAlpha(0.001);
 	forwardModel->wPrune(1.0);
-	forwardModel->initLambda(0.999999);
-	forwardModel->finalLambda(0.9995);
+	forwardModel->initLambda(0.999);
+	forwardModel->finalLambda(0.999);
 	forwardModel->tauLambda(0.1);
 
-	metaData << "Update_D:" << forwardModel->updateD() << ::std::endl;
-	metaData << "Use_meta:" << forwardModel->useMeta() << ::std::endl;
-	metaData << "Meta_rate:" << forwardModel->metaRate() << ::std::endl;
-	metaData << "Init_alpha:" << 0.001 << ::std::endl;
-	metaData << "initLambda:" << forwardModel->initLambda() << ::std::endl;
-	metaData << "finalLambda:" << forwardModel->finalLambda() << ::std::endl;
-	metaData << "tauLambda:" << forwardModel->tauLambda() << ::std::endl;
+	//metaData << "Update_D:" << forwardModel->updateD() << ::std::endl;
+	//metaData << "Use_meta:" << forwardModel->useMeta() << ::std::endl;
+	//metaData << "Meta_rate:" << forwardModel->metaRate() << ::std::endl;
+	//metaData << "Init_alpha:" << 0.001 << ::std::endl;
+	//metaData << "initLambda:" << forwardModel->initLambda() << ::std::endl;
+	//metaData << "finalLambda:" << forwardModel->finalLambda() << ::std::endl;
+	//metaData << "tauLambda:" << forwardModel->tauLambda() << ::std::endl;
 
-	metaData.close();
+	//metaData.close();
 }
 
 
 LWPRKinematics::~LWPRKinematics()
 {
-	this->SaveModel();
+	//this->SaveModel();
 
 	delete this->forwardModel;
 }

@@ -1017,7 +1017,7 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 			mySelf->ProcessCommand(localStat);	
 		}
 
-		for(int i=0; i<7; i++)	vel[i] *= 0.3;	
+		for(int i=0; i<7; i++)	vel[i] *= 0.5;	
 		// ----------------------------------------------------- //
 		// CKim - Command joint velocity, update shared variable
 		// ----------------------------------------------------- //

@@ -1017,7 +1017,7 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 			mySelf->ProcessCommand(localStat);	
 		}
 
-		for(int i=0; i<7; i++)	vel[i] *= 0.5;	
+		for(int i=0; i<7; i++)	vel[i] *= 0.3;	
 		// ----------------------------------------------------- //
 		// CKim - Command joint velocity, update shared variable
 		// ----------------------------------------------------- //
@@ -1718,14 +1718,14 @@ void CCTRDoc::SolveInverseKin(CTR_status& stat)
 	for(int i=0; i<5; i++)	{	stat.initJang[i] = stat.currJang[i];		}
 
 	// ------------------------------------------------------------------------------------------ //
-	m_kinLib->InverseKinematicsLSQ(stat.tgtTipPosDir, stat.initJang, jAng, Err, exitCond);
+	//m_kinLib->InverseKinematicsLSQ(stat.tgtTipPosDir, stat.initJang, jAng, Err, exitCond);
 
 
 	/*stat.condNum = Err[0];		stat.invKinErr[0] = Err[1];		stat.invKinErr[1] = Err[2];*/
 	
 	
-	m_kinLWPR->InverseKinematicsLSQ(stat.tgtTipPosDir, stat.initJang, stat.jAngLWPR, Err, exitCond);
-	PrintCArray(stat.jAngLWPR, 5);
+	m_kinLWPR->InverseKinematicsLSQ(stat.tgtTipPosDir, stat.initJang, jAng, Err, exitCond);
+	//PrintCArray(stat.jAngLWPR, 5);
 
 	stat.condNum = Err[0];		stat.invKinErr[0] = Err[1];		stat.invKinErr[1] = Err[2];
 

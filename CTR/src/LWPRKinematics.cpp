@@ -32,6 +32,15 @@ LWPRKinematics::LWPRKinematics(const ::std::string& pathToForwardModel):
 	forwardModel->finalLambda(0.9995);
 	forwardModel->tauLambda(0.1);
 
+	forwardModelforInverse->updateD(true);
+	forwardModelforInverse->useMeta(true);
+	forwardModelforInverse->metaRate(0.1);
+	forwardModelforInverse->setInitAlpha(0.001);
+	forwardModelforInverse->wPrune(1.0);
+	forwardModelforInverse->initLambda(0.9995);
+	forwardModelforInverse->finalLambda(0.9995);
+	forwardModelforInverse->tauLambda(0.1);
+
 	/*double normD[6] = {1, 1, 1, 1, 1, 1};
 	forwardModel->normOut(doubleVec(normD, normD + 6));*/
 
@@ -90,18 +99,18 @@ LWPRKinematics::AdaptForwardModel(const double* posOrt, const double* jAng)
 	double posOrtFinal[6] = {0};
 	this->CompensateForRigidBodyMotionInverse(jAng, posOrt, posOrtFinal);
 
-	::std::vector<double> output_data(posOrtFinal, posOrtFinal + this->forwardModel->nOut());
+	::std::vector<double> outputData(posOrtFinal, posOrtFinal + this->forwardModel->nOut());
 
 	WaitForSingleObject(this->m_hLWPRMutex,INFINITE);
-	for (int i = 0; i < 2; i++)
-		this->forwardModel->update(inputData, output_data);
+	for (int i = 0; i < 1; i++)
+		this->forwardModel->update(inputData, outputData);
 	//Sleep(100);
 	ReleaseMutex(this->m_hLWPRMutex);
 
 	//WaitForSingleObject(this->m_hLWPRInvMutex,INFINITE);
 	////this->AdaptModel(this->forwardModelforInverse, input_data, output_data);
 	//for (int i = 0; i < 10; ++i)
-	//	this->forwardModelforInverse.update(input_data, output_data);
+		this->forwardModelforInverse->update(inputData, outputData);
 	//ReleaseMutex(this->m_hLWPRInvMutex);
 }
 
@@ -189,8 +198,8 @@ void LWPRKinematics::EvalF_LSQ(const double* jAng, const double* tgtPosOrt, cons
 	double thmax = m_MaxOrtErr*3.141592/180.0;		
 	double sum = 0.0;
 	
-	//TipFwdKinInv(jAng, posOrt);
-	TipFwdKin(jAng, posOrt);
+	TipFwdKinInv(jAng, posOrt);
+	//TipFwdKin(jAng, posOrt);
 
 	for(int i = 0; i < 3; i++)	
 	{	

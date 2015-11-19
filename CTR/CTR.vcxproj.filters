@@ -85,7 +85,7 @@
       <Filter>04. Kinematics</Filter>
     </ClCompile>
     <ClCompile Include="src\VtkOnLinePlot.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>01. VTK</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

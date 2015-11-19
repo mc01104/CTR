@@ -154,14 +154,14 @@ void VtkOnLinePlot::PlotData(const double* sensorData, const double* predictionD
 #endif
   line->SetColor(0, 255, 0, 255);
   line->SetWidth(1.0);
-  line = chart->AddPlot(vtkChart::LINE);
-#if VTK_MAJOR_VERSION <= 5
-  line->SetInput(table, 0, 2);
-#else
-  line->SetInputData(table, 0, 2);
-#endif
-  line->SetColor(255, 0, 0, 255);
-  line->SetWidth(5.0);
+//  line = chart->AddPlot(vtkChart::LINE);
+//#if VTK_MAJOR_VERSION <= 5
+//  //line->SetInput(table, 0, 2);
+//#else
+//  line->SetInputData(table, 0, 2);
+//#endif
+//  line->SetColor(255, 0, 0, 255);
+//  line->SetWidth(5.0);
  
   // For dotted line, the line type can be from 2 to 5 for different dash/dot
   // patterns (see enum in vtkPen containing DASH_LINE, value 2):

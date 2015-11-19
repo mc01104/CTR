@@ -251,10 +251,12 @@ void CCTRDoc::OnViewPlot()
 		m_vtkPlot->SetWindowPos(&CWnd::wndTop,640,200,0,0,SWP_NOSIZE);		
 		m_vtkPlot->ShowWindow(SW_SHOW);
 		m_vtkPlot->Invalidate();
+		m_plotData = true;
 	}
 	else
 	{
 		m_vtkPlot->DestroyWindow();		delete m_vtkPlot;		m_vtkPlot = NULL;
+		m_plotData = false;
 	}
 }
 

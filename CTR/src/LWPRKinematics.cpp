@@ -102,7 +102,7 @@ LWPRKinematics::AdaptForwardModel(const double* posOrt, const double* jAng)
 	::std::vector<double> outputData(posOrtFinal, posOrtFinal + this->forwardModel->nOut());
 
 	WaitForSingleObject(this->m_hLWPRMutex,INFINITE);
-	for (int i = 0; i < 1; i++)
+	for (int i = 0; i < 2; i++)
 		this->forwardModel->update(inputData, outputData);
 	//Sleep(100);
 	ReleaseMutex(this->m_hLWPRMutex);
@@ -110,6 +110,7 @@ LWPRKinematics::AdaptForwardModel(const double* posOrt, const double* jAng)
 	//WaitForSingleObject(this->m_hLWPRInvMutex,INFINITE);
 	////this->AdaptModel(this->forwardModelforInverse, input_data, output_data);
 	//for (int i = 0; i < 10; ++i)
+	for (int i = 0; i < 2; i++)
 		this->forwardModelforInverse->update(inputData, outputData);
 	//ReleaseMutex(this->m_hLWPRInvMutex);
 }

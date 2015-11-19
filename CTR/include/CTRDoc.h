@@ -47,7 +47,7 @@ private:
 	HWND				m_hWndView;		// CKim - handle to view window
 	ChunMotion*			m_motionCtrl;
 	CTRKin*				m_kinLib;
-	LWPRKinematics*				m_kinLWPR;
+	LWPRKinematics*		m_kinLWPR;
 	ChunTracker*		m_Tracker;
 	TrjGenerator*		m_TrjGen;
 	

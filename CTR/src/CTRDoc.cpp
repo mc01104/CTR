@@ -523,9 +523,16 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 
 			mySelf->SolveInverseKin(localStat);			// Updates localStat.tgtMotorCnt, tgtJang
 
-			if (mySelf->m_adapt_LWPR)
-				dynamic_cast<LWPRKinematics*> (mySelf->m_kinLWPR)->AdaptForwardModel(localStat.sensedTipPosDir, localStat.currJang);
-
+			int flag = WaitForSingleObject(mySelf->m_hEMevent,1000);
+			if(flag == WAIT_TIMEOUT)	
+			{
+				AfxMessageBox("No event from EM Loop!");	return 0;
+			}
+			else
+			{
+				if (mySelf->m_adapt_LWPR)
+					mySelf->m_kinLWPR->AdaptForwardModel(localStat.sensedTipPosDir, localStat.currJang);
+			}
 
 			// CKim - Teleoperation safety check - gradually increase the resistance and decrease controller gain
 			// when the leastSquare error is above threshold and jont limit is reached. This is to prevent any 

@@ -19,18 +19,13 @@ LWPRKinematics::LWPRKinematics(const ::std::string& pathToForwardModel):
 	this->m_hLWPRMutex = CreateMutex(NULL,false,"LWPR_Mutex");
 	this->m_hLWPRInvMutex = CreateMutex(NULL,false,"LWPRInv_Mutex");
 
-	forwardModel->updateD(false);
-	//forwardModelforInverse.updateD(true);
-	//forwardModel->metaRate(0.02);
-	//forwardModel->useMeta(true);
-	//forwardModel->diagOnly(false);
+	forwardModel->updateD(true);
+	forwardModel->setInitAlpha(0.01);
+	forwardModel->wPrune(0.8);
 	forwardModel->initLambda(0.999);
 	forwardModel->finalLambda(0.999);
 	forwardModel->tauLambda(0.9999);
-	//forwardModel->setInitAlpha(0.0);
-	//forwardModel->initS2(1.0);
-	
-	//forwardModelforInverse.useMeta(true);
+
 }
 
 
@@ -51,7 +46,7 @@ LWPRKinematics::TipFwdKin(const double* jAng, double* posOrt)
 #endif
 	
 	WaitForSingleObject(this->m_hLWPRMutex,INFINITE);
-	::std::vector<double> outputData = this->forwardModel->predict(inputData, 0.00001);
+	::std::vector<double> outputData = this->forwardModel->predict(inputData, 0.1);
 	ReleaseMutex(this->m_hLWPRMutex);
 
 	::std::vector<double> orientation = ::std::vector<double> (outputData.begin() + 3, outputData.end());
@@ -78,8 +73,9 @@ LWPRKinematics::AdaptForwardModel(const double* posOrt, const double* jAng)
 	::std::vector<double> output_data(posOrtFinal, posOrtFinal + this->forwardModel->nOut());
 
 	WaitForSingleObject(this->m_hLWPRMutex,INFINITE);
-	for (int i = 0; i < 10; i++)
+	for (int i = 0; i < 2; i++)
 		this->forwardModel->update(inputData, output_data);
+	//Sleep(100);
 	ReleaseMutex(this->m_hLWPRMutex);
 
 	//WaitForSingleObject(this->m_hLWPRInvMutex,INFINITE);

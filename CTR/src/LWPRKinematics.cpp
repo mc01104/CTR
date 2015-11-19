@@ -32,6 +32,8 @@ LWPRKinematics::LWPRKinematics(const ::std::string& pathToForwardModel):
 	forwardModel->finalLambda(0.9995);
 	forwardModel->tauLambda(0.1);
 
+	/*double normD[6] = {1, 1, 1, 1, 1, 1};
+	forwardModel->normOut(doubleVec(normD, normD + 6));*/
 
 	//metaData << "Update_D:" << forwardModel->updateD() << ::std::endl;
 	//metaData << "Use_meta:" << forwardModel->useMeta() << ::std::endl;

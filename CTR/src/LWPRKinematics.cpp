@@ -189,8 +189,9 @@ void LWPRKinematics::EvalF_LSQ(const double* jAng, const double* tgtPosOrt, cons
 	double thmax = m_MaxOrtErr*3.141592/180.0;		
 	double sum = 0.0;
 	
-	TipFwdKinInv(jAng, posOrt);
-	
+	//TipFwdKinInv(jAng, posOrt);
+	TipFwdKin(jAng, posOrt);
+
 	for(int i = 0; i < 3; i++)	
 	{	
 		F(i,0) = posOrt[i] - tgtPosOrt[i];				

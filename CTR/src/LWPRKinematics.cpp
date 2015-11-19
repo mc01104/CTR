@@ -19,6 +19,10 @@ LWPRKinematics::LWPRKinematics(const ::std::string& pathToForwardModel):
 	this->m_hLWPRMutex = CreateMutex(NULL,false,"LWPR_Mutex");
 	this->m_hLWPRInvMutex = CreateMutex(NULL,false,"LWPRInv_Mutex");
 
+	::std::ofstream metaData;
+	::std::string name = GetDateString() + "Adapt_Parameters.txt";
+	metaData.open(name);
+
 	forwardModel->updateD(true);
 	forwardModel->useMeta(true);
 	forwardModel->metaRate(0.1);
@@ -28,11 +32,22 @@ LWPRKinematics::LWPRKinematics(const ::std::string& pathToForwardModel):
 	forwardModel->finalLambda(0.9995);
 	forwardModel->tauLambda(0.1);
 
+	metaData << "Update_D:" << forwardModel->updateD() << ::std::endl;
+	metaData << "Use_meta:" << forwardModel->useMeta() << ::std::endl;
+	metaData << "Meta_rate:" << forwardModel->metaRate() << ::std::endl;
+	metaData << "Init_alpha:" << 0.001 << ::std::endl;
+	metaData << "initLambda:" << forwardModel->initLambda() << ::std::endl;
+	metaData << "finalLambda:" << forwardModel->finalLambda() << ::std::endl;
+	metaData << "tauLambda:" << forwardModel->tauLambda() << ::std::endl;
+
+	metaData.close();
 }
 
 
 LWPRKinematics::~LWPRKinematics()
 {
+	this->SaveModel();
+
 	delete this->forwardModel;
 }
 
@@ -48,7 +63,7 @@ LWPRKinematics::TipFwdKin(const double* jAng, double* posOrt)
 #endif
 	
 	WaitForSingleObject(this->m_hLWPRMutex,INFINITE);
-	::std::vector<double> outputData = this->forwardModel->predict(inputData, 0.1);
+	::std::vector<double> outputData = this->forwardModel->predict(inputData, 0.001);
 	ReleaseMutex(this->m_hLWPRMutex);
 
 	::std::vector<double> orientation = ::std::vector<double> (outputData.begin() + 3, outputData.end());
@@ -195,7 +210,7 @@ LWPRKinematics::TipFwdKinInv(const double* jAng, double* posOrt)
 #endif
 
 	//WaitForSingleObject(this->m_hLWPRInvMutex,INFINITE);
-	::std::vector<double> outputData = this->forwardModelforInverse->predict(inputData, 0.00001);
+	::std::vector<double> outputData = this->forwardModelforInverse->predict(inputData, 0.001);
 	//ReleaseMutex(this->m_hLWPRInvMutex);
 
 	::std::vector<double> orientation = ::std::vector<double> (outputData.begin() + 3, outputData.end());

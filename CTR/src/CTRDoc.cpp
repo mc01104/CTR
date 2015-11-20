@@ -1231,7 +1231,6 @@ unsigned int WINAPI	CCTRDoc::ClosedLoopControlLoop(void* para)
 	::std::string filename = "ExperimentData/" + mySelf->m_date + "-ClosedLoop.txt";
 
 	std::ofstream ofstr;	
-	//ofstr.open("C:\\03. OnlineCalibration\\OnlineCalib\\ExperimentData\\CLIK_Log.txt");	
 	ofstr.open(filename);
 
 	// CKim - Parameters for loop speed measurement
@@ -1241,7 +1240,9 @@ unsigned int WINAPI	CCTRDoc::ClosedLoopControlLoop(void* para)
 	CTR_status localStat;		
 	
 	double predTipPosDir[6];		double kp = 10.0;
+
 	mySelf->m_kinLib->SetInvKinThreshold(0.1,3.0);
+
 	for(int i=0; i<5; i++)	{	localStat.initJang[i] = mySelf->m_Status.currJang[i];	}
 
 	// CKim - The Loop
@@ -1280,6 +1281,8 @@ unsigned int WINAPI	CCTRDoc::ClosedLoopControlLoop(void* para)
 		if (mySelf->m_adapt_LWPR)
 			mySelf->m_kinLWPR->AdaptForwardModel(localStat.sensedTipPosDir, localStat.currJang);
 
+		mySelf->m_kinLWPR->TipFwdKin(localStat.currJang, predTipPosDir);
+
 		// CKim - Read trajectory from the 'Playback.txt'. Returns false when the end of trajectory is reached
 		mySelf->m_playBack = mySelf->m_TrjGen->InterpolateNextPoint(localStat.tgtTipPosDir);	// Update tgtTipPosDir
 		
@@ -1302,12 +1305,12 @@ unsigned int WINAPI	CCTRDoc::ClosedLoopControlLoop(void* para)
 			ofstr<<loopTime<<" ";
 			for(int i=0; i<6; i++)	{	ofstr<<localStat.currTipPosDir[i]<<" ";		}
 			for(int i=0; i<6; i++)	{	ofstr<<localStat.sensedTipPosDir[i]<<" ";	}
-			for(int i=0; i<6; i++)	{	ofstr<<localStat.tgtTipPosDir[i]<<" ";		}
-			for(int i=0; i<5; i++)	{	ofstr<<localStat.tgtJang[i]<<" ";			}
-			for(int i=0; i<7; i++)	{	ofstr<<localStat.tgtMotorCnt[i]<<" ";	}
-			ofstr<<localStat.invKinOK<<" ";
-			ofstr<<localStat.condNum<<" ";
-			ofstr<<localStat.limitOK<<" ";
+			for(int i=0; i<6; i++)	{	ofstr<<predTipPosDir[i]<<" ";		}
+			//for(int i=0; i<5; i++)	{	ofstr<<localStat.tgtJang[i]<<" ";			}
+			//for(int i=0; i<7; i++)	{	ofstr<<localStat.tgtMotorCnt[i]<<" ";	}
+			//ofstr<<localStat.invKinOK<<" ";
+			//ofstr<<localStat.condNum<<" ";
+			//ofstr<<localStat.limitOK<<" ";
 			ofstr<<"\n";		
 			perfcnt = 0;		//timer.ResetTime();
 		}

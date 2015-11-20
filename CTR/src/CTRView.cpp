@@ -535,6 +535,7 @@ void CCTRView::OnBnClickedButtonSave()
 void CCTRView::OnClickedBtnHome()
 {
 	CButton* pButton = (CButton*) GetDlgItem(IDC_RADIO_JA);
+	m_ctrlMode = 0;
 	pButton->SetCheck(true);
 
 	double p[10] = {0, 0, 86.34, 0 , 0,};

@@ -152,7 +152,7 @@ void VtkOnLinePlot::PlotData(const double* sensorData, const double* predictionD
 	// update the table
 	m_table->RemoveRow(0);
 	m_table->InsertNextBlankRow();
-	m_table->SetValue(timeWindowSize - 1, 0, timeWindowSize - 1);
+	m_table->SetValue(timeWindowSize - 1, 0, timeWindowSize);
 	m_table->SetValue(timeWindowSize - 1, 1, predictionData[2]);
   
 	m_line->SetInput(m_table, 0, 1);

@@ -534,6 +534,9 @@ void CCTRView::OnBnClickedButtonSave()
 
 void CCTRView::OnClickedBtnHome()
 {
+	CButton* pButton = (CButton*) GetDlgItem(IDC_RADIO_JA);
+	pButton->SetCheck(true);
+
 	double p[10] = {0, 0, 86.34, 0 , 0,};
 
 	p[0] *= (3.141592/180.0);	p[1] *= (3.141592/180.0);	p[3] *= (3.141592/180.0);

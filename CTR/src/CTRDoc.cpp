@@ -351,12 +351,12 @@ unsigned int WINAPI	CCTRDoc::EMLoop(void* para)
 
 		// CKim - update model if specified
 //		if(rCnt%24 ==0 )
-//		{
-			if(mySelf->m_playBack || mySelf->m_bStaticPlayBack || mySelf->m_bRunExperiment)
-			{
-				mySelf->m_kinLib->UpdateFAC(jAng,measTipPosDir,predTipPosDir,mySelf->m_bDoUpdate);
-			}
-//		}
+////		{
+//			if(mySelf->m_playBack || mySelf->m_bStaticPlayBack || mySelf->m_bRunExperiment)
+//			{
+//				mySelf->m_kinLib->UpdateFAC(jAng,measTipPosDir,predTipPosDir,mySelf->m_bDoUpdate);
+//			}
+////		}
 		rCnt++;
 
 		//// ------------------------------------------------------------- //
@@ -670,7 +670,7 @@ unsigned int WINAPI	CCTRDoc::PlaybackLoop(void* para)
 	CCTRDoc* mySelf = (CCTRDoc*) para;		
 
 	// CKim - Log files
-	filename = "ExperimentData/" + mySelf->m_date + "-Playback.txt";
+	::std::string filename = "ExperimentData/" + mySelf->m_date + "-Playback.txt";
 	std::ofstream ofstr;	
 	//ofstr.open("PlaybackLog.txt");	
 	ofstr.open(filename);
@@ -985,6 +985,7 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 
 		else if(mySelf->m_bCLIK)	// CKim - Differential Inverse Kinematics Control.
 		{
+			::std::cout << "I need to change a flag" << ::std::endl;
 			// CKim - Read shared variables (sensed / target posdir and kinematics model)
 			// Sensed posdir and kinematics model is updated from EM tracker loop,
 			// target posdir is updated from 'Playback' loop  or 'TeleOp' loop
@@ -1227,7 +1228,11 @@ unsigned int WINAPI	CCTRDoc::ClosedLoopControlLoop(void* para)
 	CCTRDoc* mySelf = (CCTRDoc*) para;		
 
 	// CKim - Log files
-	std::ofstream ofstr;	ofstr.open("C:\\03. OnlineCalibration\\OnlineCalib\\ExperimentData\\CLIK_Log.txt");	
+	::std::string filename = "ExperimentData/" + mySelf->m_date + "-ClosedLoop.txt";
+
+	std::ofstream ofstr;	
+	//ofstr.open("C:\\03. OnlineCalibration\\OnlineCalib\\ExperimentData\\CLIK_Log.txt");	
+	ofstr.open(filename);
 
 	// CKim - Parameters for loop speed measurement
 	ChunTimer timer;	int perfcnt = 20;		int navg = 20;		long loopTime = 0;
@@ -2012,13 +2017,11 @@ void CCTRDoc::OnBnClickedBtnPlay()
 	else
 	{
 		//::std::cout << "else" << ::std::endl;
-		m_TrjGen->Initialize("C:\\03. OnlineCalibration\\OnlineCalib\\PlayBack.txt",6);
+		m_TrjGen->Initialize("PlayBack.txt",6);
 		m_hEMevent = CreateEvent(NULL,false,false,NULL);	// Auto reset event (2nd argument false means...)
 		m_playBack = true;
 
-		//m_hAdaptive = (HANDLE)_beginthreadex(NULL, 0, CCTRDoc::PlaybackLoop, this, 0, NULL);
 		m_hAdaptive = (HANDLE)_beginthreadex(NULL, 0, CCTRDoc::ClosedLoopControlLoop, this, 0, NULL);
-			//PostMessage(m_hWndView,WM_USER+2,NULL,NULL);
 	}
 
 }

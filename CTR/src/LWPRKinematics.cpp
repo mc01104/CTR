@@ -69,7 +69,7 @@ LWPRKinematics::TipFwdKin(const double* jAng, double* posOrt)
 	::std::vector< double> inputData(jAng, jAng + this->forwardModel->nIn());
 
 	this->CheckJointLimits(inputData);
-	
+
 #ifdef _SCALED_
 	inputData[2] = inputData[2]/L31_MAX ;
 #endif
@@ -198,7 +198,7 @@ void LWPRKinematics::EvalF_LSQ(const double* jAng, const double* tgtPosOrt, cons
 	double pmax = m_MaxPosErr;		
 	double thmax = m_MaxOrtErr*3.141592/180.0;		
 	double sum = 0.0;
-	
+	//::std::cout << "lwpr" << ::std::endl;
 	TipFwdKinInv(jAng, posOrt);
 	//TipFwdKin(jAng, posOrt);
 

@@ -28,8 +28,8 @@ LWPRKinematics::LWPRKinematics(const ::std::string& pathToForwardModel):
 	forwardModel->metaRate(0.1);
 	forwardModel->setInitAlpha(0.001);
 	forwardModel->wPrune(1.0);
-	forwardModel->initLambda(0.999);
-	forwardModel->finalLambda(0.999);
+	forwardModel->initLambda(0.995);
+	forwardModel->finalLambda(0.995);
 	forwardModel->tauLambda(0.1);
 
 	forwardModelforInverse->updateD(true);
@@ -37,8 +37,8 @@ LWPRKinematics::LWPRKinematics(const ::std::string& pathToForwardModel):
 	forwardModelforInverse->metaRate(0.1);
 	forwardModelforInverse->setInitAlpha(0.001);
 	forwardModelforInverse->wPrune(1.0);
-	forwardModelforInverse->initLambda(0.999);
-	forwardModelforInverse->finalLambda(0.999);
+	forwardModelforInverse->initLambda(0.995);
+	forwardModelforInverse->finalLambda(0.995);
 	forwardModelforInverse->tauLambda(0.1);
 
 	/*double normD[6] = {1, 1, 1, 1, 1, 1};

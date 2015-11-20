@@ -143,8 +143,8 @@ void CCTRView::OnInitialUpdate()
 
 
 	// CKim - Initialize controls here
-	this->SetDlgItemTextA(m_idCmdJang[0],"180");		this->SetDlgItemTextA(m_idCmdJang[1],"180");	
-	this->SetDlgItemTextA(m_idCmdJang[2],"43");			this->SetDlgItemTextA(m_idCmdJang[3],"0");			this->SetDlgItemTextA(m_idCmdJang[4],"0");
+	this->SetDlgItemTextA(m_idCmdJang[0],"82");		this->SetDlgItemTextA(m_idCmdJang[1],"-135");	
+	this->SetDlgItemTextA(m_idCmdJang[2],"69.3");			this->SetDlgItemTextA(m_idCmdJang[3],"313.8");			this->SetDlgItemTextA(m_idCmdJang[4],"-25.3");
 	
 	//// CKim - Open the graphics dialog
 	//if(!m_vtkDlg)
@@ -420,7 +420,8 @@ void CCTRView::OnBnClickedRadioModes()
 	
 	if(m_ctrlMode == 0)	{
 		for(int i=0; i<5; i++)	{	
-			CEdit* pWnd = (CEdit*) this->GetDlgItem(m_idCmdJang[i]);		pWnd->SetReadOnly(0);		}	}
+			CEdit* pWnd = (CEdit*) this->GetDlgItem(m_idCmdJang[i]);		pWnd->SetReadOnly(0);	
+		}	}
 	else {
 		for(int i=0; i<5; i++)	{	
 			CEdit* pWnd = (CEdit*) this->GetDlgItem(m_idCmdJang[i]);		pWnd->SetReadOnly(1);		}	}
@@ -538,8 +539,11 @@ void CCTRView::OnClickedBtnHome()
 	m_ctrlMode = 0;
 	pButton->SetCheck(true);
 
-	double p[10] = {0, 0, 86.34, 0 , 0,};
+	this->GetDocument()->SwitchAllControlFlagsOff();
+	
+	this->GetDocument()->ClearCommandQueue();
 
+	double p[10] = {0, 0, 86.34, 0 , 0,};
 	p[0] *= (3.141592/180.0);	p[1] *= (3.141592/180.0);	p[3] *= (3.141592/180.0);
 	this->GetDocument()->SendCommand(0,p);
 }

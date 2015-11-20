@@ -105,6 +105,8 @@ public:
 	virtual ~CCTRDoc();
 	void StartUIupdate();
 
+	void SwitchAllControlFlagsOff();
+
 	// CKim - Get thread safe copy of the robot status
 	void	GetCurrentStatus(CTR_status& stat);
 
@@ -122,7 +124,7 @@ public:
 	void	SetForgettingFactor(double val);
 
 	void	SaveModel();
-
+	void	ClearCommandQueue();
 #ifdef _DEBUG
 	virtual void AssertValid() const;
 	virtual void Dump(CDumpContext& dc) const;

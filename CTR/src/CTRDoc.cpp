@@ -1635,6 +1635,12 @@ void CCTRDoc::SendCommand(int type, const double* para)
 	LeaveCriticalSection(&m_cSection);
 }
 
+void CCTRDoc::ClearCommandQueue()
+{
+	EnterCriticalSection(&m_cSection);
+	m_cmdQueue.empty();
+	LeaveCriticalSection(&m_cSection);
+}
 
 void CCTRDoc::SwitchTeleOpMode(bool onoff)
 {
@@ -2062,4 +2068,16 @@ void CCTRDoc::OnBnClickedBtnMdlreset()
 void CCTRDoc::SetForgettingFactor(double val)
 {
 	m_kinLib->m_forgettingFactor = val;
+}
+
+void CCTRDoc::SwitchAllControlFlagsOff()
+{
+	m_teleOpMode = false;
+	m_playBack = false;
+	m_jointPlayback = false;
+	m_FeedbackOn = false;
+	m_InvKinOn = false;
+	m_bStaticPlayBack = false;
+	m_bRunExperiment = false;
+	m_bCLIK = false;
 }

@@ -35,10 +35,25 @@ VtkOnLinePlot::VtkOnLinePlot(CWnd* pParent /*=NULL*/)
 	m_view->GetScene()->AddItem(m_chart);
 	m_line = m_chart->AddPlot(vtkChart::LINE);
 
-	this->dataBuffer = new double[timeWindowSize];
+	m_table =  vtkSmartPointer<vtkTable>::New();
 
-	for (int i = 0; i < this->timeWindowSize; ++i)
-		this->dataBuffer[i] = 0.0;
+	vtkSmartPointer<vtkFloatArray> arrX =  vtkSmartPointer<vtkFloatArray>::New();
+
+	arrX->SetName("X Axis");
+	m_table->AddColumn(arrX);
+ 
+	vtkSmartPointer<vtkFloatArray> arrC =  vtkSmartPointer<vtkFloatArray>::New();
+	arrC->SetName("Position Error");
+	m_table->AddColumn(arrC);
+
+	m_table->SetNumberOfRows(timeWindowSize);
+
+	// find a way to maintain this data as a member variable and remove the buffer
+	for (int i = 0; i < timeWindowSize; ++i)
+	{
+		m_table->SetValue(i, 0, i);
+		m_table->SetValue(i, 1, 0);
+	}
 
 	this->start = clock();
 }
@@ -134,39 +149,16 @@ void VtkOnLinePlot::PlotData(const double* sensorData, const double* predictionD
 {
 
 	::std::cout << "predicted z = "<< predictionData[2] << ::std::endl;
-	// update the dataBuffer
-	memmove(this->dataBuffer, this->dataBuffer + 1, (this->timeWindowSize - 1) * sizeof(double));
-	this->dataBuffer[this->timeWindowSize - 1] = predictionData[2];
-	//this->dataBuffer[this->timeWindowSize - 1] = 10;
-	vtkSmartPointer<vtkTable> table = vtkSmartPointer<vtkTable>::New();
-	vtkSmartPointer<vtkFloatArray> arrX =  vtkSmartPointer<vtkFloatArray>::New();
-
-	arrX->SetName("X Axis");
-	table->AddColumn(arrX);
- 
-	vtkSmartPointer<vtkFloatArray> arrC =  vtkSmartPointer<vtkFloatArray>::New();
-	arrC->SetName("Position Error");
-	table->AddColumn(arrC);
-
-	table->SetNumberOfRows(timeWindowSize);
-	// find a way to maintain this data as a member variable and remove the buffer
-	for (int i = 0; i < timeWindowSize; ++i)
-	{
-		table->SetValue(i, 0, i);
-		table->SetValue(i, 1, this->dataBuffer[i]);
-	}
- 
-	// Set up the view
+	// update the table
+	m_table->RemoveRow(0);
+	m_table->InsertNextBlankRow();
+	m_table->SetValue(timeWindowSize - 1, 0, timeWindowSize - 1);
+	m_table->SetValue(timeWindowSize - 1, 1, predictionData[2]);
   
-	#if VTK_MAJOR_VERSION <= 5
-		m_line->SetInput(table, 0, 1);
-	#else
-		line->SetInputData(table, 0, 1);
-	#endif
+	m_line->SetInput(m_table, 0, 1);
 
 	m_line->SetColor(0, 255, 0, 255);
 	m_line->SetWidth(1.0);
 
-  	//m_view->GetInteractor()->Initialize();
 }
 // VtkOnLinePlot message handlers

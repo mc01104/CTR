@@ -1277,6 +1277,9 @@ unsigned int WINAPI	CCTRDoc::ClosedLoopControlLoop(void* para)
 			break;
 		}
 
+		if (mySelf->m_adapt_LWPR)
+			mySelf->m_kinLWPR->AdaptForwardModel(localStat.sensedTipPosDir, localStat.currJang);
+
 		// CKim - Read trajectory from the 'Playback.txt'. Returns false when the end of trajectory is reached
 		mySelf->m_playBack = mySelf->m_TrjGen->InterpolateNextPoint(localStat.tgtTipPosDir);	// Update tgtTipPosDir
 		

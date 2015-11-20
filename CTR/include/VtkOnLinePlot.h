@@ -29,10 +29,11 @@ class VtkOnLinePlot : public CDialog
 	vtkSmartPointer<vtkChartXY>		m_chart;
 	vtkPlot*						m_line;
 	int timeWindowSize;
-	double* dataBuffer;
 
 	clock_t start;
 	clock_t end;
+
+	vtkSmartPointer<vtkTable>		m_table;
 
 public:
 	VtkOnLinePlot(CWnd* pParent = NULL);   // standard constructor

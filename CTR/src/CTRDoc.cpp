@@ -670,8 +670,11 @@ unsigned int WINAPI	CCTRDoc::PlaybackLoop(void* para)
 	CCTRDoc* mySelf = (CCTRDoc*) para;		
 
 	// CKim - Log files
-	std::ofstream ofstr;	ofstr.open("PlaybackLog.txt");	
-
+	filename = "ExperimentData/" + mySelf->m_date + "-Playback.txt";
+	std::ofstream ofstr;	
+	//ofstr.open("PlaybackLog.txt");	
+	ofstr.open(filename);
+	
 	// CKim - Parameters for loop speed measurement
 	ChunTimer timer;	int perfcnt = 0;	int navg = 0;		long loopTime = 0;
 
@@ -712,10 +715,13 @@ unsigned int WINAPI	CCTRDoc::PlaybackLoop(void* para)
 		for(int i=0; i<6; i++)	{	localStat.sensedTipPosDir[i] = mySelf->m_Status.sensedTipPosDir[i];		}
 		LeaveCriticalSection(&m_cSection);
 
-		// CKim - calculate predicted position and perform adaptive update if instructed
+		// ADAPT LWPR
+		mySelf->m_kinLWPR->AdaptForwardModel(localStat.sensedTipPosDir, localStat.currJang);		// CKim - calculate predicted position and perform adaptive update if instructed
+		
 		//if( (loopTime/1000.0) < 9000 )
 		//{
-			mySelf->m_kinLib->UpdateFAC(localStat.currJang,localStat.sensedTipPosDir,predTipPosDir,mySelf->m_AdaptiveOn);
+		//	mySelf->m_kinLib->UpdateFAC(localStat.currJang,localStat.sensedTipPosDir,predTipPosDir,mySelf->m_AdaptiveOn);
+		
 		//}
 		//else
 		//{
@@ -731,7 +737,7 @@ unsigned int WINAPI	CCTRDoc::PlaybackLoop(void* para)
 		// if least square error is larger than 1 and if joints has been limited. 
 		mySelf->SolveInverseKin(localStat);			// Updates localStat.tgtMotorCnt, tgtJang
 	
-		mySelf->m_kinLib->TipFwdKin(localStat.tgtJang,localStat.solvedTipPosDir);
+		mySelf->m_kinLWPR->TipFwdKin(localStat.tgtJang,localStat.solvedTipPosDir);
 
 		// CKim - Log
 		if(perfcnt==navg)
@@ -742,14 +748,14 @@ unsigned int WINAPI	CCTRDoc::PlaybackLoop(void* para)
 			for(int i=0; i<6; i++)	{	ofstr<<localStat.currTipPosDir[i]<<" ";		}
 			for(int i=0; i<6; i++)	{	ofstr<<predTipPosDir[i]<<" ";				}
 			for(int i=0; i<6; i++)	{	ofstr<<localStat.sensedTipPosDir[i]<<" ";	}
-			for(int i=0; i<6; i++)	{	ofstr<<localStat.tgtTipPosDir[i]<<" ";		}
-			for(int i=0; i<5; i++)	{	ofstr<<localStat.tgtJang[i]<<" ";			}
-			for(int i=0; i<7; i++)	{	ofstr<<localStat.tgtMotorCnt[i]<<" ";	}
-			ofstr<<localStat.invKinOK<<" ";
-			ofstr<<localStat.condNum<<" ";
-			ofstr<<localStat.limitOK<<" ";
-			for(int i=0; i<6; i++)	{	ofstr<<localStat.solvedTipPosDir[i]<<" ";		}
-			ofstr<<localStat.exitCond<<" ";
+			//for(int i=0; i<6; i++)	{	ofstr<<localStat.tgtTipPosDir[i]<<" ";		}
+			//for(int i=0; i<5; i++)	{	ofstr<<localStat.tgtJang[i]<<" ";			}
+			//for(int i=0; i<7; i++)	{	ofstr<<localStat.tgtMotorCnt[i]<<" ";	}
+			//ofstr<<localStat.invKinOK<<" ";
+			//ofstr<<localStat.condNum<<" ";
+			//ofstr<<localStat.limitOK<<" ";
+			//for(int i=0; i<6; i++)	{	ofstr<<localStat.solvedTipPosDir[i]<<" ";		}
+			//ofstr<<localStat.exitCond<<" ";
 			ofstr<<"\n";
 		
 			perfcnt = 0;		//timer.ResetTime();

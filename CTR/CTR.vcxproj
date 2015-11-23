@@ -69,7 +69,7 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SolutionDir)$(Configuration);$(SolutionDir)\Lib\Ascension;$(SolutionDir)\Lib\vtk\lib\vtk-5.8;$(SolutionDir)\Lib\CopleyMotion\ChunCML\lib\$(Configuration);$(SolutionDir)Lib\OpenHaptics\lib\$(Platform)\$(Configuration)AcademicEdition;$(SolutionDir)\Lib\OpenHaptics\utilities\lib\$(Platform)\$(Configuration)AcademicEdition</AdditionalLibraryDirectories>
-      <AdditionalDependencies>Utilities.lib;lwpr.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>vtkCharts.lib;Utilities.lib;lwpr.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>

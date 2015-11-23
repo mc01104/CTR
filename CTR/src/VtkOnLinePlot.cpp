@@ -64,6 +64,7 @@ int VtkOnLinePlot::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	
 	m_view = vtkSmartPointer<vtkContextView>::New();
 	m_view->SetRenderWindow(m_renWin);
+	//m_view->SetInteractor(m_iren);
 
 	m_view->GetRenderer()->SetBackground(1.0, 1.0, 1.0);
  
@@ -98,8 +99,13 @@ int VtkOnLinePlot::OnCreate(LPCREATESTRUCT lpCreateStruct)
 		m_table->SetValue(i, 0, i);
 		m_table->SetValue(i, 1, 0);
 	}
+
+	m_line->SetInput(m_table, 0, 1);
+
+	m_line->SetColor(0, 255, 0, 255);
+	m_line->SetWidth(1.0);
+
 	m_view->GetInteractor()->Initialize();
-	//m_view->GetInteractor()->Start();
 
 	return 0;
 }
@@ -107,26 +113,16 @@ int VtkOnLinePlot::OnCreate(LPCREATESTRUCT lpCreateStruct)
 void VtkOnLinePlot::OnPaint()
 {
 	CPaintDC dc(this); // device context for painting
-	// TODO: Add your message handler code here
-	// Do not call CDialog::OnPaint() for painting messages
 
-	// CKim - OnPaint() is called by OS whenever UI area needs to be updated. 
-	// All actors that are added to the renderer are rendered here
-
-	// CKim - For the first time, initialize render interactor, set the 
-	// size of the render window and reset the camera of the renderer
 	if(!m_iren->GetInitialized())
 	{
 		m_iren->Initialize();
 
 	}
 
-	m_view->Update();
-
-	// CKim - Rendering only starts when 'render()' is called. Render() should be called through
-	// renderwindow or interactor class, not straight from rendere
-	m_iren->Render();
-	m_view->Render();
+	//m_view->Update();
+	//m_view->GetInteractor()->Initialize();
+	m_view->GetInteractor()->Render();
 }
 
 void VtkOnLinePlot::OnSize(UINT nType, int cx, int cy)
@@ -159,15 +155,40 @@ void VtkOnLinePlot::PlotData(const double* sensorData, const double* predictionD
 
 	//::std::cout << "predicted z = "<< predictionData[2] << ::std::endl;
 	// update the table
-	m_table->RemoveRow(0);
-	m_table->InsertNextBlankRow();
-	m_table->SetValue(timeWindowSize - 1, 0, timeWindowSize);
-	m_table->SetValue(timeWindowSize - 1, 1, predictionData[2]);
-  
-	m_line->SetInput(m_table, 0, 1);
+	//m_table->RemoveRow(0);
+	//m_table->InsertNextBlankRow();
+	//m_table->SetValue(timeWindowSize - 1, 0, timeWindowSize);
+	//m_table->SetValue(timeWindowSize - 1, 1, predictionData[2]);
+ // 
+	////m_line->SetInput(m_table);
+	//m_chart->GetPlot(0)->SetInput(m_table, 0, 1);
+ 
+	vtkSmartPointer<vtkTable> table =  vtkSmartPointer<vtkTable>::New();
+
+	vtkSmartPointer<vtkFloatArray> arrX =  vtkSmartPointer<vtkFloatArray>::New();
+
+	arrX->SetName("X Axis");
+	table->AddColumn(arrX);
+ 
+	vtkSmartPointer<vtkFloatArray> arrC =  vtkSmartPointer<vtkFloatArray>::New();
+	arrC->SetName("Position Error");
+	table->AddColumn(arrC);
+
+	//table->SetNumberOfRows(timeWindowSize);
+	//m_line->SetInput(table->getOut	
+	////// find a way to maintain this data as a member variable and remove the buffer
+	////for (int i = 0; i < timeWindowSize; ++i)
+	////{
+	////	m_table->SetValue(i, 0, i);
+	////	m_table->SetValue(i, 1, 10);
+	////}
+
+	//m_line->SetInput(table, 0, 1);
 
 	m_line->SetColor(0, 255, 0, 255);
 	m_line->SetWidth(1.0);
+
+	//m_view->GetInteractor()->Initialize();
 
 }
 // VtkOnLinePlot message handlers

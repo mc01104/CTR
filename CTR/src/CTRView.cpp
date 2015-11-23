@@ -323,8 +323,8 @@ void CCTRView::OnTimer(UINT_PTR nIDEvent)
 	}
 	
 	
-	if (this->GetDocument()->GetVtkPlot()) 
-		this->GetDocument()->GetVtkPlot()->PlotData(stat.sensedTipPosDir, stat.currTipPosDir);
+	//if (this->GetDocument()->GetVtkPlot()) 
+	//	this->GetDocument()->GetVtkPlot()->PlotData(stat.sensedTipPosDir, stat.currTipPosDir);
 
 }
 
@@ -535,13 +535,13 @@ void CCTRView::OnBnClickedButtonSave()
 
 void CCTRView::OnClickedBtnHome()
 {
-	CButton* pButton = (CButton*) GetDlgItem(IDC_RADIO_JA);
-	m_ctrlMode = 0;
-	pButton->SetCheck(true);
+	//CButton* pButton = (CButton*) GetDlgItem(IDC_RADIO_JA);
+	//m_ctrlMode = 0;
+	//pButton->SetCheck(true);
 
-	this->GetDocument()->SwitchAllControlFlagsOff();
-	
-	this->GetDocument()->ClearCommandQueue();
+	//this->GetDocument()->SwitchAllControlFlagsOff();
+	//
+	//this->GetDocument()->ClearCommandQueue();
 
 	double p[10] = {0, 0, 86.34, 0 , 0,};
 	p[0] *= (3.141592/180.0);	p[1] *= (3.141592/180.0);	p[3] *= (3.141592/180.0);

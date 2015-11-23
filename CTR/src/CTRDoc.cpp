@@ -1063,7 +1063,7 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 			mySelf->ProcessCommand(localStat);	
 		}
 
-		for(int i=0; i<7; i++)	vel[i] *= 0.5;	
+		for(int i=0; i<7; i++)	vel[i] *= 0.3;	
 		// ----------------------------------------------------- //
 		// CKim - Command joint velocity, update shared variable
 		// ----------------------------------------------------- //
@@ -1247,9 +1247,10 @@ unsigned int WINAPI	CCTRDoc::ClosedLoopControlLoop(void* para)
 
 	// CKim - The Loop
 	timer.ResetTime();
-
+	//::std::cout << "closed loop control" <<  ::std::endl;
 	while(mySelf->m_playBack)
 	{
+		//::std::cout << "in playbacl loop " << ::std::endl;
 		//// CKim - Synchronize on the update of the EM tracker data. Since the adaptive update will be 
 		//// meaningful only when new EM tracker data and predicted tip posDir is available
 		//// Use WaitForMultipleObjects to wait for this....
@@ -1278,8 +1279,8 @@ unsigned int WINAPI	CCTRDoc::ClosedLoopControlLoop(void* para)
 			break;
 		}
 
-		if (mySelf->m_adapt_LWPR)
-			mySelf->m_kinLWPR->AdaptForwardModel(localStat.sensedTipPosDir, localStat.currJang);
+		//if (mySelf->m_adapt_LWPR)
+	//		mySelf->m_kinLWPR->AdaptForwardModel(localStat.sensedTipPosDir, localStat.currJang);
 
 		mySelf->m_kinLWPR->TipFwdKin(localStat.currJang, predTipPosDir);
 
@@ -2028,8 +2029,11 @@ void CCTRDoc::OnBnClickedBtnPlay()
 	}
 	else
 	{
-		//::std::cout << "else" << ::std::endl;
-		m_TrjGen->Initialize("PlayBack.txt",6);
+		::std::cout << "else" << ::std::endl;
+		//m_TrjGen->Initialize("PlayBack.txt",6);
+		m_TrjGen->Initialize("PlayBack_Circ 4.5 sec per rev.txt",6);
+
+		::std::cout << "trajectory initialized" << ::std::endl;
 		m_hEMevent = CreateEvent(NULL,false,false,NULL);	// Auto reset event (2nd argument false means...)
 		m_playBack = true;
 

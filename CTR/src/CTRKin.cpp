@@ -8,8 +8,8 @@ CTRKin::CTRKin(void)
 	std::string fName = "";
 
 	// CKim - Coefficient file for Tip
-	//fName = "CTR_TIP_FAC.txt";
-	fName = "FK_new_parameters.txt";
+	fName = "CTR_TIP_FAC.txt";
+	//fName = "FK_new_parameters.txt";
 
 	if (readCTR_FAC_file(fName, m_Tip_px, m_Tip_py, m_Tip_pz, m_Tip_ox, m_Tip_oy, m_Tip_oz) == false) //file read error
 	{

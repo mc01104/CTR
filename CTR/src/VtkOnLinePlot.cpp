@@ -20,41 +20,7 @@ VtkOnLinePlot::VtkOnLinePlot(CWnd* pParent /*=NULL*/)
 	m_Renderer = vtkRenderer::New();
 	m_iren = vtkWin32RenderWindowInteractor::New();
 
-	m_view = vtkSmartPointer<vtkContextView>::New();
 
-	m_view->GetRenderer()->SetBackground(1.0, 1.0, 1.0);
- 
-
-    m_chart = vtkSmartPointer<vtkChartXY>::New();
-	m_chart->AutoAxesOff();
-
-	m_chart->GetAxis(vtkAxis::LEFT)->SetRange(0,200);	
-	m_chart->GetAxis(vtkAxis::LEFT)->SetBehavior(vtkAxis::FIXED);
-	m_chart->GetAxis(vtkAxis::BOTTOM)->SetRange(0,200);	
-	m_chart->GetAxis(vtkAxis::BOTTOM)->SetBehavior(vtkAxis::FIXED);
-
-	m_view->GetScene()->AddItem(m_chart);
-	m_line = m_chart->AddPlot(vtkChart::LINE);
-
-	m_table =  vtkSmartPointer<vtkTable>::New();
-
-	vtkSmartPointer<vtkFloatArray> arrX =  vtkSmartPointer<vtkFloatArray>::New();
-
-	arrX->SetName("X Axis");
-	m_table->AddColumn(arrX);
- 
-	vtkSmartPointer<vtkFloatArray> arrC =  vtkSmartPointer<vtkFloatArray>::New();
-	arrC->SetName("Position Error");
-	m_table->AddColumn(arrC);
-
-	m_table->SetNumberOfRows(timeWindowSize);
-
-	// find a way to maintain this data as a member variable and remove the buffer
-	for (int i = 0; i < timeWindowSize; ++i)
-	{
-		m_table->SetValue(i, 0, i);
-		m_table->SetValue(i, 1, 0);
-	}
 
 
 }
@@ -95,8 +61,44 @@ int VtkOnLinePlot::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	m_renWin->AddRenderer(m_Renderer);
 	m_renWin->SetParentId(this->GetSafeHwnd());
 	m_iren->SetRenderWindow(m_renWin);
+	
+	m_view = vtkSmartPointer<vtkContextView>::New();
+	m_view->SetRenderWindow(m_renWin);
 
-	//m_view->GetInteractor()->Initialize();
+	m_view->GetRenderer()->SetBackground(1.0, 1.0, 1.0);
+ 
+
+    m_chart = vtkSmartPointer<vtkChartXY>::New();
+	m_chart->AutoAxesOff();
+
+	m_chart->GetAxis(vtkAxis::LEFT)->SetRange(0,200);	
+	m_chart->GetAxis(vtkAxis::LEFT)->SetBehavior(vtkAxis::FIXED);
+	m_chart->GetAxis(vtkAxis::BOTTOM)->SetRange(0,200);	
+	m_chart->GetAxis(vtkAxis::BOTTOM)->SetBehavior(vtkAxis::FIXED);
+
+	m_view->GetScene()->AddItem(m_chart);
+	m_line = m_chart->AddPlot(vtkChart::LINE);
+
+	m_table =  vtkSmartPointer<vtkTable>::New();
+
+	vtkSmartPointer<vtkFloatArray> arrX =  vtkSmartPointer<vtkFloatArray>::New();
+
+	arrX->SetName("X Axis");
+	m_table->AddColumn(arrX);
+ 
+	vtkSmartPointer<vtkFloatArray> arrC =  vtkSmartPointer<vtkFloatArray>::New();
+	arrC->SetName("Position Error");
+	m_table->AddColumn(arrC);
+
+	m_table->SetNumberOfRows(timeWindowSize);
+
+	// find a way to maintain this data as a member variable and remove the buffer
+	for (int i = 0; i < timeWindowSize; ++i)
+	{
+		m_table->SetValue(i, 0, i);
+		m_table->SetValue(i, 1, 0);
+	}
+	m_view->GetInteractor()->Initialize();
 	//m_view->GetInteractor()->Start();
 
 	return 0;
@@ -124,6 +126,7 @@ void VtkOnLinePlot::OnPaint()
 	// CKim - Rendering only starts when 'render()' is called. Render() should be called through
 	// renderwindow or interactor class, not straight from rendere
 	m_iren->Render();
+	m_view->Render();
 }
 
 void VtkOnLinePlot::OnSize(UINT nType, int cx, int cy)

@@ -19,11 +19,12 @@ VtkOnLinePlot::VtkOnLinePlot(CWnd* pParent /*=NULL*/)
 	m_renWin = vtkWin32OpenGLRenderWindow::New();
 	m_Renderer = vtkRenderer::New();
 	m_iren = vtkWin32RenderWindowInteractor::New();
+
 	m_view = vtkSmartPointer<vtkContextView>::New();
 
 	m_view->GetRenderer()->SetBackground(1.0, 1.0, 1.0);
  
-  // Add multiple line plots, setting the colors etc
+
     m_chart = vtkSmartPointer<vtkChartXY>::New();
 	m_chart->AutoAxesOff();
 
@@ -55,11 +56,14 @@ VtkOnLinePlot::VtkOnLinePlot(CWnd* pParent /*=NULL*/)
 		m_table->SetValue(i, 1, 0);
 	}
 
-	this->start = clock();
+
 }
 
 VtkOnLinePlot::~VtkOnLinePlot()
 {
+	m_Renderer->Delete();
+	m_iren->Delete();
+	m_renWin->Delete();
 }
 
 void VtkOnLinePlot::DoDataExchange(CDataExchange* pDX)
@@ -92,8 +96,8 @@ int VtkOnLinePlot::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	m_renWin->SetParentId(this->GetSafeHwnd());
 	m_iren->SetRenderWindow(m_renWin);
 
-	m_view->GetInteractor()->Initialize();
-	m_view->GetInteractor()->Start();
+	//m_view->GetInteractor()->Initialize();
+	//m_view->GetInteractor()->Start();
 
 	return 0;
 }
@@ -114,7 +118,9 @@ void VtkOnLinePlot::OnPaint()
 		m_iren->Initialize();
 
 	}
-	
+
+	m_view->Update();
+
 	// CKim - Rendering only starts when 'render()' is called. Render() should be called through
 	// renderwindow or interactor class, not straight from rendere
 	m_iren->Render();
@@ -148,7 +154,7 @@ void VtkOnLinePlot::OnDestroy()
 void VtkOnLinePlot::PlotData(const double* sensorData, const double* predictionData)
 {
 
-	::std::cout << "predicted z = "<< predictionData[2] << ::std::endl;
+	//::std::cout << "predicted z = "<< predictionData[2] << ::std::endl;
 	// update the table
 	m_table->RemoveRow(0);
 	m_table->InsertNextBlankRow();

@@ -233,3 +233,37 @@ LWPRKinematics::TipFwdKinInv(const double* jAng, double* posOrt)
 		
 }
 
+void
+LWPRKinematics::TipFwdKinJac(const double* jAng, double* posOrt, Eigen::MatrixXd& J, bool evalJ)
+{
+	double dq = FLT_EPSILON;		
+	double q[5];		
+	double Fq[6];
+
+	TipFwdKin(jAng, posOrt);
+
+	if(evalJ)	
+	{
+		for(int col=0; col<5; col++)
+		{
+			for(int i=0; i<5; i++)
+			{
+				if(i==col)
+				{
+					dq = FLT_EPSILON*fabs(jAng[i]);
+					if(dq==0.0) {	dq = FLT_EPSILON;	}
+				
+					q[i] = jAng[i] + dq;
+					dq = q[i] - jAng[i];
+				}
+				else		{	q[i] = jAng[i];		}
+			}
+		
+			TipFwdKin(q, Fq);
+
+			for(int i=0; i<6; i++)	{	J(i,col) = (Fq[i] - posOrt[i])/dq;	}
+		}
+	}
+	
+	return;
+}

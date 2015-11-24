@@ -54,7 +54,7 @@ public:
 	// CKim - Evaluate Forward kinematics and Jacobian using current kinematics model
 	void EvalCurrentKinematicsModel(const double* jAng, double* predTipPosDir, Eigen::MatrixXd& J, bool evalJ);
 	void EvalCurrentKinematicsModel_NEW(const double* jAng, const double* tgtPosDir, double* predTipPosDir, Eigen::MatrixXd& J, bool evalJ);
-	void EvalCurrentKinematicsModelNumeric(const double* jAng, double* predTipPosDir, Eigen::MatrixXd& J, bool evalJ);
+	virtual void EvalCurrentKinematicsModelNumeric(const double* jAng, double* predTipPosDir, Eigen::MatrixXd& J, bool evalJ);
 
 
 	// CKim - Control law for closed loop inverse kinematics control. 'tgtMotorVel'

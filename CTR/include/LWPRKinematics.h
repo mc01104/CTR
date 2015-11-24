@@ -45,6 +45,7 @@ public:
 	  *@param - tip position and orientation
 	  */
 	virtual bool TipFwdKin(const double* jAng, double* posOrt);	
+	void TipFwdKinJac(const double* jAng, double* posOrt, Eigen::MatrixXd& J, bool evalJ);
 
 	/**
 	  *@brief adapt LWPR based on incoming information

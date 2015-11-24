@@ -997,7 +997,9 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 			LeaveCriticalSection(&m_cSection);
 
 			// CKim - Evaluate model
-			mySelf->m_kinLib->EvalCurrentKinematicsModelNumeric(localStat.currJang, localStat.currTipPosDir, J, mySelf->m_bCLIK);
+			//mySelf->m_kinLib->EvalCurrentKinematicsModelNumeric(localStat.currJang, localStat.currTipPosDir, J, mySelf->m_bCLIK);
+			
+			mySelf->m_kinLWPR->TipFwdKinJac(localStat.currJang, localStat.currTipPosDir, J, mySelf->m_bCLIK);
 
 			// CKim - Apply Closed Loop Inverse kienmatics control law. dq = inv(J) x (dxd + K(xd - xm))
 			if(mySelf->m_FeedbackOn)

@@ -985,7 +985,7 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 
 		else if(mySelf->m_bCLIK)	// CKim - Differential Inverse Kinematics Control.
 		{
-			::std::cout << "I need to change a flag" << ::std::endl;
+			//::std::cout << "I need to change a flag" << ::std::endl;
 			// CKim - Read shared variables (sensed / target posdir and kinematics model)
 			// Sensed posdir and kinematics model is updated from EM tracker loop,
 			// target posdir is updated from 'Playback' loop  or 'TeleOp' loop

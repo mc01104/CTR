@@ -36,6 +36,7 @@ class VtkOnLinePlot : public CDialog
 
 	vtkSmartPointer<vtkTable>		m_table;
 
+	double* dataBuffer;
 public:
 	VtkOnLinePlot(CWnd* pParent = NULL);   // standard constructor
 	virtual ~VtkOnLinePlot();

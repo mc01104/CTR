@@ -20,8 +20,7 @@ VtkOnLinePlot::VtkOnLinePlot(CWnd* pParent /*=NULL*/)
 	m_Renderer = vtkRenderer::New();
 	m_iren = vtkWin32RenderWindowInteractor::New();
 
-
-
+	this->dataBuffer = new double[timeWindowSize];
 
 }
 
@@ -30,6 +29,8 @@ VtkOnLinePlot::~VtkOnLinePlot()
 	m_Renderer->Delete();
 	m_iren->Delete();
 	m_renWin->Delete();
+
+	delete this->dataBuffer;
 }
 
 void VtkOnLinePlot::DoDataExchange(CDataExchange* pDX)
@@ -61,51 +62,6 @@ int VtkOnLinePlot::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	m_renWin->AddRenderer(m_Renderer);
 	m_renWin->SetParentId(this->GetSafeHwnd());
 	m_iren->SetRenderWindow(m_renWin);
-	
-	m_view = vtkSmartPointer<vtkContextView>::New();
-	m_view->SetRenderWindow(m_renWin);
-	//m_view->SetInteractor(m_iren);
-
-	m_view->GetRenderer()->SetBackground(1.0, 1.0, 1.0);
- 
-
-    m_chart = vtkSmartPointer<vtkChartXY>::New();
-	m_chart->AutoAxesOff();
-
-	m_chart->GetAxis(vtkAxis::LEFT)->SetRange(0,200);	
-	m_chart->GetAxis(vtkAxis::LEFT)->SetBehavior(vtkAxis::FIXED);
-	m_chart->GetAxis(vtkAxis::BOTTOM)->SetRange(0,200);	
-	m_chart->GetAxis(vtkAxis::BOTTOM)->SetBehavior(vtkAxis::FIXED);
-
-	m_view->GetScene()->AddItem(m_chart);
-	m_line = m_chart->AddPlot(vtkChart::LINE);
-
-	m_table =  vtkSmartPointer<vtkTable>::New();
-
-	vtkSmartPointer<vtkFloatArray> arrX =  vtkSmartPointer<vtkFloatArray>::New();
-
-	arrX->SetName("X Axis");
-	m_table->AddColumn(arrX);
- 
-	vtkSmartPointer<vtkFloatArray> arrC =  vtkSmartPointer<vtkFloatArray>::New();
-	arrC->SetName("Position Error");
-	m_table->AddColumn(arrC);
-
-	m_table->SetNumberOfRows(timeWindowSize);
-
-	// find a way to maintain this data as a member variable and remove the buffer
-	for (int i = 0; i < timeWindowSize; ++i)
-	{
-		m_table->SetValue(i, 0, i);
-		m_table->SetValue(i, 1, 0);
-	}
-
-	m_line->SetInput(m_table, 0, 1);
-
-	m_line->SetColor(0, 255, 0, 255);
-	m_line->SetWidth(1.0);
-
-	m_view->GetInteractor()->Initialize();
 
 	return 0;
 }
@@ -121,8 +77,8 @@ void VtkOnLinePlot::OnPaint()
 	}
 
 	//m_view->Update();
-	//m_view->GetInteractor()->Initialize();
-	m_view->GetInteractor()->Render();
+	//view->GetInteractor()->Initialize();
+	//view->GetInteractor()->Render();
 }
 
 void VtkOnLinePlot::OnSize(UINT nType, int cx, int cy)
@@ -153,42 +109,47 @@ void VtkOnLinePlot::OnDestroy()
 void VtkOnLinePlot::PlotData(const double* sensorData, const double* predictionData)
 {
 
-	//::std::cout << "predicted z = "<< predictionData[2] << ::std::endl;
-	// update the table
-	//m_table->RemoveRow(0);
-	//m_table->InsertNextBlankRow();
-	//m_table->SetValue(timeWindowSize - 1, 0, timeWindowSize);
-	//m_table->SetValue(timeWindowSize - 1, 1, predictionData[2]);
- // 
-	////m_line->SetInput(m_table);
-	//m_chart->GetPlot(0)->SetInput(m_table, 0, 1);
+	memmove(this->dataBuffer, this->dataBuffer + 1, (this->timeWindowSize - 1)*sizeof(double)); 
+	this->dataBuffer[this->timeWindowSize - 1] = predictionData[2];
+
+  // Create a table with some points in it
+  vtkSmartPointer<vtkTable> table =  vtkSmartPointer<vtkTable>::New();
  
-	vtkSmartPointer<vtkTable> table =  vtkSmartPointer<vtkTable>::New();
-
-	vtkSmartPointer<vtkFloatArray> arrX =  vtkSmartPointer<vtkFloatArray>::New();
-
-	arrX->SetName("X Axis");
-	table->AddColumn(arrX);
+  vtkSmartPointer<vtkFloatArray> arrX = vtkSmartPointer<vtkFloatArray>::New();
+  arrX->SetName("X Axis");
+  table->AddColumn(arrX);
  
-	vtkSmartPointer<vtkFloatArray> arrC =  vtkSmartPointer<vtkFloatArray>::New();
-	arrC->SetName("Position Error");
-	table->AddColumn(arrC);
+  vtkSmartPointer<vtkFloatArray> arrC =  vtkSmartPointer<vtkFloatArray>::New();
+  arrC->SetName("Cosine");  table->AddColumn(arrC);
+ 
+ 
+  table->SetNumberOfRows(timeWindowSize);
+  for (int i = 0; i < timeWindowSize; ++i)
+  {
+    table->SetValue(i, 0, i );
+    table->SetValue(i, 1, dataBuffer[i]);
+  }
+ 
+  // Set up the view
+  vtkSmartPointer<vtkContextView> view = 
+    vtkSmartPointer<vtkContextView>::New();
+  view->GetRenderer()->SetBackground(1.0, 1.0, 1.0);
+ 
+  // Add multiple line plots, setting the colors etc
+  vtkSmartPointer<vtkChartXY> chart = 
+    vtkSmartPointer<vtkChartXY>::New();
+  view->GetScene()->AddItem(chart);
+  vtkPlot *line = chart->AddPlot(vtkChart::LINE);
+#if VTK_MAJOR_VERSION <= 5
+  line->SetInput(table, 0, 1);
+#else
+  line->SetInputData(table, 0, 1);
+#endif
+  line->SetColor(0, 255, 0, 255);
+  line->SetWidth(1.0);
+  line = chart->AddPlot(vtkChart::LINE);
 
-	//table->SetNumberOfRows(timeWindowSize);
-	//m_line->SetInput(table->getOut	
-	////// find a way to maintain this data as a member variable and remove the buffer
-	////for (int i = 0; i < timeWindowSize; ++i)
-	////{
-	////	m_table->SetValue(i, 0, i);
-	////	m_table->SetValue(i, 1, 10);
-	////}
-
-	//m_line->SetInput(table, 0, 1);
-
-	m_line->SetColor(0, 255, 0, 255);
-	m_line->SetWidth(1.0);
-
-	//m_view->GetInteractor()->Initialize();
-
+  // Start interactor
+  view->GetInteractor()->Initialize();
 }
 // VtkOnLinePlot message handlers

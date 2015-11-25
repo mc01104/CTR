@@ -996,7 +996,8 @@ void CTRKin::ApplyKinematicControl(const Eigen::MatrixXd& J, const Eigen::Matrix
 	Eigen::JacobiSVD<Eigen::Matrix<double,5,5>> Jsvd(JtJ,Eigen::ComputeThinU | Eigen::ComputeThinV);
 	sv = Jsvd.singularValues();	
 	eps = sv(0,0)*Eigen::NumTraits<double>::epsilon();
-
+	
+	::std::cout << JtJ.determinant() << ::std::endl;
 	condNum = fabs(sv(4,0));
 	//eps = 0.00001;
 			

@@ -75,7 +75,7 @@ LWPRKinematics::TipFwdKin(const double* jAng, double* posOrt)
 #endif
 	
 	WaitForSingleObject(this->m_hLWPRMutex,INFINITE);
-	::std::vector<double> outputData = this->forwardModel->predict(inputData, 0.001);
+	::std::vector<double> outputData = this->forwardModel->predict(inputData, 0.0001);
 	ReleaseMutex(this->m_hLWPRMutex);
 
 	::std::vector<double> orientation = ::std::vector<double> (outputData.begin() + 3, outputData.end());
@@ -239,7 +239,7 @@ LWPRKinematics::TipFwdKinJac(const double* jAng, double* posOrt, Eigen::MatrixXd
 	double dq = FLT_EPSILON;		
 	double q[5];		
 	double Fq[6];
-
+	//double epsilon = 0.01;
 	TipFwdKin(jAng, posOrt);
 
 	if(evalJ)	
@@ -251,7 +251,9 @@ LWPRKinematics::TipFwdKinJac(const double* jAng, double* posOrt, Eigen::MatrixXd
 				if(i==col)
 				{
 					dq = FLT_EPSILON*fabs(jAng[i]);
+					//dq = epsilon*fabs(jAng[i]);
 					if(dq==0.0) {	dq = FLT_EPSILON;	}
+					//if(dq==0.0) {	dq = epsilon;	}
 				
 					q[i] = jAng[i] + dq;
 					dq = q[i] - jAng[i];

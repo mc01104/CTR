@@ -936,9 +936,9 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 	//double K[6] = {3.0, 3.0, 3.0, 6.0, 6.0, 6.0 };	// working
 	//double K[6] = {10.0, 10.0, 10.0, 10.0, 10.0, 10.0 };		// working
 	//double K[6] = {20.0, 20.0, 20.0, 20.0, 20.0, 20.0 };		// working
-	double K[6] = {10.0, 10.0, 10.0, 10.0, 10.0, 10.0 };		// working
+	//double K[6] = {10.0, 10.0, 10.0, 10.0, 10.0, 10.0 };		// working
 	//double K[6] = { 5.0, 5.0, 5.0, 5.0, 5.0, 5.0 };				// For sensor feedback + estimator
-
+	double K[6] = { 1.0, 1.0, 1.0, 1.0, 1.0, 1.0 };				// For sensor feedback + estimator
 		
 
 	// CKim - Parameters for loop speed measurement
@@ -1001,6 +1001,10 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 			
 			mySelf->m_kinLWPR->TipFwdKinJac(localStat.currJang, localStat.currTipPosDir, J, mySelf->m_bCLIK);
 
+			//::std::cout << J << ::std::endl;
+			//for (int i = 0; i < 6; i++)
+			//	::std::cout << J(i, 0) << " ";
+			//::std::cout << ::std::endl;
 			// CKim - Apply Closed Loop Inverse kienmatics control law. dq = inv(J) x (dxd + K(xd - xm))
 			if(mySelf->m_FeedbackOn)
 			{

@@ -92,8 +92,8 @@ CCTRDoc::CCTRDoc()
 
 	// paths for LWPR models
 	//::std::string pathToForwardModel("../models/model_ct_2015_11_9_14_0_40.bin");
-	//::std::string pathToForwardModel("../models/model_ct_2015_11_19_9_17_44.bin");
-	::std::string pathToForwardModel("../models/model_ct_2015_11_19_12_58_45.bin");
+	::std::string pathToForwardModel("../models/model_ct_2015_11_19_9_17_44.bin");
+	//::std::string pathToForwardModel("../models/model_ct_2015_11_19_12_58_45.bin");
 	
 	m_kinLWPR = new LWPRKinematics(pathToForwardModel);
 	double forgettingFactor[3] = {0.99, 0.99, 0.99};
@@ -932,13 +932,13 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 	// CKim - Variables for Differential inverse kinematics control. Jacobian matrix
 	Eigen::MatrixXd J(6,5);			Eigen::Matrix<double,6,1> err;		double dq[5];		double dCnt[7];		
 	//Eigen::MatrixXd J(4,5);				Eigen::Matrix<double,4,1> err;		double dq[5];		double dCnt[7];		
-	
+	Eigen::MatrixXd JLWPR(6,5);
 	//double K[6] = {3.0, 3.0, 3.0, 6.0, 6.0, 6.0 };	// working
 	//double K[6] = {10.0, 10.0, 10.0, 10.0, 10.0, 10.0 };		// working
 	//double K[6] = {20.0, 20.0, 20.0, 20.0, 20.0, 20.0 };		// working
-	//double K[6] = {10.0, 10.0, 10.0, 10.0, 10.0, 10.0 };		// working
+	double K[6] = {10.0, 10.0, 10.0, 10.0, 10.0, 10.0 };		// working
 	//double K[6] = { 5.0, 5.0, 5.0, 5.0, 5.0, 5.0 };				// For sensor feedback + estimator
-	double K[6] = { 1.0, 1.0, 1.0, 1.0, 1.0, 1.0 };				// For sensor feedback + estimator
+	//double K[6] = { 1.0, 1.0, 1.0, 1.0, 1.0, 1.0 };				// For sensor feedback + estimator
 		
 
 	// CKim - Parameters for loop speed measurement
@@ -997,10 +997,19 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 			LeaveCriticalSection(&m_cSection);
 
 			// CKim - Evaluate model
-			//mySelf->m_kinLib->EvalCurrentKinematicsModelNumeric(localStat.currJang, localStat.currTipPosDir, J, mySelf->m_bCLIK);
 			
 			mySelf->m_kinLWPR->TipFwdKinJac(localStat.currJang, localStat.currTipPosDir, J, mySelf->m_bCLIK);
-
+			double pred[6] = {0};
+			mySelf->m_kinLib->EvalCurrentKinematicsModelNumeric(localStat.currJang, pred, JLWPR, mySelf->m_bCLIK);
+			//mySelf->m_kinLib->EvalCurrentKinematicsModelNumeric(localStat.currJang, localStat.currTipPosDir, JLWPR, mySelf->m_bCLIK);
+			//mySelf->m_kinLWPR->TipFwdKinJac(localStat.currJang, pred, J, mySelf->m_bCLIK);
+			::std::cout << "Chun:" << ::std::endl;
+			::std::cout << J << ::std::endl;
+			::std::cout << (J.transpose() * J).determinant() << ::std::endl;
+			::std::cout << "George:" << ::std::endl;
+			::std::cout << JLWPR << ::std::endl;
+			::std::cout << (JLWPR.transpose() * JLWPR).determinant() << ::std::endl;
+			::std::cout << ::std::endl;
 			//::std::cout << J << ::std::endl;
 			//for (int i = 0; i < 6; i++)
 			//	::std::cout << J(i, 0) << " ";
@@ -1069,7 +1078,7 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 			mySelf->ProcessCommand(localStat);	
 		}
 
-		for(int i=0; i<7; i++)	vel[i] *= 0.3;	
+		for(int i=0; i<7; i++)	vel[i] *= 1.0;	
 		// ----------------------------------------------------- //
 		// CKim - Command joint velocity, update shared variable
 		// ----------------------------------------------------- //

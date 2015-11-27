@@ -94,8 +94,9 @@ CCTRDoc::CCTRDoc()
 	//::std::string pathToForwardModel("../models/model_ct_2015_11_9_14_0_40.bin");
 	//::std::string pathToForwardModel("../models/model_ct_2015_11_19_9_17_44.bin");
 	//::std::string pathToForwardModel("../models/model_ct_2015_11_19_12_58_45.bin");
-	::std::string pathToForwardModel("../models/model_ct_2015_11_27_13_9_5_update_metric.bin");
-	
+	//::std::string pathToForwardModel("../models/model_ct_2015_11_27_13_9_5_update_metric.bin");
+	::std::string pathToForwardModel("../models/model_ct_2015_11_27_17_24_54.bin");
+
 	m_kinLWPR = new LWPRKinematics(pathToForwardModel);
 	double forgettingFactor[3] = {0.99, 0.99, 0.99};
 	dynamic_cast<LWPRKinematics*> (m_kinLWPR)->SetForgettingFactor(forgettingFactor);
@@ -2046,9 +2047,9 @@ void CCTRDoc::OnBnClickedBtnPlay()
 	}
 	else
 	{
-		::std::cout << "else" << ::std::endl;
-		m_TrjGen->Initialize("PlayBack.txt",6);
-		//m_TrjGen->Initialize("PlayBack_Circ 4.5 sec per rev.txt",6);
+		//::std::cout << "else" << ::std::endl;
+		//m_TrjGen->Initialize("PlayBack.txt",6);
+		m_TrjGen->Initialize("PlayBack_Circ 4.5 sec per rev.txt",6);
 
 		::std::cout << "trajectory initialized" << ::std::endl;
 		m_hEMevent = CreateEvent(NULL,false,false,NULL);	// Auto reset event (2nd argument false means...)

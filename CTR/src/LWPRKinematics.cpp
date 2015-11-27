@@ -75,7 +75,7 @@ LWPRKinematics::TipFwdKin(const double* jAng, double* posOrt)
 #endif
 	
 	WaitForSingleObject(this->m_hLWPRMutex,INFINITE);
-	::std::vector<double> outputData = this->forwardModel->predict(inputData, 0.0001);
+	::std::vector<double> outputData = this->forwardModel->predict(inputData, 0.001);
 	ReleaseMutex(this->m_hLWPRMutex);
 
 	::std::vector<double> orientation = ::std::vector<double> (outputData.begin() + 3, outputData.end());

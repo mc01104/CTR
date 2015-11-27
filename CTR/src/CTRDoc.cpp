@@ -92,8 +92,9 @@ CCTRDoc::CCTRDoc()
 
 	// paths for LWPR models
 	//::std::string pathToForwardModel("../models/model_ct_2015_11_9_14_0_40.bin");
-	::std::string pathToForwardModel("../models/model_ct_2015_11_19_9_17_44.bin");
+	//::std::string pathToForwardModel("../models/model_ct_2015_11_19_9_17_44.bin");
 	//::std::string pathToForwardModel("../models/model_ct_2015_11_19_12_58_45.bin");
+	::std::string pathToForwardModel("../models/model_ct_2015_11_27_13_9_5_update_metric.bin");
 	
 	m_kinLWPR = new LWPRKinematics(pathToForwardModel);
 	double forgettingFactor[3] = {0.99, 0.99, 0.99};
@@ -935,8 +936,8 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 	Eigen::MatrixXd JLWPR(6,5);
 	//double K[6] = {3.0, 3.0, 3.0, 6.0, 6.0, 6.0 };	// working
 	//double K[6] = {10.0, 10.0, 10.0, 10.0, 10.0, 10.0 };		// working
-	//double K[6] = {20.0, 20.0, 20.0, 20.0, 20.0, 20.0 };		// working
-	double K[6] = {10.0, 10.0, 10.0, 10.0, 10.0, 10.0 };		// working
+	double K[6] = {20.0, 20.0, 20.0, 20.0, 20.0, 20.0 };		// working
+	//double K[6] = {10.0, 10.0, 10.0, 10.0, 10.0, 10.0 };		// working
 	//double K[6] = { 5.0, 5.0, 5.0, 5.0, 5.0, 5.0 };				// For sensor feedback + estimator
 	//double K[6] = { 1.0, 1.0, 1.0, 1.0, 1.0, 1.0 };				// For sensor feedback + estimator
 		
@@ -1003,13 +1004,13 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 			mySelf->m_kinLib->EvalCurrentKinematicsModelNumeric(localStat.currJang, pred, JLWPR, mySelf->m_bCLIK);
 			//mySelf->m_kinLib->EvalCurrentKinematicsModelNumeric(localStat.currJang, localStat.currTipPosDir, JLWPR, mySelf->m_bCLIK);
 			//mySelf->m_kinLWPR->TipFwdKinJac(localStat.currJang, pred, J, mySelf->m_bCLIK);
-			::std::cout << "Chun:" << ::std::endl;
-			::std::cout << J << ::std::endl;
-			::std::cout << (J.transpose() * J).determinant() << ::std::endl;
-			::std::cout << "George:" << ::std::endl;
-			::std::cout << JLWPR << ::std::endl;
-			::std::cout << (JLWPR.transpose() * JLWPR).determinant() << ::std::endl;
-			::std::cout << ::std::endl;
+			//::std::cout << "Chun:" << ::std::endl;
+			//::std::cout << J << ::std::endl;
+			//::std::cout << (J.transpose() * J).determinant() << ::std::endl;
+			//::std::cout << "George:" << ::std::endl;
+			//::std::cout << JLWPR << ::std::endl;
+			//::std::cout << (JLWPR.transpose() * JLWPR).determinant() << ::std::endl;
+			//::std::cout << ::std::endl;
 			//::std::cout << J << ::std::endl;
 			//for (int i = 0; i < 6; i++)
 			//	::std::cout << J(i, 0) << " ";
@@ -1078,7 +1079,7 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 			mySelf->ProcessCommand(localStat);	
 		}
 
-		for(int i=0; i<7; i++)	vel[i] *= 1.0;	
+		for(int i=0; i<7; i++)	vel[i] *= 0.3;	
 		// ----------------------------------------------------- //
 		// CKim - Command joint velocity, update shared variable
 		// ----------------------------------------------------- //
@@ -1294,8 +1295,8 @@ unsigned int WINAPI	CCTRDoc::ClosedLoopControlLoop(void* para)
 			break;
 		}
 
-		//if (mySelf->m_adapt_LWPR)
-	//		mySelf->m_kinLWPR->AdaptForwardModel(localStat.sensedTipPosDir, localStat.currJang);
+		if (mySelf->m_adapt_LWPR)
+			mySelf->m_kinLWPR->AdaptForwardModel(localStat.sensedTipPosDir, localStat.currJang);
 
 		mySelf->m_kinLWPR->TipFwdKin(localStat.currJang, predTipPosDir);
 
@@ -2046,8 +2047,8 @@ void CCTRDoc::OnBnClickedBtnPlay()
 	else
 	{
 		::std::cout << "else" << ::std::endl;
-		//m_TrjGen->Initialize("PlayBack.txt",6);
-		m_TrjGen->Initialize("PlayBack_Circ 4.5 sec per rev.txt",6);
+		m_TrjGen->Initialize("PlayBack.txt",6);
+		//m_TrjGen->Initialize("PlayBack_Circ 4.5 sec per rev.txt",6);
 
 		::std::cout << "trajectory initialized" << ::std::endl;
 		m_hEMevent = CreateEvent(NULL,false,false,NULL);	// Auto reset event (2nd argument false means...)

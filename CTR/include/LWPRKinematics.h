@@ -126,8 +126,8 @@ private:
 	template<class T>
 	void CheckJointLimits(T& inputData)
 	{
-		inputData[0] = 0.99999 * atan2(sin(inputData[0]), cos(inputData[0]));
-		inputData[1] = 0.99999 * atan2(sin(inputData[1]), cos(inputData[1]));
+		inputData[0] = 1 * atan2(sin(inputData[0]), cos(inputData[0]));
+		inputData[1] = 1 * atan2(sin(inputData[1]), cos(inputData[1]));
 
 		if (inputData[2] < 0) {inputData[2] = 1;}
 		if (abs(inputData[2]) > L31_MAX) {inputData[2] = L31_MAX;}

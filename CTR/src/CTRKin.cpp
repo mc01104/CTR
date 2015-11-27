@@ -1001,7 +1001,7 @@ void CTRKin::ApplyKinematicControl(const Eigen::MatrixXd& J, const Eigen::Matrix
 	condNum = fabs(sv(4,0));
 	//eps = 0.00001;
 			
-	//for(int i=0; i<5; i++)	{	JtJ(i,i) += lambda;		}
+	for(int i=0; i<5; i++)	{	JtJ(i,i) += lambda;		}
 
 	if(condNum < eps)	
 	{

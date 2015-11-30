@@ -28,8 +28,8 @@ LWPRKinematics::LWPRKinematics(const ::std::string& pathToForwardModel):
 	forwardModel->metaRate(0.1);
 	forwardModel->setInitAlpha(0.001);
 	forwardModel->wPrune(1.0);
-	forwardModel->initLambda(0.95);
-	forwardModel->finalLambda(0.95);
+	forwardModel->initLambda(0.995);
+	forwardModel->finalLambda(0.995);
 	forwardModel->tauLambda(0.1);
 
 	forwardModelforInverse->updateD(true);

@@ -23,10 +23,10 @@ LWPRKinematics::LWPRKinematics(const ::std::string& pathToForwardModel):
 	//::std::string name = GetDateString() + "-Adapt_Parameters.txt";
 	//metaData.open(name);
 
-	forwardModel->updateD(false);
+	forwardModel->updateD(true);
 	//forwardModel->useMeta(true);
 	//forwardModel->metaRate(0.1);
-	forwardModel->setInitAlpha(0.001);
+	forwardModel->setInitAlpha(0.01);
 	forwardModel->wPrune(1.0);
 	forwardModel->initLambda(0.995);
 	forwardModel->finalLambda(0.995);

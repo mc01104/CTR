@@ -1332,7 +1332,7 @@ unsigned int WINAPI	CCTRDoc::ClosedLoopControlLoop(void* para)
 			for(int i=0; i<6; i++)	{	ofstr<<localStat.currTipPosDir[i]<<" ";		}
 			for(int i=0; i<6; i++)	{	ofstr<<localStat.sensedTipPosDir[i]<<" ";	}
 			for(int i = 0; i < 5; i++) { ofstr  << localStat.currJang[i] << " "; }
-			for(int i=0; i<6; i++)	{	ofstr<<predTipPosDir[i]<<" ";		}
+			//for(int i=0; i<6; i++)	{	ofstr<<predTipPosDir[i]<<" ";		}
 			//for(int i=0; i<5; i++)	{	ofstr<<localStat.tgtJang[i]<<" ";			}
 			//for(int i=0; i<7; i++)	{	ofstr<<localStat.tgtMotorCnt[i]<<" ";	}
 			//ofstr<<localStat.invKinOK<<" ";

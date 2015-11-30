@@ -105,10 +105,10 @@ LWPRKinematics::AdaptForwardModel(const double* posOrt, const double* jAng)
 	for (int i = 0; i < 1; i++)
 	{
 		this->forwardModel->update(inputData, outputData);
-		//inputData[0] += 2 * M_PI;
-		//this->forwardModel->update(inputData, outputData);
-		//inputData[0] -= 4 * M_PI;
-		//this->forwardModel->update(inputData, outputData);
+		inputData[0] += 2 * M_PI;
+		this->forwardModel->update(inputData, outputData);
+		inputData[0] -= 4 * M_PI;
+		this->forwardModel->update(inputData, outputData);
 	}
 	//Sleep(100);
 	ReleaseMutex(this->m_hLWPRMutex);

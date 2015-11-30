@@ -26,6 +26,8 @@ Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #include <stdlib.h>
 #include <stdio.h>
 
+#define M_PI 3.14159265358979323846
+
 #if NUM_THREADS > 1
    #ifdef WIN32
       #include <windows.h>
@@ -862,9 +864,21 @@ void *lwpr_aux_update_one_T(void *ptr) {
       LWPR_ReceptiveField *RF = sub->rf[n];
       
       
+      //for (i=0;i<nIn;i++) {
+      //   xc[i] = TD->xn[i] - RF->c[i];
+      //}
+
       for (i=0;i<nIn;i++) {
-         xc[i] = TD->xn[i] - RF->c[i];
+		 double d1 = abs(TD->xn[i] - RF->c[i]);
+		 double d2 = abs(TD->xn[i] - RF->c[i]) - 2 * M_PI;
+
+		 if (d2 < d1)
+			 xc[i] = d2;
+		 else
+			 xc[i] = d1;
+
       }
+
       
       for (j=0;j<nIn;j++) {
          dist += xc[j] * lwpr_math_dot_product(RF->D + j*nInS, xc, nIn);

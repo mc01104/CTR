@@ -350,6 +350,9 @@ unsigned int WINAPI	CCTRDoc::EMLoop(void* para)
 //		}
 		LeaveCriticalSection(&m_cSection);
 
+		if (mySelf->m_adapt_LWPR)
+			mySelf->m_kinLWPR->AdaptForwardModel(mySelf->m_Status.sensedTipPosDir, mySelf->m_Status.currJang);
+
 		// CKim - update model if specified
 //		if(rCnt%24 ==0 )
 ////		{
@@ -1295,8 +1298,8 @@ unsigned int WINAPI	CCTRDoc::ClosedLoopControlLoop(void* para)
 			break;
 		}
 
-		if (mySelf->m_adapt_LWPR)
-			mySelf->m_kinLWPR->AdaptForwardModel(localStat.sensedTipPosDir, localStat.currJang);
+		//if (mySelf->m_adapt_LWPR)
+		//	mySelf->m_kinLWPR->AdaptForwardModel(localStat.sensedTipPosDir, localStat.currJang);
 
 		mySelf->m_kinLWPR->TipFwdKin(localStat.currJang, predTipPosDir);
 

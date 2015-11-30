@@ -352,8 +352,13 @@ unsigned int WINAPI	CCTRDoc::EMLoop(void* para)
 		LeaveCriticalSection(&m_cSection);
 
 		if (mySelf->m_adapt_LWPR)
+		{
+			clock_t start = clock();
 			mySelf->m_kinLWPR->AdaptForwardModel(mySelf->m_Status.sensedTipPosDir, mySelf->m_Status.currJang);
-
+			clock_t end = clock();
+			::std::cout << "adaptation time" << ::std::endl;
+			::std::cout << (double) (end - start)/CLOCKS_PER_SEC << ::std::endl;
+		}
 		// CKim - update model if specified
 //		if(rCnt%24 ==0 )
 ////		{
@@ -941,8 +946,8 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 	//double K[6] = {3.0, 3.0, 3.0, 6.0, 6.0, 6.0 };	// working
 	//double K[6] = {10.0, 10.0, 10.0, 10.0, 10.0, 10.0 };		// working
 	//double K[6] = {20.0, 20.0, 20.0, 20.0, 20.0, 20.0 };		// working
-	double K[6] = {10.0, 10.0, 10.0, 10.0, 10.0, 10.0 };		// working
-	//double K[6] = { 5.0, 5.0, 5.0, 5.0, 5.0, 5.0 };				// For sensor feedback + estimator
+	//double K[6] = {10.0, 10.0, 10.0, 10.0, 10.0, 10.0 };		// working
+	double K[6] = { 5.0, 5.0, 5.0, 5.0, 5.0, 5.0 };				// For sensor feedback + estimator
 	//double K[6] = { 1.0, 1.0, 1.0, 1.0, 1.0, 1.0 };				// For sensor feedback + estimator
 		
 
@@ -1083,7 +1088,7 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 			mySelf->ProcessCommand(localStat);	
 		}
 
-		for(int i=0; i<7; i++)	vel[i] *= 0.3;	
+		for(int i=0; i<7; i++)	vel[i] *= 1.0;	
 		// ----------------------------------------------------- //
 		// CKim - Command joint velocity, update shared variable
 		// ----------------------------------------------------- //
@@ -1302,7 +1307,7 @@ unsigned int WINAPI	CCTRDoc::ClosedLoopControlLoop(void* para)
 		//if (mySelf->m_adapt_LWPR)
 		//	mySelf->m_kinLWPR->AdaptForwardModel(localStat.sensedTipPosDir, localStat.currJang);
 
-		mySelf->m_kinLWPR->TipFwdKin(localStat.currJang, predTipPosDir);
+		//mySelf->m_kinLWPR->TipFwdKin(localStat.currJang, predTipPosDir);
 
 		// CKim - Read trajectory from the 'Playback.txt'. Returns false when the end of trajectory is reached
 		mySelf->m_playBack = mySelf->m_TrjGen->InterpolateNextPoint(localStat.tgtTipPosDir);	// Update tgtTipPosDir
@@ -1325,9 +1330,9 @@ unsigned int WINAPI	CCTRDoc::ClosedLoopControlLoop(void* para)
 			loopTime = timer.GetTime();
 			ofstr<<loopTime<<" ";
 			for(int i=0; i<6; i++)	{	ofstr<<localStat.currTipPosDir[i]<<" ";		}
-			//for(int i=0; i<6; i++)	{	ofstr<<localStat.sensedTipPosDir[i]<<" ";	}
+			for(int i=0; i<6; i++)	{	ofstr<<localStat.sensedTipPosDir[i]<<" ";	}
 			for(int i = 0; i < 5; i++) { ofstr  << localStat.currJang[i] << " "; }
-			//for(int i=0; i<6; i++)	{	ofstr<<predTipPosDir[i]<<" ";		}
+			for(int i=0; i<6; i++)	{	ofstr<<predTipPosDir[i]<<" ";		}
 			//for(int i=0; i<5; i++)	{	ofstr<<localStat.tgtJang[i]<<" ";			}
 			//for(int i=0; i<7; i++)	{	ofstr<<localStat.tgtMotorCnt[i]<<" ";	}
 			//ofstr<<localStat.invKinOK<<" ";

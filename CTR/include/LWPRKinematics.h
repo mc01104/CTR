@@ -44,6 +44,7 @@ public:
 	  *@param - joint angles
 	  *@param - tip position and orientation
 	  */
+	virtual bool TipFwdKinEx(const double* jAng, double* posOrt);	
 	virtual bool TipFwdKin(const double* jAng, double* posOrt);	
 	void TipFwdKinJac(const double* jAng, double* posOrt, Eigen::MatrixXd& J, bool evalJ);
 

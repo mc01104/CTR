@@ -239,6 +239,26 @@ LWPRKinematics::TipFwdKinInv(const double* jAng, double* posOrt)
 		
 }
 
+bool 
+LWPRKinematics::TipFwdKinEx(const double* jAng, double* posOrt)
+{
+	::std::vector< double> inputData(jAng, jAng + this->forwardModel->nIn());
+
+	this->CheckJointLimits(inputData);
+
+#ifdef _SCALED_
+	inputData[2] = inputData[2]/L31_MAX ;
+#endif
+	
+	::std::vector<double> outputData = this->forwardModel->predict(inputData, 0.001);
+
+	::std::vector<double> orientation = ::std::vector<double> (outputData.begin() + 3, outputData.end());
+	
+	this->CompensateForRigidBodyMotion(jAng, outputData.data(), posOrt);
+		
+	return true;
+}
+
 void
 LWPRKinematics::TipFwdKinJac(const double* jAng, double* posOrt, Eigen::MatrixXd& J, bool evalJ)
 {
@@ -246,7 +266,10 @@ LWPRKinematics::TipFwdKinJac(const double* jAng, double* posOrt, Eigen::MatrixXd
 	double q[5];		
 	double Fq[6];
 	//double epsilon = 0.01;
-	TipFwdKin(jAng, posOrt);
+	//TipFwdKin(jAng, posOrt);
+
+	WaitForSingleObject(m_hLWPRMutex, INFINITE);
+	TipFwdKinEx(jAng, posOrt);
 
 	if(evalJ)	
 	{
@@ -267,11 +290,12 @@ LWPRKinematics::TipFwdKinJac(const double* jAng, double* posOrt, Eigen::MatrixXd
 				else		{	q[i] = jAng[i];		}
 			}
 		
-			TipFwdKin(q, Fq);
+			TipFwdKinEx(q, Fq);
 
 			for(int i=0; i<6; i++)	{	J(i,col) = (Fq[i] - posOrt[i])/dq;	}
 		}
 	}
-	
+	ReleaseMutex(this->m_hLWPRMutex);
+
 	return;
 }

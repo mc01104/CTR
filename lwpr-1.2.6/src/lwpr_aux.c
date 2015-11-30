@@ -872,7 +872,7 @@ void *lwpr_aux_update_one_T(void *ptr) {
 		 double d1 = abs(TD->xn[i] - RF->c[i]);
 		 double d2 = abs(TD->xn[i] - RF->c[i]) - 2 * M_PI;
 
-		 if (d2 < d1)
+		 if ((i == 2) && (d2 < d1))
 			 xc[i] = d2;
 		 else
 			 xc[i] = d1;

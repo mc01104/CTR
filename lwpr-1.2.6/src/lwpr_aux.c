@@ -1148,8 +1148,19 @@ void *lwpr_aux_predict_one_T(void *ptr) {
       double dist = 0.0;
       LWPR_ReceptiveField *RF = sub->rf[n];
 
-      for (i=0;i<nIn;i++) {
-         xc[i] = TD->xn[i] - RF->c[i];
+      //for (i=0;i<nIn;i++) {
+      //   xc[i] = TD->xn[i] - RF->c[i];
+      //}
+      
+	  for (i=0;i<nIn;i++) {
+		 double d1 = abs(TD->xn[i] - RF->c[i]);
+		 double d2 = abs(TD->xn[i] - RF->c[i]) - 2 * M_PI;
+
+		 if ((i == 2) && (d2 < d1))
+			 xc[i] = d2;
+		 else
+			 xc[i] = d1;
+
       }
 
       for (j=0;j<nIn;j++) {

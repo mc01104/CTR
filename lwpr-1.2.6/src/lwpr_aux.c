@@ -920,7 +920,7 @@ void *lwpr_aux_update_one_T(void *ptr) {
       }
       
       //if (w>0.001) {
-	  if (w> 0.3){
+	  if (w> 0.001){
          double transmul;
          
          RF->w = w;
@@ -1211,7 +1211,7 @@ void *lwpr_aux_predict_one_T(void *ptr) {
    }
    if (sum_w > 0.0) yp/=sum_w;
    TD->yn = yp;
-   printf("RF:%d", n2);
+   //printf("RF:%d\n", n2);
 
    //::std::cout << n << ::std::endl;
    return NULL;

@@ -14,52 +14,24 @@ LWPRKinematics::LWPRKinematics(const ::std::string& pathToForwardModel):
 	CTRKin()
 {
 	this->forwardModel = new LWPR_Object(pathToForwardModel.c_str());
+
+	//TODO this is a hack -> fix thread safety and remove extra model
 	this->forwardModelforInverse = new LWPR_Object(pathToForwardModel.c_str());
 
 	this->m_hLWPRMutex = CreateMutex(NULL,false,"LWPR_Mutex");
-	this->m_hLWPRInvMutex = CreateMutex(NULL,false,"LWPRInv_Mutex");
-
-	//::std::ofstream metaData;
-	//::std::string name = GetDateString() + "-Adapt_Parameters.txt";
-	//metaData.open(name);
 
 	forwardModel->updateD(false);
 	forwardModel->useMeta(true);
 	forwardModel->metaRate(0.1);
 	forwardModel->setInitAlpha(0.001);
-	forwardModel->wPrune(1.0);
-	forwardModel->initLambda(0.995);
-	forwardModel->finalLambda(0.995);
-	forwardModel->tauLambda(0.1);
 
-	forwardModelforInverse->updateD(true);
-	forwardModelforInverse->useMeta(true);
-	forwardModelforInverse->metaRate(0.01);
-	forwardModelforInverse->setInitAlpha(0.001);
-	forwardModelforInverse->wPrune(1.0);
-	forwardModelforInverse->initLambda(0.995);
-	forwardModelforInverse->finalLambda(0.995);
-	forwardModelforInverse->tauLambda(0.1);
-
-	/*double normD[6] = {1, 1, 1, 1, 1, 1};
-	forwardModel->normOut(doubleVec(normD, normD + 6));*/
-
-	//metaData << "Update_D:" << forwardModel->updateD() << ::std::endl;
-	//metaData << "Use_meta:" << forwardModel->useMeta() << ::std::endl;
-	//metaData << "Meta_rate:" << forwardModel->metaRate() << ::std::endl;
-	//metaData << "Init_alpha:" << 0.001 << ::std::endl;
-	//metaData << "initLambda:" << forwardModel->initLambda() << ::std::endl;
-	//metaData << "finalLambda:" << forwardModel->finalLambda() << ::std::endl;
-	//metaData << "tauLambda:" << forwardModel->tauLambda() << ::std::endl;
-
-	//metaData.close();
+	double ffactor[3] = {0.995, 0.995, 0.1};
+	this->SetForgettingFactor(ffactor);
 }
 
 
 LWPRKinematics::~LWPRKinematics()
 {
-	//this->SaveModel();
-
 	delete this->forwardModel;
 }
 
@@ -102,6 +74,7 @@ LWPRKinematics::AdaptForwardModel(const double* posOrt, const double* jAng)
 	::std::vector<double> outputData(posOrtFinal, posOrtFinal + this->forwardModel->nOut());
 
 	WaitForSingleObject(this->m_hLWPRMutex,INFINITE);
+	//TODO this is a HACK - find a way to update the metric so that it takes care of periodic functions
 	for (int i = 0; i < 1; i++)
 	{
 		this->forwardModel->update(inputData, outputData);
@@ -112,24 +85,15 @@ LWPRKinematics::AdaptForwardModel(const double* posOrt, const double* jAng)
 	}
 	ReleaseMutex(this->m_hLWPRMutex);
 
-	//WaitForSingleObject(this->m_hLWPRInvMutex,INFINITE);
-	////this->AdaptModel(this->forwardModelforInverse, input_data, output_data);
-	//for (int i = 0; i < 10; ++i)
-	//for (int i = 0; i < 2; i++)
-	//	this->forwardModelforInverse->update(inputData, outputData);
-	//ReleaseMutex(this->m_hLWPRInvMutex);
 }
 
 
 void
 LWPRKinematics::SetForgettingFactor(double* ffactor)
 {
-	//this->forwardModel.initLambda(ffactor[0]);
-	//this->forwardModel.finalLambda(ffactor[1]);
-	//this->forwardModel.tauLambda(ffactor[2]);
-	//this->forwardModelforInverse.initLambda(ffactor[0]);
-	//this->forwardModelforInverse.finalLambda(ffactor[1]);
-	//this->forwardModelforInverse.tauLambda(ffactor[2]);
+	this->forwardModel->initLambda(ffactor[0]);
+	this->forwardModel->finalLambda(ffactor[1]);
+	this->forwardModel->tauLambda(ffactor[2]);
 }
 
 
@@ -197,13 +161,14 @@ LWPRKinematics::SaveModel()
 }
 
 
+//TODO fix thread-safety
 void LWPRKinematics::EvalF_LSQ(const double* jAng, const double* tgtPosOrt, const Eigen::MatrixXd& Coeff, Eigen::Matrix<double,4,1>& F)
 {
 	double posOrt[6];
 	double pmax = m_MaxPosErr;		
 	double thmax = m_MaxOrtErr*3.141592/180.0;		
 	double sum = 0.0;
-	//::std::cout << "lwpr" << ::std::endl;
+	
 	TipFwdKinInv(jAng, posOrt);
 	//TipFwdKin(jAng, posOrt);
 
@@ -216,7 +181,7 @@ void LWPRKinematics::EvalF_LSQ(const double* jAng, const double* tgtPosOrt, cons
 	F(3,0) = pmax/(1 - cos(thmax)) * (1 - sum);
 }
 
-
+// this will be removed once I fix the mutex
 void
 LWPRKinematics::TipFwdKinInv(const double* jAng, double* posOrt)
 {
@@ -228,9 +193,7 @@ LWPRKinematics::TipFwdKinInv(const double* jAng, double* posOrt)
 	inputData[2] = inputData[2]/L31_MAX;
 #endif
 
-	//WaitForSingleObject(this->m_hLWPRInvMutex,INFINITE);
 	::std::vector<double> outputData = this->forwardModelforInverse->predict(inputData, 0.001);
-	//ReleaseMutex(this->m_hLWPRInvMutex);
 
 	::std::vector<double> orientation = ::std::vector<double> (outputData.begin() + 3, outputData.end());
 	
@@ -264,8 +227,6 @@ LWPRKinematics::TipFwdKinJac(const double* jAng, double* posOrt, Eigen::MatrixXd
 	double dq = FLT_EPSILON;		
 	double q[5];		
 	double Fq[6];
-	//double epsilon = 0.01;
-	//TipFwdKin(jAng, posOrt);
 
 	WaitForSingleObject(m_hLWPRMutex, INFINITE);
 	TipFwdKinEx(jAng, posOrt);
@@ -279,9 +240,8 @@ LWPRKinematics::TipFwdKinJac(const double* jAng, double* posOrt, Eigen::MatrixXd
 				if(i==col)
 				{
 					dq = FLT_EPSILON*fabs(jAng[i]);
-					//dq = epsilon*fabs(jAng[i]);
+
 					if(dq==0.0) {	dq = FLT_EPSILON;	}
-					//if(dq==0.0) {	dq = epsilon;	}
 				
 					q[i] = jAng[i] + dq;
 					dq = q[i] - jAng[i];

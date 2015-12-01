@@ -69,9 +69,16 @@ LWPRKinematics::AdaptForwardModel(const double* posOrt, const double* jAng)
 #endif
 
 	double posOrtFinal[6] = {0};
+	double tmpOutput[6] = {0};
+	this->TipFwdKin(jAng, tmpOutput);
+	double OutputFinal[6] = {0};
+	this->CompensateForRigidBodyMotion(jAng, tmpOutput, OutputFinal);
 	this->CompensateForRigidBodyMotionInverse(jAng, posOrt, posOrtFinal);
 
+
 	::std::vector<double> outputData(posOrtFinal, posOrtFinal + this->forwardModel->nOut());
+	outputData[0] = OutputFinal[0];
+	outputData[1] = OutputFinal[1];
 
 	WaitForSingleObject(this->m_hLWPRMutex,INFINITE);
 	//TODO: this is a HACK - find a way to update the metric so that it takes care of periodic functions

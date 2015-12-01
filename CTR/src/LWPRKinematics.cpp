@@ -15,7 +15,7 @@ LWPRKinematics::LWPRKinematics(const ::std::string& pathToForwardModel):
 {
 	this->forwardModel = new LWPR_Object(pathToForwardModel.c_str());
 
-	//TODO this is a hack -> fix thread safety and remove extra model
+	//TODO: this is a hack -> fix thread safety and remove extra model
 	this->forwardModelforInverse = new LWPR_Object(pathToForwardModel.c_str());
 
 	this->m_hLWPRMutex = CreateMutex(NULL,false,"LWPR_Mutex");
@@ -74,7 +74,7 @@ LWPRKinematics::AdaptForwardModel(const double* posOrt, const double* jAng)
 	::std::vector<double> outputData(posOrtFinal, posOrtFinal + this->forwardModel->nOut());
 
 	WaitForSingleObject(this->m_hLWPRMutex,INFINITE);
-	//TODO this is a HACK - find a way to update the metric so that it takes care of periodic functions
+	//TODO: this is a HACK - find a way to update the metric so that it takes care of periodic functions
 	for (int i = 0; i < 1; i++)
 	{
 		this->forwardModel->update(inputData, outputData);
@@ -161,7 +161,7 @@ LWPRKinematics::SaveModel()
 }
 
 
-//TODO fix thread-safety
+//TODO: fix thread-safety
 void LWPRKinematics::EvalF_LSQ(const double* jAng, const double* tgtPosOrt, const Eigen::MatrixXd& Coeff, Eigen::Matrix<double,4,1>& F)
 {
 	double posOrt[6];

@@ -98,8 +98,6 @@ CCTRDoc::CCTRDoc()
 	//::std::string pathToForwardModel("../models/model_ct_2015_11_27_17_24_54.bin");
 
 	m_kinLWPR = new LWPRKinematics(pathToForwardModel);
-	double forgettingFactor[3] = {0.99, 0.99, 0.99};
-	dynamic_cast<LWPRKinematics*> (m_kinLWPR)->SetForgettingFactor(forgettingFactor);
 
 	m_Tracker = new ChunTracker;
 	m_TrjGen = new TrjGenerator;
@@ -147,14 +145,9 @@ BOOL CCTRDoc::OnNewDocument()
 	if (!CDocument::OnNewDocument())
 		return FALSE;
 
-	// TODO: add reinitialization code here
-	// (SDI documents will reuse this document)
-
 	return TRUE;
 }
 
-
-// CCTRDoc serialization
 
 void CCTRDoc::Serialize(CArchive& ar)
 {
@@ -937,12 +930,17 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 	CTR_status	localStat;
 
 	// CKim - Variables for Feedforward position control
-	bool safeToTeleOp = false;			double vel[7];			double MtrCntSetPt[7];				double kp = 10.0;		
+	bool safeToTeleOp = false;			
+	double vel[7];			
+	double MtrCntSetPt[7];				
+	double kp = 10.0;		
 
 	// CKim - Variables for Differential inverse kinematics control. Jacobian matrix
-	Eigen::MatrixXd J(6,5);			Eigen::Matrix<double,6,1> err;		double dq[5];		double dCnt[7];		
-	//Eigen::MatrixXd J(4,5);				Eigen::Matrix<double,4,1> err;		double dq[5];		double dCnt[7];		
-	Eigen::MatrixXd JLWPR(6,5);
+	Eigen::MatrixXd J(6,5);			
+	Eigen::Matrix<double,6,1> err;		
+	double dq[5];		
+	double dCnt[7];		
+	
 	//double K[6] = {3.0, 3.0, 3.0, 6.0, 6.0, 6.0 };	// working
 	//double K[6] = {10.0, 10.0, 10.0, 10.0, 10.0, 10.0 };		// working
 	//double K[6] = {20.0, 20.0, 20.0, 20.0, 20.0, 20.0 };		// working
@@ -952,13 +950,15 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 		
 
 	// CKim - Parameters for loop speed measurement
-	ChunTimer timer;	int perfcnt = 0;	int navg = 50;		timer.ResetTime();		long endTime;		
+	ChunTimer timer;	
+	int perfcnt = 0;	
+	int navg = 50;		
+	timer.ResetTime();		
+	long endTime;		
 
 	while(mySelf->m_motorConnected)
 	{
-		// ------------------------------------------------- //
-		// CKim - Read motor, calculate joint angles
-		// ------------------------------------------------- //
+	
 		// CKim - Read from the motors - blocking function
 		mySelf->m_motionCtrl->GetMotorPos(localStat.currMotorCnt);	
 		mySelf->m_motionCtrl->GetErrorFlag(localStat.errFlag);
@@ -966,21 +966,23 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 		// CKim - Calculate current joint angle
 		mySelf->MtrToJang(localStat.currMotorCnt, localStat.currJang);
 
+		// TODO: learn an LWPR model for the balanced pair as well
 		// CKim - Evaluate Kinematics Model for balanced pair position and orientation
 		mySelf->m_kinLib->BalancedPairFwdKin(localStat.currJang, localStat.bpTipPosDir);
 
-		// ------------------------------------------------------ //
 		// CKim - Apply Control Law to calculate joint velocity
-		// ------------------------------------------------------ //
-		//if(!mySelf->m_bCLIK)	// CKim - Position FeedForward Control.
-		if(mySelf->m_InvKinOn || mySelf->m_teleOpMode)	// CKim - Position FeedForward Control.
+		// CKim - Position FeedForward Control.
+		if(mySelf->m_InvKinOn || mySelf->m_teleOpMode)	
 		{
 			// CKim - Read shared variable (Motor Count Setpoint and gain)
 			// Motor count setpoint is updated from another loop that reads desired configuration from 
 			// a) haptic device or b) trajectory point list and solves the inverse kinematics
 			EnterCriticalSection(&m_cSection);
-			for(int i=0; i<7; i++)	{	MtrCntSetPt[i] = mySelf->m_Status.tgtMotorCnt[i];		}
+			for(int i=0; i<7; i++)	
+				MtrCntSetPt[i] = mySelf->m_Status.tgtMotorCnt[i];
+
 			kp = mySelf->m_Status.gain;
+
 			safeToTeleOp = mySelf->m_Status.isTeleOpMoving;
 			LeaveCriticalSection(&m_cSection);
 
@@ -989,57 +991,53 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 			//mySelf->m_kinLib->EvalCurrentKinematicsModelNumeric(localStat.currJang, localStat.currTipPosDir, J, mySelf->m_bCLIK);
 
 			// CKim - Apply simple control law : vel = kp(target pos - current pos)
-			if(safeToTeleOp)	{	for(int i=0; i<7; i++)	{	vel[i] = -kp*(localStat.currMotorCnt[i]-MtrCntSetPt[i]);	}		}
-			else				{	for(int i=0; i<7; i++)	{	vel[i] = 0.0;												}		}
+			if(safeToTeleOp)	
+				for(int i=0; i<7; i++)	
+					vel[i] = -kp*(localStat.currMotorCnt[i]-MtrCntSetPt[i]);
+			else				
+				for(int i=0; i<7; i++)	
+					vel[i] = 0.0;									
 		}
-
-		else if(mySelf->m_bCLIK)	// CKim - Differential Inverse Kinematics Control.
+		// CKim - Differential Inverse Kinematics Control.
+		else if(mySelf->m_bCLIK)	
 		{
-			//::std::cout << "I need to change a flag" << ::std::endl;
+
 			// CKim - Read shared variables (sensed / target posdir and kinematics model)
 			// Sensed posdir and kinematics model is updated from EM tracker loop,
 			// target posdir is updated from 'Playback' loop  or 'TeleOp' loop
 			EnterCriticalSection(&m_cSection);
-			for(int i=0; i<6; i++)	{	localStat.tgtTipPosDir[i] = mySelf->m_Status.tgtTipPosDir[i];			}
-			for(int i=0; i<6; i++)	{	localStat.sensedTipPosDir[i] = mySelf->m_Status.sensedTipPosDir[i];		}
-			for(int i=0; i<6; i++)	{	localStat.tgtMotorVel[i] = mySelf->m_Status.tgtMotorVel[i];		}
+			for(int i=0; i<6; i++)
+				localStat.tgtTipPosDir[i] = mySelf->m_Status.tgtTipPosDir[i];			
+			for(int i=0; i<6; i++)	
+				localStat.sensedTipPosDir[i] = mySelf->m_Status.sensedTipPosDir[i];		
+			for(int i=0; i<6; i++)	
+				localStat.tgtMotorVel[i] = mySelf->m_Status.tgtMotorVel[i];	
+
 			safeToTeleOp = mySelf->m_Status.isTeleOpMoving;
 			LeaveCriticalSection(&m_cSection);
 
 			// CKim - Evaluate model
-			
 			mySelf->m_kinLWPR->TipFwdKinJac(localStat.currJang, localStat.currTipPosDir, J, mySelf->m_bCLIK);
-			double pred[6] = {0};
-			mySelf->m_kinLib->EvalCurrentKinematicsModelNumeric(localStat.currJang, pred, JLWPR, mySelf->m_bCLIK);
-			//mySelf->m_kinLib->EvalCurrentKinematicsModelNumeric(localStat.currJang, localStat.currTipPosDir, JLWPR, mySelf->m_bCLIK);
-			//mySelf->m_kinLWPR->TipFwdKinJac(localStat.currJang, pred, J, mySelf->m_bCLIK);
-			//::std::cout << "Chun:" << ::std::endl;
-			//::std::cout << J << ::std::endl;
-			//::std::cout << (J.transpose() * J).determinant() << ::std::endl;
-			//::std::cout << "George:" << ::std::endl;
-			//::std::cout << JLWPR << ::std::endl;
-			//::std::cout << (JLWPR.transpose() * JLWPR).determinant() << ::std::endl;
-			//::std::cout << ::std::endl;
-			//::std::cout << J << ::std::endl;
-			//for (int i = 0; i < 6; i++)
-			//	::std::cout << J(i, 0) << " ";
-			//::std::cout << ::std::endl;
+
 			// CKim - Apply Closed Loop Inverse kienmatics control law. dq = inv(J) x (dxd + K(xd - xm))
+
+			// Use sensor feedback
 			if(mySelf->m_FeedbackOn)
 			{
-				for(int i=0; i<6; i++)	{	
-					err(i,0) = K[i]*(localStat.tgtTipPosDir[i] - localStat.sensedTipPosDir[i]);	// Use sensor feedback
-					//err(i,0) += localStat.tgtMotorVel[i];
-				}
+				for(int i=0; i<6; i++)	
+					err(i,0) = K[i]*(localStat.tgtTipPosDir[i] - localStat.sensedTipPosDir[i]);	
 			}
+			// Use fwd kin output
 			else
 			{
 				double sum = 0;
-				for(int i=0; i<3; i++)	{	
+				for(int i=0; i<3; i++)	
+				{	
 					err(i,0) = K[i]*(localStat.tgtTipPosDir[i] - localStat.currTipPosDir[i]);
-					sum += (localStat.tgtTipPosDir[i+3]*localStat.currTipPosDir[i+3]);				}// Use fwd kin output
-				for(int i=3; i<6; i++)	{	
-					err(i,0) = K[i]*(localStat.tgtTipPosDir[i] - localStat.currTipPosDir[i]);		}
+					sum += (localStat.tgtTipPosDir[i+3]*localStat.currTipPosDir[i+3]);				
+				}
+				for(int i=3; i<6; i++)	
+					err(i,0) = K[i]*(localStat.tgtTipPosDir[i] - localStat.currTipPosDir[i]);		
 			}
 
 			// CKim - Invert jacobian, handle singularity and solve
@@ -1067,28 +1065,25 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 			if (safeToTeleOp)
 			{
 				for(int i=0; i<7; i++)	
-				{
 					vel[i] = -kp*(localStat.currMotorCnt[i]-MtrCntSetPt[i]);
-		
-				}
-				//::std::cout << ::std::endl;
 			}
 			else
-				for(int i=0; i<7; i++)	vel[i] = 0.0;	
+				for(int i=0; i<7; i++)	
+					vel[i] = 0.0;	
 		}
 
 		else	// CKim - When control is not running
 		{
 			mySelf->m_kinLWPR->TipFwdKin(localStat.currJang, localStat.currTipPosDir);
-	
 			//mySelf->m_kinLib->EvalCurrentKinematicsModel(localStat.currJang, localStat.currTipPosDir, J, mySelf->m_bCLIK);
-			for(int i=0; i<7; i++)	{	vel[i] = 0.0;		}
+
+			for(int i=0; i<7; i++)	
+				vel[i] = 0.0;		
 	
 			// CKim - Process user commands... should be in separate threads..
 			mySelf->ProcessCommand(localStat);	
 		}
 
-		for(int i=0; i<7; i++)	vel[i] *= 1.0;	
 		// ----------------------------------------------------- //
 		// CKim - Command joint velocity, update shared variable
 		// ----------------------------------------------------- //

@@ -919,7 +919,8 @@ void *lwpr_aux_update_one_T(void *ptr) {
          ind = n;
       }
       
-      if (w>0.001) {
+      //if (w>0.001) {
+	  if (w> 0.3){
          double transmul;
          
          RF->w = w;

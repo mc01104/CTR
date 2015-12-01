@@ -80,8 +80,8 @@ LWPRKinematics::AdaptForwardModel(const double* posOrt, const double* jAng)
 
 
 	::std::vector<double> outputData(posOrtFinal, posOrtFinal + this->forwardModel->nOut());
-	outputData[0] = tmpOutput[0];
-	outputData[1] = tmpOutput[1];
+	/*outputData[0] = tmpOutput[0];
+	outputData[1] = tmpOutput[1];*/
 	//outputData[2] = tmpOutput[2];
 
 	WaitForSingleObject(this->m_hLWPRMutex,INFINITE);

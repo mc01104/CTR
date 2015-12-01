@@ -1142,9 +1142,11 @@ void *lwpr_aux_predict_one_T(void *ptr) {
    double yp = 0.0;
    
    double sum_w = 0.0;
-   
+   int n2 = 0;
+
    TD->w_max = 0.0;
 
+   
    for (n=0;n<sub->numRFS;n++) {
       double dist = 0.0;
       LWPR_ReceptiveField *RF = sub->rf[n];
@@ -1184,7 +1186,7 @@ void *lwpr_aux_predict_one_T(void *ptr) {
 
       if (w > TD->cutoff && RF->trustworthy) {
          double yp_n = RF->beta0;
-
+		 n2++;
          for (i=0;i<nIn;i++) {
             xc[i] = TD->xn[i] - RF->mean_x[i];
          }      
@@ -1209,7 +1211,9 @@ void *lwpr_aux_predict_one_T(void *ptr) {
    }
    if (sum_w > 0.0) yp/=sum_w;
    TD->yn = yp;
-   
+   printf("RF:%d", n2);
+
+   //::std::cout << n << ::std::endl;
    return NULL;
 }
 

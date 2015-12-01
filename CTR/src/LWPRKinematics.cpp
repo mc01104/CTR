@@ -20,7 +20,7 @@ LWPRKinematics::LWPRKinematics(const ::std::string& pathToForwardModel):
 
 	this->m_hLWPRMutex = CreateMutex(NULL,false,"LWPR_Mutex");
 
-	forwardModel->updateD(true);
+	forwardModel->updateD(false);
 	forwardModel->useMeta(true);
 	forwardModel->metaRate(0.01);
 	forwardModel->setInitAlpha(0.001);

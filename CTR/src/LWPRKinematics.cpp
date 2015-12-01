@@ -25,7 +25,7 @@ LWPRKinematics::LWPRKinematics(const ::std::string& pathToForwardModel):
 	forwardModel->metaRate(0.01);
 	forwardModel->setInitAlpha(0.001);
 
-	double ffactor[3] = {0.999, 0.999, 0.1};
+	double ffactor[3] = {1.0, 1.0, 0.1};
 	this->SetForgettingFactor(ffactor);
 }
 

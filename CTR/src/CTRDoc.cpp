@@ -950,7 +950,7 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 	double dq[5];		
 	double dCnt[7];		
 	
-	double K[6] = {3.0, 3.0, 3.0, 0.5, 0.5, 0.5 };	// working
+	double K[6] = {5.0, 5.0, 5.0, 0.5, 0.5, 0.5 };	// working
 	//double K[6] = {10.0, 10.0, 10.0, 10.0, 10.0, 10.0 };		// working
 	//double K[6] = {20.0, 20.0, 20.0, 20.0, 20.0, 20.0 };		// working
 	//double K[6] = {10.0, 10.0, 10.0, 10.0, 10.0, 10.0 };		// working

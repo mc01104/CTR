@@ -2054,8 +2054,9 @@ void CCTRDoc::OnBnClickedBtnPlay()
 		//::std::cout << "else" << ::std::endl;
 		//m_TrjGen->Initialize("PlayBack.txt",6);
 		//m_TrjGen->Initialize("PlayBack_Circ 4.5 sec per rev.txt",6);
-		m_TrjGen->Initialize("PlayBack_Sq 10 sec per rev.txt",6);
-
+		//m_TrjGen->Initialize("PlayBack_Sq 10 sec per rev.txt",6);
+		m_TrjGen->Initialize("slowSquare.txt",6);
+		
 		::std::cout << "trajectory initialized" << ::std::endl;
 		m_hEMevent = CreateEvent(NULL,false,false,NULL);	// Auto reset event (2nd argument false means...)
 		m_playBack = true;

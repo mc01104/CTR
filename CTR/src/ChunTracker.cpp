@@ -108,6 +108,8 @@ bool ChunTracker::GetTrackerMatrix(double pMat[4][4], unsigned short sNum)
 	else {	::std::cout<< "error!!" << std::endl;
 			AfxMessageBox("!!");	
 	}
+
+	sprintf(&this->m_errMsg[0] , "patates");
 }
 
 

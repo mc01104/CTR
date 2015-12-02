@@ -20,13 +20,13 @@ LWPRKinematics::LWPRKinematics(const ::std::string& pathToForwardModel):
 
 	this->m_hLWPRMutex = CreateMutex(NULL,false,"LWPR_Mutex");
 
-	forwardModel->updateD(true);
-	forwardModel->useMeta(false);
-	forwardModel->metaRate(0.01);
-	forwardModel->setInitAlpha(0.01);
+	//forwardModel->updateD(true);
+	//forwardModel->useMeta(false);
+	//forwardModel->metaRate(0.01);
+	//forwardModel->setInitAlpha(0.01);
 
-	double ffactor[3] = {0.999, 0.999, 0.1};
-	this->SetForgettingFactor(ffactor);
+	//double ffactor[3] = {0.999, 0.999, 0.1};
+	//this->SetForgettingFactor(ffactor);
 }
 
 

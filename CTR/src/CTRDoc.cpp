@@ -94,12 +94,20 @@ CCTRDoc::CCTRDoc()
 	//::std::string pathToForwardModel("../models/model_ct_2015_11_9_14_0_40.bin");
 	//::std::string pathToForwardModel("../models/model_ct_2015_11_19_9_17_44.bin");
 	//::std::string pathToForwardModel("../models/model_ct_2015_11_19_12_58_45.bin");
-	::std::string pathToForwardModel("../models/model_ct_2015_11_27_13_9_5_update_metric.bin");
+	//::std::string pathToForwardModel("../models/model_ct_2015_11_27_13_9_5_update_metric.bin");
 	//::std::string pathToForwardModel("../models/model_ct_2015_11_27_17_24_54.bin");
 	//::std::string pathToForwardModel("../models/model_ct_2015_12_1_10_5_15.bin");
-
-	m_kinLWPR = new LWPRKinematics(pathToForwardModel);
-
+	::std::string pathToForwardModel("../models/model_ct_2015_12_2_12_12_35.bin");
+	
+	try
+	{
+		m_kinLWPR = new LWPRKinematics(pathToForwardModel);
+	}
+	catch(LWPR_Exception& e)
+	{
+		::std::cout << ::std::string(e.getString()) << ::std::endl;
+		::std::cout << "memory" << ::std::endl;
+	}
 	m_Tracker = new ChunTracker;
 	m_TrjGen = new TrjGenerator;
 	
@@ -2054,8 +2062,8 @@ void CCTRDoc::OnBnClickedBtnPlay()
 		//::std::cout << "else" << ::std::endl;
 		//m_TrjGen->Initialize("PlayBack.txt",6);
 		//m_TrjGen->Initialize("PlayBack_Circ 4.5 sec per rev.txt",6);
-		//m_TrjGen->Initialize("PlayBack_Sq 10 sec per rev.txt",6);
-		m_TrjGen->Initialize("slowSquare.txt",6);
+		m_TrjGen->Initialize("PlayBack_Sq 10 sec per rev.txt",6);
+		//m_TrjGen->Initialize("slowSquare.txt",6);
 		
 		::std::cout << "trajectory initialized" << ::std::endl;
 		m_hEMevent = CreateEvent(NULL,false,false,NULL);	// Auto reset event (2nd argument false means...)

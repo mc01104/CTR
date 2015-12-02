@@ -143,8 +143,8 @@ void CCTRView::OnInitialUpdate()
 
 
 	// CKim - Initialize controls here
-	this->SetDlgItemTextA(m_idCmdJang[0],"-67");		this->SetDlgItemTextA(m_idCmdJang[1],"147");	
-	this->SetDlgItemTextA(m_idCmdJang[2],"5");			this->SetDlgItemTextA(m_idCmdJang[3],"348");			this->SetDlgItemTextA(m_idCmdJang[4],"61");
+	this->SetDlgItemTextA(m_idCmdJang[0],"80");		this->SetDlgItemTextA(m_idCmdJang[1],"142");	
+	this->SetDlgItemTextA(m_idCmdJang[2],"20.7");			this->SetDlgItemTextA(m_idCmdJang[3],"350");			this->SetDlgItemTextA(m_idCmdJang[4],"42.6");
 	
 	//// CKim - Open the graphics dialog
 	//if(!m_vtkDlg)

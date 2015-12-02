@@ -879,6 +879,7 @@ void *lwpr_aux_update_one_T(void *ptr) {
 
       }*/
 
+
       
       for (j=0;j<nIn;j++) {
          dist += xc[j] * lwpr_math_dot_product(RF->D + j*nInS, xc, nIn);

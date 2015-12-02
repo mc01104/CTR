@@ -1308,10 +1308,10 @@ unsigned int WINAPI	CCTRDoc::ClosedLoopControlLoop(void* para)
 			break;
 		}
 
-		//if (mySelf->m_adapt_LWPR)
-		//	mySelf->m_kinLWPR->AdaptForwardModel(localStat.sensedTipPosDir, localStat.currJang);
+		if (mySelf->m_adapt_LWPR)
+			mySelf->m_kinLWPR->AdaptForwardModel(localStat.sensedTipPosDir, localStat.currJang);
 
-		//mySelf->m_kinLWPR->TipFwdKin(localStat.currJang, predTipPosDir);
+		mySelf->m_kinLWPR->TipFwdKin(localStat.currJang, predTipPosDir);
 
 		// CKim - Read trajectory from the 'Playback.txt'. Returns false when the end of trajectory is reached
 		mySelf->m_playBack = mySelf->m_TrjGen->InterpolateNextPoint(localStat.tgtTipPosDir);	// Update tgtTipPosDir
@@ -1336,7 +1336,7 @@ unsigned int WINAPI	CCTRDoc::ClosedLoopControlLoop(void* para)
 			for(int i=0; i<6; i++)	{	ofstr<<localStat.currTipPosDir[i]<<" ";		}
 			for(int i=0; i<6; i++)	{	ofstr<<localStat.sensedTipPosDir[i]<<" ";	}
 			for(int i = 0; i < 5; i++) { ofstr  << localStat.currJang[i] << " "; }
-			//for(int i=0; i<6; i++)	{	ofstr<<predTipPosDir[i]<<" ";		}
+			for(int i=0; i<6; i++)	{	ofstr<<predTipPosDir[i]<<" ";		}
 			//for(int i=0; i<5; i++)	{	ofstr<<localStat.tgtJang[i]<<" ";			}
 			//for(int i=0; i<7; i++)	{	ofstr<<localStat.tgtMotorCnt[i]<<" ";	}
 			//ofstr<<localStat.invKinOK<<" ";

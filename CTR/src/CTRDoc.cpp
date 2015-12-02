@@ -353,14 +353,14 @@ unsigned int WINAPI	CCTRDoc::EMLoop(void* para)
 //		}
 		LeaveCriticalSection(&m_cSection);
 
-		if (mySelf->m_adapt_LWPR)
-		{
-			clock_t start = clock();
-			mySelf->m_kinLWPR->AdaptForwardModel(mySelf->m_Status.sensedTipPosDir, mySelf->m_Status.currJang);
-			clock_t end = clock();
-			::std::cout << "adaptation time" << ::std::endl;
-			::std::cout << (double) (end - start)/CLOCKS_PER_SEC << ::std::endl;
-		}
+		//if (mySelf->m_adapt_LWPR)
+		//{
+		//	clock_t start = clock();
+		//	mySelf->m_kinLWPR->AdaptForwardModel(mySelf->m_Status.sensedTipPosDir, mySelf->m_Status.currJang);
+		//	clock_t end = clock();
+		//	::std::cout << "adaptation time" << ::std::endl;
+		//	::std::cout << (double) (end - start)/CLOCKS_PER_SEC << ::std::endl;
+		//}
 		// CKim - update model if specified
 //		if(rCnt%24 ==0 )
 ////		{
@@ -1283,10 +1283,10 @@ unsigned int WINAPI	CCTRDoc::ClosedLoopControlLoop(void* para)
 		//// CKim - Synchronize on the update of the EM tracker data. Since the adaptive update will be 
 		//// meaningful only when new EM tracker data and predicted tip posDir is available
 		//// Use WaitForMultipleObjects to wait for this....
-		//int flag = WaitForSingleObject(mySelf->m_hEMevent,1000);
-		//if(flag == WAIT_TIMEOUT)	{
-		//	AfxMessageBox("No event from EM Loop!");	return 0;
-		//}
+		int flag = WaitForSingleObject(mySelf->m_hEMevent,1000);
+		if(flag == WAIT_TIMEOUT)	{
+			AfxMessageBox("No event from EM Loop!");	return 0;
+		}
 
 		// CKim - Synch with haptic device. This is for spending 1 ms. 
 		mySelf->m_Omni->SynchState(localStat);
@@ -2062,8 +2062,8 @@ void CCTRDoc::OnBnClickedBtnPlay()
 		//::std::cout << "else" << ::std::endl;
 		//m_TrjGen->Initialize("PlayBack.txt",6);
 		//m_TrjGen->Initialize("PlayBack_Circ 4.5 sec per rev.txt",6);
-		//m_TrjGen->Initialize("PlayBack_Sq 10 sec per rev.txt",6);
-		m_TrjGen->Initialize("slowSquare.txt",6);
+		m_TrjGen->Initialize("PlayBack_Sq 10 sec per rev.txt",6);
+		//m_TrjGen->Initialize("slowSquare.txt",6);
 		
 		::std::cout << "trajectory initialized" << ::std::endl;
 		m_hEMevent = CreateEvent(NULL,false,false,NULL);	// Auto reset event (2nd argument false means...)

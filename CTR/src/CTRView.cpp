@@ -61,6 +61,7 @@ BEGIN_MESSAGE_MAP(CCTRView, CFormView)
 	ON_BN_CLICKED(IDC_CHECK2, &CCTRView::OnBnClickedCheckLWPR)
 	ON_BN_CLICKED(IDC_BUTTON5, &CCTRView::OnBnClickedButtonSave)
 	ON_BN_CLICKED(IDC_BUTTON6, &CCTRView::OnClickedBtnHome)
+	ON_BN_CLICKED(IDC_COMBO1, &CCTRView::OnCheckTraj)
 END_MESSAGE_MAP()
 
 // CCTRView construction/destruction
@@ -69,6 +70,7 @@ CCTRView::CCTRView()
 	: CFormView(CCTRView::IDD)
 	, m_sysMsg(_T(""))
 	, m_ctrlMode(0)
+	, IDC_CIRCLE(_T(""))
 {
 	// TODO: add construction code here
 	for(int i=0;i<7; i++)	{	m_errFlag[i] = 0;	}
@@ -123,6 +125,8 @@ void CCTRView::DoDataExchange(CDataExchange* pDX)
 	DDX_Radio(pDX, IDC_RADIO_JA, m_ctrlMode);
 
 	DDV_MinMaxInt(pDX, m_ctrlMode, 0, 5);
+	DDX_Control(pDX, IDC_COMBO1, m_traj_type);
+	DDX_CBString(pDX, IDC_COMBO1, IDC_CIRCLE);
 }
 
 BOOL CCTRView::PreCreateWindow(CREATESTRUCT& cs)
@@ -546,4 +550,18 @@ void CCTRView::OnClickedBtnHome()
 	double p[10] = {0, 0, 86.34, 0 , 0,};
 	p[0] *= (3.141592/180.0);	p[1] *= (3.141592/180.0);	p[3] *= (3.141592/180.0);
 	this->GetDocument()->SendCommand(0,p);
+}
+
+void CCTRView::OnCheckTraj()
+{
+	int mode = this->m_traj_type.GetCurSel();
+	switch(mode)
+	{
+		case 0:
+			::std::cout << "circle" << ::std::endl;
+			break;
+		case 1:
+			::std::cout << "square" << ::std::endl;
+	}
+
 }

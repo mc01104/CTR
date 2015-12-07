@@ -91,6 +91,10 @@ public:
 	afx_msg void OnEnKillfocusForget();
 	afx_msg void OnBnClickedCheckLWPR();
 	afx_msg void OnBnClickedButtonSave();
+	afx_msg void OnCheckTraj();
+
+	CComboBox m_traj_type;
+	CString IDC_CIRCLE;
 };
 
 #ifndef _DEBUG  // debug version in CTRView.cpp

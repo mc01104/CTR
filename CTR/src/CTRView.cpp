@@ -125,8 +125,13 @@ void CCTRView::DoDataExchange(CDataExchange* pDX)
 	DDX_Radio(pDX, IDC_RADIO_JA, m_ctrlMode);
 
 	DDV_MinMaxInt(pDX, m_ctrlMode, 0, 5);
+	//if (m_traj_type.GetCurSel() == -1)
 	DDX_Control(pDX, IDC_COMBO1, m_traj_type);
-	DDX_CBString(pDX, IDC_COMBO1, IDC_CIRCLE);
+
+	this->GetDocument()->SetTrajectoryType(this->m_traj_type.GetCurSel());
+
+	//::std::cout << "trajectory type:" << m_traj_type.GetCurSel() << ::std::endl;
+	//DDX_CBString(pDX, IDC_COMBO1, IDC_CIRCLE);
 }
 
 BOOL CCTRView::PreCreateWindow(CREATESTRUCT& cs)
@@ -555,6 +560,7 @@ void CCTRView::OnClickedBtnHome()
 void CCTRView::OnCheckTraj()
 {
 	int mode = this->m_traj_type.GetCurSel();
+	::std::cout << "in callback" << ::std::endl;
 	switch(mode)
 	{
 		case 0:

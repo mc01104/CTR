@@ -81,7 +81,7 @@ private:
 	VtkOnLinePlot*		m_vtkPlot;
 //	bool				
 	std::ofstream		m_fStr;
-
+	int					m_traj_type;
 	static CRITICAL_SECTION	m_cSection;		// CKim - Critical Section is used instead of mutex for synchroniation between threads. slightly fatser than mutexes
 
 	// CKim - Transmission ratio
@@ -120,7 +120,7 @@ public:
 	void	SwitchPlayBackMode(bool onoff);
 	void	SwitchStaticPlayBackMode(bool onoff);
 	void	SwitchJointPlayBackMode(bool onoff);
-
+	void	SetTrajectoryType(int traj_type) {m_traj_type = traj_type;};
 	void	SetForgettingFactor(double val);
 
 	void	SaveModel();

@@ -129,7 +129,7 @@ void CCTRView::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_COMBO1, m_traj_type);
 
 	this->GetDocument()->SetTrajectoryType(this->m_traj_type.GetCurSel());
-
+	::std::cout << this->m_traj_type.GetCurSel() << ::std::endl;
 	//::std::cout << "trajectory type:" << m_traj_type.GetCurSel() << ::std::endl;
 	//DDX_CBString(pDX, IDC_COMBO1, IDC_CIRCLE);
 }
@@ -374,11 +374,38 @@ void CCTRView::OnClickedBtnMove()
 
 	if(m_ctrlMode == 0)	//0: joint angle, 1: tip configuration, 2: tele op
 	{
-		for(int i=0; i<5; i++)	{
+		switch(m_traj_type.GetCurSel())
+		{
+		case 0:
+			{
+			double initialConfiguration[5] = {105, -128, 15, 300, 47};
+			initialConfiguration[0] *= (3.141592/180.0);	initialConfiguration[1] *= (3.141592/180.0);	initialConfiguration[3] *= (3.141592/180.0);
+			this->GetDocument()->SendCommand(0, initialConfiguration);
+			break;
+			}
+		case 1:
+			{
+			double initialConfiguration[5] = {-67, 147, 8, 348, 61};
+			initialConfiguration[0] *= (3.141592/180.0);	initialConfiguration[1] *= (3.141592/180.0);	initialConfiguration[3] *= (3.141592/180.0);
+			this->GetDocument()->SendCommand(0,initialConfiguration);
+			break;
+			}
+		case -1:
+			for(int i=0; i<5; i++)	{
 			this->GetDlgItemTextA(m_idCmdJang[i],str);		p[i] = 	atof(str);		p[i+5] = 0;		}
+			p[0] *= (3.141592/180.0);	p[1] *= (3.141592/180.0);	p[3] *= (3.141592/180.0);
+			this->GetDocument()->SendCommand(0,p);
+			break;
+		default:
+			{
+			double initialConfiguration[5] = {-82, -135, 69.3, 313.8, -25.3};
+			initialConfiguration[0] *= (3.141592/180.0);	initialConfiguration[1] *= (3.141592/180.0);	initialConfiguration[3] *= (3.141592/180.0);
+			this->GetDocument()->SendCommand(0,initialConfiguration);
+			break;
+			}
+		}
 
-		p[0] *= (3.141592/180.0);	p[1] *= (3.141592/180.0);	p[3] *= (3.141592/180.0);
-		this->GetDocument()->SendCommand(0,p);
+
 	}
 
 	if(m_ctrlMode == 1)	//0: joint angle, 1: tip configuration, 2: tele op

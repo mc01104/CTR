@@ -58,6 +58,7 @@ BEGIN_MESSAGE_MAP(CCTRView, CFormView)
 	ON_BN_CLICKED(IDC_RADIO_JSPB, &CCTRView::OnBnClickedRadioModes)
 	ON_WM_CTLCOLOR()
 	ON_EN_KILLFOCUS(IDC_FORGET, &CCTRView::OnEnKillfocusForget)
+	//ON_EN_CHANGE   (IDC_FORGET, &CCTRView::OnEnKillfocusForget)
 	ON_BN_CLICKED(IDC_CHECK2, &CCTRView::OnBnClickedCheckLWPR)
 	ON_BN_CLICKED(IDC_BUTTON5, &CCTRView::OnBnClickedButtonSave)
 	ON_BN_CLICKED(IDC_BUTTON6, &CCTRView::OnClickedBtnHome)
@@ -129,7 +130,7 @@ void CCTRView::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_COMBO1, m_traj_type);
 
 	this->GetDocument()->SetTrajectoryType(this->m_traj_type.GetCurSel());
-	::std::cout << this->m_traj_type.GetCurSel() << ::std::endl;
+	//::std::cout << this->m_traj_type.GetCurSel() << ::std::endl;
 	//::std::cout << "trajectory type:" << m_traj_type.GetCurSel() << ::std::endl;
 	//DDX_CBString(pDX, IDC_COMBO1, IDC_CIRCLE);
 }
@@ -552,7 +553,7 @@ void CCTRView::OnEnKillfocusForget()
 	CString str;
 	this->GetDlgItemTextA(IDC_FORGET, str);		
 	this->GetDocument()->SetForgettingFactor(atof(str));
-
+	::std::cout << "Setting model forgetting factor:" <<  atof(str) <<::std::endl;
 	// TODO: Add your control notification handler code here
 }
 

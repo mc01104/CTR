@@ -58,11 +58,9 @@ BEGIN_MESSAGE_MAP(CCTRView, CFormView)
 	ON_BN_CLICKED(IDC_RADIO_JSPB, &CCTRView::OnBnClickedRadioModes)
 	ON_WM_CTLCOLOR()
 	ON_EN_KILLFOCUS(IDC_FORGET, &CCTRView::OnEnKillfocusForget)
-	//ON_EN_CHANGE   (IDC_FORGET, &CCTRView::OnEnKillfocusForget)
 	ON_BN_CLICKED(IDC_CHECK2, &CCTRView::OnBnClickedCheckLWPR)
 	ON_BN_CLICKED(IDC_BUTTON5, &CCTRView::OnBnClickedButtonSave)
 	ON_BN_CLICKED(IDC_BUTTON6, &CCTRView::OnClickedBtnHome)
-	ON_BN_CLICKED(IDC_COMBO1, &CCTRView::OnCheckTraj)
 END_MESSAGE_MAP()
 
 // CCTRView construction/destruction
@@ -126,13 +124,10 @@ void CCTRView::DoDataExchange(CDataExchange* pDX)
 	DDX_Radio(pDX, IDC_RADIO_JA, m_ctrlMode);
 
 	DDV_MinMaxInt(pDX, m_ctrlMode, 0, 5);
-	//if (m_traj_type.GetCurSel() == -1)
+
 	DDX_Control(pDX, IDC_COMBO1, m_traj_type);
 
 	this->GetDocument()->SetTrajectoryType(this->m_traj_type.GetCurSel());
-	//::std::cout << this->m_traj_type.GetCurSel() << ::std::endl;
-	//::std::cout << "trajectory type:" << m_traj_type.GetCurSel() << ::std::endl;
-	//DDX_CBString(pDX, IDC_COMBO1, IDC_CIRCLE);
 }
 
 BOOL CCTRView::PreCreateWindow(CREATESTRUCT& cs)
@@ -359,18 +354,14 @@ int CCTRView::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
 void CCTRView::OnDestroy()
 {
-	//delete[] m_ctrlLabels;
 	CFormView::OnDestroy();
 	KillTimer(100);
 
-	// TODO: Add your message handler code here
 }
 
-
+// TODO: Given a planner this function should be simplified to move in the first point of the trajectory - currently there is no guarantee that the inverse kinematics will converge to a solution
 void CCTRView::OnClickedBtnMove()
 {
-	// TODO: Add your control notification handler code here
-	//UpdateData(true);
 	CString str;	double p[10];
 
 	if(m_ctrlMode == 0)	//0: joint angle, 1: tip configuration, 2: tele op
@@ -405,7 +396,6 @@ void CCTRView::OnClickedBtnMove()
 			break;
 			}
 		}
-
 
 	}
 
@@ -445,7 +435,6 @@ void CCTRView::OnUpdateViewGraphicwin(CCmdUI *pCmdUI)
 {
 	if(m_vtkDlg)	{	pCmdUI->SetCheck(1);		}
 	else			{	pCmdUI->SetCheck(0);		}
-	// TODO: Add your command update UI handler code here
 }
 
 
@@ -541,9 +530,6 @@ HBRUSH CCTRView::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 		}
 
 	}
-	// TODO:  Change any attributes of the DC here
-
-	// TODO:  Return a different brush if the default is not desired
 	return hbr;
 }
 
@@ -554,15 +540,18 @@ void CCTRView::OnEnKillfocusForget()
 	this->GetDlgItemTextA(IDC_FORGET, str);		
 	this->GetDocument()->SetForgettingFactor(atof(str));
 	::std::cout << "Setting model forgetting factor:" <<  atof(str) <<::std::endl;
-	// TODO: Add your control notification handler code here
 }
 
 
 void CCTRView::OnBnClickedCheckLWPR()
 {
-	// TODO: Add your control notification handler code here
+	
 	this->GetDocument()->m_adapt_LWPR = !this->GetDocument()->m_adapt_LWPR;
-	::std::cout << "changing mode" << ::std::endl;
+
+	if (this->GetDocument()->m_adapt_LWPR)
+		::std::cout << "LWPR adaptation is ON" << ::std::endl;
+	else
+		::std::cout << "LWPR adaptation is OFF" << ::std::endl;
 }
 
 void CCTRView::OnBnClickedButtonSave()
@@ -572,30 +561,8 @@ void CCTRView::OnBnClickedButtonSave()
 
 void CCTRView::OnClickedBtnHome()
 {
-	//CButton* pButton = (CButton*) GetDlgItem(IDC_RADIO_JA);
-	//m_ctrlMode = 0;
-	//pButton->SetCheck(true);
-
-	//this->GetDocument()->SwitchAllControlFlagsOff();
-	//
-	//this->GetDocument()->ClearCommandQueue();
-
 	double p[10] = {0, 0, 86.34, 0 , 0,};
 	p[0] *= (3.141592/180.0);	p[1] *= (3.141592/180.0);	p[3] *= (3.141592/180.0);
 	this->GetDocument()->SendCommand(0,p);
 }
 
-void CCTRView::OnCheckTraj()
-{
-	int mode = this->m_traj_type.GetCurSel();
-	::std::cout << "in callback" << ::std::endl;
-	switch(mode)
-	{
-		case 0:
-			::std::cout << "circle" << ::std::endl;
-			break;
-		case 1:
-			::std::cout << "square" << ::std::endl;
-	}
-
-}

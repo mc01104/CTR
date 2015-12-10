@@ -346,60 +346,45 @@ unsigned int WINAPI	CCTRDoc::EMLoop(void* para)
 			for(int j=0; j<4; j++)	{	mySelf->m_Status.emMat[i][j] = M[i][j];		}	}
 		for(int i=0; i<6; i++)	{	mySelf->m_measPosforRec[i] = measTipPosDir[i];	}
 
-//		if(rCnt%24 ==0 )
-//		{
-			for(int i=0; i<6; i++)	{	mySelf->m_Status.sensedTipPosDir[i] = measTipPosDir[i];	}
-			for(int i=0; i<5; i++)	{	jAng[i] = mySelf->m_Status.currJang[i];					}
-//		}
+		for(int i=0; i<6; i++)	{	mySelf->m_Status.sensedTipPosDir[i] = measTipPosDir[i];	}
+		for(int i=0; i<5; i++)	{	jAng[i] = mySelf->m_Status.currJang[i];					}
+
 		LeaveCriticalSection(&m_cSection);
 
-		//if (mySelf->m_adapt_LWPR)
-		//{
-		//	clock_t start = clock();
-		//	mySelf->m_kinLWPR->AdaptForwardModel(mySelf->m_Status.sensedTipPosDir, mySelf->m_Status.currJang);
-		//	clock_t end = clock();
-		//	::std::cout << "adaptation time" << ::std::endl;
-		//	::std::cout << (double) (end - start)/CLOCKS_PER_SEC << ::std::endl;
-		//}
-		// CKim - update model if specified
-//		if(rCnt%24 ==0 )
-////		{
-//			if(mySelf->m_playBack || mySelf->m_bStaticPlayBack || mySelf->m_bRunExperiment)
-//			{
-//				mySelf->m_kinLib->UpdateFAC(jAng,measTipPosDir,predTipPosDir,mySelf->m_bDoUpdate);
-//			}
-////		}
+		if(mySelf->m_playBack || mySelf->m_bStaticPlayBack || mySelf->m_bRunExperiment)
+			mySelf->m_kinLib->UpdateFAC(jAng,measTipPosDir,predTipPosDir,mySelf->m_bDoUpdate);
+
 		rCnt++;
 
-		//// ------------------------------------------------------------- //
-		////// CKim - Log data if flag is true
-		//if(mySelf->m_bLogEMData)
-		//{
-		//	// CKim - Calculate predicted tip pos, dir from the current kinematic model and update 
-		//	// the model using the measured data if m_AdaptiveOn is true.
-		//	mySelf->m_kinLib->UpdateFAC(jAng,measTipPosDir,predTipPosDir,0);
-		//	
-		//	if(!ofstr.is_open())	
-		//	{	
-		//		ofstr.open("C:\\03. OnlineCalibration\\OnlineCalib\\ExperimentData\\TrackerLog.txt");	timer.ResetTime();
-		//	}
-		//	if(perfcnt == navg)
-		//	{
-		//		loopTime = timer.GetTime();	
-		//		ofstr<<loopTime<<" ";
-		//		//for(int i=0; i<5; i++)	{	ofstr<<jAng[i]<<" ";	}
-		//		for(int i=0; i<6; i++)	{	ofstr<<predTipPosDir[i]<<" ";	}
-		//		for(int i=0; i<6; i++)	{	ofstr<<measTipPosDir[i]<<" ";	}
-		//		ofstr<<"\n";
-		//		perfcnt = 0;	//timer.ResetTime();
-		//	}
-		//	else	{		perfcnt++;			}
-		//}
-		//else
-		//{
-		//	if(ofstr.is_open())	{	ofstr.close();	}
-		//}
-		//// ------------------------------------------------------------- //
+		// ------------------------------------------------------------- //
+		//// CKim - Log data if flag is true
+		if(mySelf->m_bLogEMData)
+		{
+			// CKim - Calculate predicted tip pos, dir from the current kinematic model and update 
+			// the model using the measured data if m_AdaptiveOn is true.
+			mySelf->m_kinLib->UpdateFAC(jAng,measTipPosDir,predTipPosDir,0);
+			
+			if(!ofstr.is_open())	
+			{	
+				ofstr.open("C:\\03. OnlineCalibration\\OnlineCalib\\ExperimentData\\TrackerLog.txt");	timer.ResetTime();
+			}
+			if(perfcnt == navg)
+			{
+				loopTime = timer.GetTime();	
+				ofstr<<loopTime<<" ";
+				//for(int i=0; i<5; i++)	{	ofstr<<jAng[i]<<" ";	}
+				for(int i=0; i<6; i++)	{	ofstr<<predTipPosDir[i]<<" ";	}
+				for(int i=0; i<6; i++)	{	ofstr<<measTipPosDir[i]<<" ";	}
+				ofstr<<"\n";
+				perfcnt = 0;	//timer.ResetTime();
+			}
+			else	{		perfcnt++;			}
+		}
+		else
+		{
+			if(ofstr.is_open())	{	ofstr.close();	}
+		}
+		// ------------------------------------------------------------- //
 
 		// CKim - Signal Event to wake up any loops that uses the EM tracker reading
 		SetEvent(mySelf->m_hEMevent);
@@ -730,16 +715,6 @@ unsigned int WINAPI	CCTRDoc::PlaybackLoop(void* para)
 		// ADAPT LWPR
 		mySelf->m_kinLWPR->AdaptForwardModel(localStat.sensedTipPosDir, localStat.currJang);		// CKim - calculate predicted position and perform adaptive update if instructed
 		
-		//if( (loopTime/1000.0) < 9000 )
-		//{
-		//	mySelf->m_kinLib->UpdateFAC(localStat.currJang,localStat.sensedTipPosDir,predTipPosDir,mySelf->m_AdaptiveOn);
-		
-		//}
-		//else
-		//{
-		//	mySelf->m_kinLib->UpdateFAC(localStat.currJang,localStat.sensedTipPosDir,predTipPosDir,false);
-		//}
-
 		// CKim - Read trajectory from the 'Playback.txt'. Returns false when the end of trajectory is reached
 		mySelf->m_playBack = mySelf->m_TrjGen->InterpolateNextPoint(localStat.tgtTipPosDir, localStat.tgtMotorVel);	// Update tgtTipPosDir
 
@@ -1026,7 +1001,8 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 			LeaveCriticalSection(&m_cSection);
 
 			// CKim - Evaluate model
-			mySelf->m_kinLWPR->TipFwdKinJac(localStat.currJang, localStat.currTipPosDir, J, mySelf->m_bCLIK);
+			//mySelf->m_kinLWPR->TipFwdKinJac(localStat.currJang, localStat.currTipPosDir, J, mySelf->m_bCLIK);
+			mySelf->m_kinLib->EvalCurrentKinematicsModelNumeric(localStat.currJang, localStat.currTipPosDir, J, mySelf->m_bCLIK);
 
 			// CKim - Apply Closed Loop Inverse kienmatics control law. dq = inv(J) x (dxd + K(xd - xm))
 
@@ -1083,8 +1059,8 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 
 		else	// CKim - When control is not running
 		{
-			mySelf->m_kinLWPR->TipFwdKin(localStat.currJang, localStat.currTipPosDir);
-			//mySelf->m_kinLib->EvalCurrentKinematicsModel(localStat.currJang, localStat.currTipPosDir, J, mySelf->m_bCLIK);
+			//mySelf->m_kinLWPR->TipFwdKin(localStat.currJang, localStat.currTipPosDir);
+			mySelf->m_kinLib->EvalCurrentKinematicsModel(localStat.currJang, localStat.currTipPosDir, J, mySelf->m_bCLIK);
 
 			for(int i=0; i<7; i++)	
 				vel[i] = 0.0;		
@@ -1257,7 +1233,7 @@ unsigned int WINAPI	CCTRDoc::ClosedLoopControlLoop(void* para)
 	CCTRDoc* mySelf = (CCTRDoc*) para;		
 
 	// CKim - Log files
-	::std::string filename = "ExperimentData/" + mySelf->m_date + "-ClosedLoop.txt";
+	::std::string filename = "ExperimentData/" + mySelf->m_date + "-ClosedLoopChun.txt";
 
 	std::ofstream ofstr;	
 	ofstr.open(filename);
@@ -1311,7 +1287,7 @@ unsigned int WINAPI	CCTRDoc::ClosedLoopControlLoop(void* para)
 		if (mySelf->m_adapt_LWPR)
 			mySelf->m_kinLWPR->AdaptForwardModel(localStat.sensedTipPosDir, localStat.currJang);
 
-		mySelf->m_kinLWPR->TipFwdKin(localStat.currJang, predTipPosDir);
+		//mySelf->m_kinLWPR->TipFwdKin(localStat.currJang, predTipPosDir);
 
 		// CKim - Read trajectory from the 'Playback.txt'. Returns false when the end of trajectory is reached
 		mySelf->m_playBack = mySelf->m_TrjGen->InterpolateNextPoint(localStat.tgtTipPosDir);	// Update tgtTipPosDir
@@ -1336,7 +1312,7 @@ unsigned int WINAPI	CCTRDoc::ClosedLoopControlLoop(void* para)
 			for(int i=0; i<6; i++)	{	ofstr<<localStat.currTipPosDir[i]<<" ";		}
 			for(int i=0; i<6; i++)	{	ofstr<<localStat.sensedTipPosDir[i]<<" ";	}
 			for(int i = 0; i < 5; i++) { ofstr  << localStat.currJang[i] << " "; }
-			for(int i=0; i<6; i++)	{	ofstr<<predTipPosDir[i]<<" ";		}
+			//for(int i=0; i<6; i++)	{	ofstr<<predTipPosDir[i]<<" ";		}
 			//for(int i=0; i<5; i++)	{	ofstr<<localStat.tgtJang[i]<<" ";			}
 			//for(int i=0; i<7; i++)	{	ofstr<<localStat.tgtMotorCnt[i]<<" ";	}
 			//ofstr<<localStat.invKinOK<<" ";
@@ -2072,7 +2048,6 @@ void CCTRDoc::OnBnClickedBtnPlay()
 				break;
 		}
 		
-		::std::cout << "trajectory initialized" << ::std::endl;
 		m_hEMevent = CreateEvent(NULL,false,false,NULL);	// Auto reset event (2nd argument false means...)
 		m_playBack = true;
 
@@ -2089,7 +2064,6 @@ void CCTRDoc::OnBnClickedExp()
 
 	if(!m_bRunExperiment)
 	{
-	//	m_TrjGen->Initialize("C:\\03. OnlineCalibration\\OnlineCalib\\PlayBackJang.txt",5);
 		m_hEMevent = CreateEvent(NULL,false,false,NULL);	// Auto reset event (2nd argument false means...)
 		m_bRunExperiment = true;
 	}
@@ -2104,7 +2078,6 @@ void CCTRDoc::OnBnClickedBtnMdlreset()
 	// CKim - Reinitialize the kinematics model
 	m_kinLib->ReInitializeModel();
 	m_kinLib->ReInitializeEstimator();
-	// TODO: Add your control notification handler code here
 }
 
 

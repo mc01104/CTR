@@ -1284,8 +1284,8 @@ unsigned int WINAPI	CCTRDoc::ClosedLoopControlLoop(void* para)
 			break;
 		}
 
-		if (mySelf->m_adapt_LWPR)
-			mySelf->m_kinLWPR->AdaptForwardModel(localStat.sensedTipPosDir, localStat.currJang);
+		//if (mySelf->m_adapt_LWPR)
+		//	mySelf->m_kinLWPR->AdaptForwardModel(localStat.sensedTipPosDir, localStat.currJang);
 
 		//mySelf->m_kinLWPR->TipFwdKin(localStat.currJang, predTipPosDir);
 
@@ -1302,6 +1302,9 @@ unsigned int WINAPI	CCTRDoc::ClosedLoopControlLoop(void* para)
 			mySelf->m_bCLIK = true;	
 		}
 		
+		if (mySelf->m_adapt_LWPR)
+			mySelf->m_kinLWPR->AdaptForwardModel(localStat.sensedTipPosDir, localStat.currJang);
+
 		// --------------------------------------------------------------- //
 		// CKim - Log the data that was read
 		// --------------------------------------------------------------- //

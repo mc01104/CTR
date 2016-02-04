@@ -27,7 +27,7 @@ public:
 	// CKim - Initialize
 	void ReInitializeEstimator();
 	void ReInitializeModel();
-
+	::std::ofstream os;
 
 	// CKim - Inverse kinematics parameter setting
 	void SetInvKinThreshold(const double MaxPosErr, const double MaxOrtErr); 

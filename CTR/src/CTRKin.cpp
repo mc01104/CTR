@@ -10,7 +10,7 @@ CTRKin::CTRKin(void)
 	// CKim - Coefficient file for Tip
 	//fName = "CTR_TIP_FAC.txt";
 	fName = "FK_new_parameters.txt";
-
+	os.open("conditionNumber.txt");
 	if (readCTR_FAC_file(fName, m_Tip_px, m_Tip_py, m_Tip_pz, m_Tip_ox, m_Tip_oy, m_Tip_oz) == false) //file read error
 	{
 		AfxMessageBox("Sparta!!!!");
@@ -998,18 +998,22 @@ void CTRKin::ApplyKinematicControl(const Eigen::MatrixXd& J, const Eigen::Matrix
 	sv = Jsvd.singularValues();	
 
 	double conditionNumber = sv(0, 0)/sv(4, 0);
-	double conditionThreshold = 10000;
+	double conditionThreshold = 1e09;
 	
+	::std::cout << conditionNumber << ::std::endl;
+	os << conditionNumber << ::std::endl;
 	if (conditionNumber >= conditionThreshold)
 	{
 		double epsilon = conditionThreshold * sv(4, 0) - sv(0, 0);
 		epsilon /= 1 - conditionThreshold;
-
+		A = JtJ;
 		for(int i=0; i<5; i++)	
 			A(i,i) += epsilon;
 
 		Jsvd.compute(A);
 	}
+	sv = Jsvd.singularValues();	
+	::std::cout << sv(0, 0)/sv(4, 0) << ::std::endl;
 	//eps = sv(0,0)*Eigen::NumTraits<double>::epsilon();
 	//
 	////::std::cout << JtJ.determinant() << ::std::endl;
@@ -1032,6 +1036,7 @@ void CTRKin::ApplyKinematicControl(const Eigen::MatrixXd& J, const Eigen::Matrix
 	//}
 	
 	dotq = Jsvd.solve(b);
+	::std::cout << dotq << ::std::endl;
 	for(int i=0; i<5; i++)	{	dq[i] = dotq(i,0);	}
 }
 

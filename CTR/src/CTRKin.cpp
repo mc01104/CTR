@@ -998,12 +998,13 @@ void CTRKin::ApplyKinematicControl(const Eigen::MatrixXd& J, const Eigen::Matrix
 	sv = Jsvd.singularValues();	
 
 	double conditionNumber = sv(0, 0)/sv(4, 0);
-	double conditionThreshold = 1e09;
+	double conditionThreshold = 1e07;
 	
-	::std::cout << conditionNumber << ::std::endl;
-	os << conditionNumber << ::std::endl;
+	//::std::cout << conditionNumber << ::std::endl;
+	//os << conditionNumber << ::std::endl;
 	if (conditionNumber >= conditionThreshold)
 	{
+		::std::cout << conditionNumber << ::std::endl;
 		double epsilon = conditionThreshold * sv(4, 0) - sv(0, 0);
 		epsilon /= 1 - conditionThreshold;
 		A = JtJ;
@@ -1013,7 +1014,7 @@ void CTRKin::ApplyKinematicControl(const Eigen::MatrixXd& J, const Eigen::Matrix
 		Jsvd.compute(A);
 	}
 	sv = Jsvd.singularValues();	
-	::std::cout << sv(0, 0)/sv(4, 0) << ::std::endl;
+	//::std::cout << sv(0, 0)/sv(4, 0) << ::std::endl;
 	//eps = sv(0,0)*Eigen::NumTraits<double>::epsilon();
 	//
 	////::std::cout << JtJ.determinant() << ::std::endl;
@@ -1036,7 +1037,7 @@ void CTRKin::ApplyKinematicControl(const Eigen::MatrixXd& J, const Eigen::Matrix
 	//}
 	
 	dotq = Jsvd.solve(b);
-	::std::cout << dotq << ::std::endl;
+	//::std::cout << dotq << ::std::endl;
 	for(int i=0; i<5; i++)	{	dq[i] = dotq(i,0);	}
 }
 

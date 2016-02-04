@@ -436,7 +436,7 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 	CTR_status localStat;		
 	
 	// CKim - Flags
-	bool teleOpCtrl = false;		bool safeToTeleOp = false;			double scl = 1.0;	double kp = 10.0;
+	bool teleOpCtrl = false;		bool safeToTeleOp = false;			double scl = 0.5;	double kp = 3.0;
 
 	bool adaptModelFlag = false;
 
@@ -452,7 +452,7 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 	std::ofstream ofstr;	ofstr.open(fileName.c_str());
 
 	// CKim - Parameters for loop speed measurement
-	ChunTimer timer;	int perfcnt = 0;	int navg = 50;		long loopTime = 0;
+	ChunTimer timer;	int perfcnt = 0;	int navg = 5;		long loopTime = 0;
 
 	// CKim - The Loop
 	while(mySelf->m_teleOpMode)
@@ -925,13 +925,13 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 	double dq[5];		
 	double dCnt[7];		
 	
-	double K[6] = {5.0, 5.0, 5.0, 0.5, 0.5, 0.5 };	// working
+	//double K[6] = {5.0, 5.0, 5.0, 0.5, 0.5, 0.5 };	// working
 	//double K[6] = {10.0, 10.0, 10.0, 10.0, 10.0, 10.0 };		// working
 	//double K[6] = {20.0, 20.0, 20.0, 20.0, 20.0, 20.0 };		// working
 	//double K[6] = {10.0, 10.0, 10.0, 10.0, 10.0, 10.0 };		// working
 	//double K[6] = { 5.0, 5.0, 5.0, 5.0, 5.0, 5.0 };				// For sensor feedback + estimator
-	//double K[6] = { 1.5, 1.5, 1.5, 0.5, 0.5, 0.5 };				// For sensor feedback + estimator
-		
+	double K[6] = { 1.5, 1.5, 1.5, 0.1, 0.1, 0.1 };				// For sensor feedback + estimator
+	//double K[6] = {1.0, 1.0, 1.0, 0.5, 0.5, 0.5 };	// working	
 
 	// CKim - Parameters for loop speed measurement
 	ChunTimer timer;	
@@ -2047,7 +2047,7 @@ void CCTRDoc::OnBnClickedBtnPlay()
 				m_TrjGen->Initialize("superSlowSquare.txt",6);
 				break;
 		default:
-				m_TrjGen->Initialize("PlayBack.txt",6);
+				m_TrjGen->Initialize("random_trajectory.txt",6);
 				break;
 		}
 		

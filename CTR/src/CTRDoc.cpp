@@ -1794,7 +1794,7 @@ void CCTRDoc::SolveInverseKin(CTR_status& stat)
 
 
 	/*stat.condNum = Err[0];		stat.invKinErr[0] = Err[1];		stat.invKinErr[1] = Err[2];*/
-	
+	 
 	
 	m_kinLWPR->InverseKinematicsLSQ(stat.tgtTipPosDir, stat.initJang, jAng, Err, exitCond);
 	//PrintCArray(stat.jAngLWPR, 5);

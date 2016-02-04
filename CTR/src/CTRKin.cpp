@@ -996,26 +996,40 @@ void CTRKin::ApplyKinematicControl(const Eigen::MatrixXd& J, const Eigen::Matrix
 	JtJ = J.transpose()*J;			b = J.transpose()*err;
 	Eigen::JacobiSVD<Eigen::Matrix<double,5,5>> Jsvd(JtJ,Eigen::ComputeThinU | Eigen::ComputeThinV);
 	sv = Jsvd.singularValues();	
-	eps = sv(0,0)*Eigen::NumTraits<double>::epsilon();
-	
-	//::std::cout << JtJ.determinant() << ::std::endl;
-	condNum = fabs(sv(4,0));
-	//eps = 0.00001;
-			
-	for(int i=0; i<5; i++)	{	JtJ(i,i) += lambda;		}
 
-	if(condNum < eps)	
+	double conditionNumber = sv(0, 0)/sv(4, 0);
+	double conditionThreshold = 10000;
+	
+	if (conditionNumber >= conditionThreshold)
 	{
-		//localStat.invKinOK = false;
-		A = JtJ;
-		for(int i=0; i<5; i++)	{	A(i,i) += (1-sv(4,0)/eps)*lambda;	}
-				////for(int i=0; i<5; i++)	{	A(i,i) += lambda*JtJ(i,i);		}
+		double epsilon = conditionThreshold * sv(4, 0) - sv(0, 0);
+		epsilon /= 1 - conditionThreshold;
+
+		for(int i=0; i<5; i++)	
+			A(i,i) += epsilon;
+
 		Jsvd.compute(A);
 	}
-	else
-	{
-		//localStat.invKinOK = true;
-	}
+	//eps = sv(0,0)*Eigen::NumTraits<double>::epsilon();
+	//
+	////::std::cout << JtJ.determinant() << ::std::endl;
+	//condNum = fabs(sv(4,0));
+	////eps = 0.00001;
+	//		
+	////for(int i=0; i<5; i++)	{	JtJ(i,i) += lambda;		}
+
+	//if(condNum < eps)	
+	//{
+	//	//localStat.invKinOK = false;
+	//	A = JtJ;
+	//	for(int i=0; i<5; i++)	{	A(i,i) += (1-sv(4,0)/eps)*lambda;	}
+	//			////for(int i=0; i<5; i++)	{	A(i,i) += lambda*JtJ(i,i);		}
+	//	Jsvd.compute(A);
+	//}
+	//else
+	//{
+	//	//localStat.invKinOK = true;
+	//}
 	
 	dotq = Jsvd.solve(b);
 	for(int i=0; i<5; i++)	{	dq[i] = dotq(i,0);	}

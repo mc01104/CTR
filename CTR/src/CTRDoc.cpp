@@ -2047,7 +2047,7 @@ void CCTRDoc::OnBnClickedBtnPlay()
 				m_TrjGen->Initialize("superSlowSquare.txt",6);
 				break;
 		default:
-				m_TrjGen->Initialize("random_trajectory.txt",6);
+				m_TrjGen->Initialize("random_trajectory_4.txt",6);
 				break;
 		}
 		

@@ -217,7 +217,7 @@ LWPRKinematics::TipFwdKinEx(const double* jAng, double* posOrt)
 {
 	::std::vector< double> inputData(jAng, jAng + this->forwardModel->nIn());
 
-	this->CheckJointLimits(inputData);
+	//this->CheckJointLimits(inputData);
 
 #ifdef _SCALED_
 	inputData[2] = inputData[2]/L31_MAX ;
@@ -241,6 +241,8 @@ LWPRKinematics::TipFwdKinJac(const double* jAng, double* posOrt, Eigen::MatrixXd
 
 	WaitForSingleObject(m_hLWPRMutex, INFINITE);
 	TipFwdKinEx(jAng, posOrt);
+	//::std::cout << " configuration" << ::std::endl;
+	//PrintCArray(jAng, 5);
 
 	if(evalJ)	
 	{
@@ -250,9 +252,10 @@ LWPRKinematics::TipFwdKinJac(const double* jAng, double* posOrt, Eigen::MatrixXd
 			{
 				if(i==col)
 				{
-					dq = FLT_EPSILON*fabs(jAng[i]);
+					//dq = FLT_EPSILON*fabs(jAng[i]);
+					dq = 0.0001;
 
-					if(dq==0.0) {	dq = FLT_EPSILON;	}
+					//if(dq==0.0) {	dq = FLT_EPSILON;	}
 				
 					q[i] = jAng[i] + dq;
 					dq = q[i] - jAng[i];
@@ -261,10 +264,11 @@ LWPRKinematics::TipFwdKinJac(const double* jAng, double* posOrt, Eigen::MatrixXd
 			}
 		
 			TipFwdKinEx(q, Fq);
-
+			//PrintCArray(Fq, 6);
 			for(int i=0; i<6; i++)	{	J(i,col) = (Fq[i] - posOrt[i])/dq;	}
 		}
 	}
+	//::std::cout << "---------------" << ::std::endl;
 	ReleaseMutex(this->m_hLWPRMutex);
 
 	return;

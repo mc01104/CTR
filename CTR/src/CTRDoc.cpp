@@ -95,11 +95,11 @@ CCTRDoc::CCTRDoc()
 	//::std::string pathToForwardModel("../models/model_ct_2015_11_19_9_17_44.bin");
 	//::std::string pathToForwardModel("../models/model_ct_2015_11_19_12_58_45.bin");
 	//::std::string pathToForwardModel("../models/model_ct_2015_11_27_13_9_5_update_metric.bin");
-	//::std::string pathToForwardModel("../models/model_ct_2015_11_27_17_24_54.bin");
+	::std::string pathToForwardModel("../models/model_ct_2015_11_27_17_24_54.bin");
 	//::std::string pathToForwardModel("../models/model_ct_2015_12_1_10_5_15.bin");
 	//::std::string pathToForwardModel("../models/model_ct_2015_12_2_12_12_35.bin");
 	//::std::string pathToForwardModel("../models/2016-02-11-11-12-45_adapted.bin");
-	::std::string pathToForwardModel("../models/2016-02-11-14-28-28_adapted.bin");
+	//::std::string pathToForwardModel("../models/2016-02-11-14-28-28_adapted.bin");
 	
 	try
 	{
@@ -438,7 +438,7 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 	CTR_status localStat;		
 	
 	// CKim - Flags
-	bool teleOpCtrl = false;		bool safeToTeleOp = false;			double scl = 0.5;	double kp = 3.0;
+	bool teleOpCtrl = false;		bool safeToTeleOp = false;			double scl = 1.0;	double kp = 3.0;
 
 	bool adaptModelFlag = false;
 
@@ -562,6 +562,7 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 			// if least square error is larger than 1 and if joints has been limited. 
 
 			mySelf->SolveInverseKin(localStat);			// Updates localStat.tgtMotorCnt, tgtJang
+			//mySelf->m_bCLIK = true;
 
 			int flag = WaitForSingleObject(mySelf->m_hEMevent,1000);
 			if(flag == WAIT_TIMEOUT)	
@@ -927,9 +928,9 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 	double dq[5];		
 	double dCnt[7];		
 	
-	double K[6] = {5.0, 5.0, 5.0, 0.5, 0.5, 0.5 };	// working
+	//double K[6] = {5.0, 5.0, 5.0, 0.5, 0.5, 0.5 };	// working
 	//double K[6] = {10.0, 10.0, 10.0, 10.0, 10.0, 10.0 };		// working
-	//double K[6] = {20.0, 20.0, 20.0, 20.0, 20.0, 20.0 };		// working
+	double K[6] = {20.0, 20.0, 20.0, 20.0, 20.0, 20.0 };		// working
 	//double K[6] = {10.0, 10.0, 10.0, 10.0, 10.0, 10.0 };		// working
 	//double K[6] = { 5.0, 5.0, 5.0, 5.0, 5.0, 5.0 };				// For sensor feedback + estimator
 	//double K[6] = { 1.5, 1.5, 1.5, 0.1, 0.1, 0.1 };				// For sensor feedback + estimator
@@ -958,7 +959,8 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 
 		// CKim - Apply Control Law to calculate joint velocity
 		// CKim - Position FeedForward Control.
-		if(mySelf->m_InvKinOn || mySelf->m_teleOpMode)	
+		//if(mySelf->m_InvKinOn || mySelf->m_teleOpMode)
+		if(mySelf->m_InvKinOn || mySelf->m_teleOpMode)
 		{
 			// CKim - Read shared variable (Motor Count Setpoint and gain)
 			// Motor count setpoint is updated from another loop that reads desired configuration from 
@@ -985,7 +987,7 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 					vel[i] = 0.0;									
 		}
 		// CKim - Differential Inverse Kinematics Control.
-		else if(mySelf->m_bCLIK)	
+		else if(mySelf->m_bCLIK )	
 		{
 
 			// CKim - Read shared variables (sensed / target posdir and kinematics model)
@@ -1003,7 +1005,7 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 			LeaveCriticalSection(&m_cSection);
 
 			// CKim - Evaluate model
-			mySelf->m_kinLWPR->TipFwdKinJac(localStat.currJang, localStat.currTipPosDir, J, mySelf->m_bCLIK);
+			mySelf->m_kinLWPR->TipFwdKinJac(localStat.currJang, localStat.currTipPosDir, J,true);
 			//mySelf->m_kinLib->EvalCurrentKinematicsModelNumeric(localStat.currJang, localStat.currTipPosDir, J, mySelf->m_bCLIK);
 
 			// CKim - Apply Closed Loop Inverse kienmatics control law. dq = inv(J) x (dxd + K(xd - xm))
@@ -1028,7 +1030,8 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 			}
 
 			// CKim - Invert jacobian, handle singularity and solve
-			mySelf->m_kinLib->ApplyKinematicControl(J,err,dq);
+			//mySelf->m_kinLib->ApplyKinematicControl(J,err,dq);
+			mySelf->m_kinLWPR->ApplyKinematicControl(J,err,dq);
 
 			// CKim - Convert dotq into motor velocity
 			mySelf->dJangTodCnt(dq, dCnt);

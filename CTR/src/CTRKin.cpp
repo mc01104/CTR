@@ -1,6 +1,7 @@
 #include "StdAfx.h"
 #include "CTRKin.h"
 #include "ChunTimer.h"
+#include "Utilities.h"
 
 
 CTRKin::CTRKin(void)
@@ -992,17 +993,20 @@ void CTRKin::ApplyKinematicControl(const Eigen::MatrixXd& J, const Eigen::Matrix
 	Eigen::Matrix<double,5,5> A;	double lambda = 0.1;				Eigen::Matrix<double,5,1> sv;
 	double eps;						double condNum;
 
+	//::std::cout << J << ::std::endl;
 	// CKim - Invert jacobian, handle singularity and solve
 	JtJ = J.transpose()*J;			b = J.transpose()*err;
 	Eigen::JacobiSVD<Eigen::Matrix<double,5,5>> Jsvd(JtJ,Eigen::ComputeThinU | Eigen::ComputeThinV);
 	sv = Jsvd.singularValues();	
 
 	double conditionNumber = sv(0, 0)/sv(4, 0);
-	double conditionThreshold = 1e07;
+	//double conditionNumber = sv(4, 0)/sv(0, 0);
+	double conditionThreshold = 1e09;
 	
 	//::std::cout << conditionNumber << ::std::endl;
 	//os << conditionNumber << ::std::endl;
 	if (conditionNumber >= conditionThreshold)
+	//if(false)
 	{
 		::std::cout << conditionNumber << ::std::endl;
 		double epsilon = conditionThreshold * sv(4, 0) - sv(0, 0);
@@ -1014,7 +1018,7 @@ void CTRKin::ApplyKinematicControl(const Eigen::MatrixXd& J, const Eigen::Matrix
 		Jsvd.compute(A);
 	}
 	sv = Jsvd.singularValues();	
-	//::std::cout << sv(0, 0)/sv(4, 0) << ::std::endl;
+	::std::cout << sv(0, 0)/sv(4, 0) << ::std::endl;
 	//eps = sv(0,0)*Eigen::NumTraits<double>::epsilon();
 	//
 	////::std::cout << JtJ.determinant() << ::std::endl;
@@ -1035,10 +1039,11 @@ void CTRKin::ApplyKinematicControl(const Eigen::MatrixXd& J, const Eigen::Matrix
 	//{
 	//	//localStat.invKinOK = true;
 	//}
-	
+	//::std::cout << J.col(2) << ::std::endl;
 	dotq = Jsvd.solve(b);
 	//::std::cout << dotq << ::std::endl;
 	for(int i=0; i<5; i++)	{	dq[i] = dotq(i,0);	}
+	//PrintCArray(dq, 5);
 }
 
 

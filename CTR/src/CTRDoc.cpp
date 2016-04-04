@@ -561,8 +561,8 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 			// and applies joint limit to the solution. Two flags, invKinOK and limitOK will be raised
 			// if least square error is larger than 1 and if joints has been limited. 
 
-			mySelf->SolveInverseKin(localStat);			// Updates localStat.tgtMotorCnt, tgtJang
-			//mySelf->m_bCLIK = true;
+			//mySelf->SolveInverseKin(localStat);			// Updates localStat.tgtMotorCnt, tgtJang
+			mySelf->m_bCLIK = true;
 
 			int flag = WaitForSingleObject(mySelf->m_hEMevent,1000);
 			if(flag == WAIT_TIMEOUT)	
@@ -959,8 +959,8 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 
 		// CKim - Apply Control Law to calculate joint velocity
 		// CKim - Position FeedForward Control.
+		if(mySelf->m_InvKinOn)
 		//if(mySelf->m_InvKinOn || mySelf->m_teleOpMode)
-		if(mySelf->m_InvKinOn || mySelf->m_teleOpMode)
 		{
 			// CKim - Read shared variable (Motor Count Setpoint and gain)
 			// Motor count setpoint is updated from another loop that reads desired configuration from 

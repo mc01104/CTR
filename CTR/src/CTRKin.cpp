@@ -473,7 +473,7 @@ void CTRKin::InverseKinematicsLSQ(const double* tgtPosOrt, const double* init, d
 	Eigen::MatrixXd Coeff(125,6);		GetFAC(Coeff);
 	for(int i=0; i<5; i++)	{	jAng[i] = init[i];		}
 	lambda = 0.001;		exitCond = 0;
-
+	
 	// CKim - Iterate
 	for(iter = 0; iter < maxiter; iter++)
 	{
@@ -490,6 +490,8 @@ void CTRKin::InverseKinematicsLSQ(const double* tgtPosOrt, const double* init, d
 		EvalJ_LSQ(jAng,tgtPosOrt,Coeff,J);
 		
 		// CKim - Find the update direction. update = - inv ( (JtJ + lambda*diag(JtJ) ) Jt*fx
+
+
 		b = -1.0 * J.transpose()*fx;
 		JtJ = J.transpose()*J;		A = JtJ;
 		for(int i=0; i<5; i++)	{	A(i,i) += lambda*JtJ(i,i);	}
@@ -995,7 +997,15 @@ void CTRKin::ApplyKinematicControl(const Eigen::MatrixXd& J, const Eigen::Matrix
 
 	//::std::cout << J << ::std::endl;
 	// CKim - Invert jacobian, handle singularity and solve
-	JtJ = J.transpose()*J;			b = J.transpose()*err;
+	double scalarWeight = 100.0;
+	Eigen::Matrix<double, 6,6> weights;
+	weights.setIdentity();
+	for (int i = 3; i < 6; ++i)
+		weights(i,i) = pow(scalarWeight,2);
+
+	//JtJ = J.transpose()*J;			b = J.transpose()*err;
+	JtJ = J.transpose() * weights * J;			b = J.transpose()* weights * err;
+
 	Eigen::JacobiSVD<Eigen::Matrix<double,5,5>> Jsvd(JtJ,Eigen::ComputeThinU | Eigen::ComputeThinV);
 	sv = Jsvd.singularValues();	
 

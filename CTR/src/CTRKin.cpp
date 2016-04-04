@@ -1011,7 +1011,7 @@ void CTRKin::ApplyKinematicControl(const Eigen::MatrixXd& J, const Eigen::Matrix
 
 	double conditionNumber = sv(0, 0)/sv(4, 0);
 	//double conditionNumber = sv(4, 0)/sv(0, 0);
-	double conditionThreshold = 1e09;
+	double conditionThreshold = 1e06;
 	
 	//::std::cout << conditionNumber << ::std::endl;
 	//os << conditionNumber << ::std::endl;

@@ -929,8 +929,8 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 	double dCnt[7];		
 	
 	//double K[6] = {5.0, 5.0, 5.0, 0.5, 0.5, 0.5 };	// working
-	//double K[6] = {10.0, 10.0, 10.0, 10.0, 10.0, 10.0 };		// working
-	double K[6] = {20.0, 20.0, 20.0, 20.0, 20.0, 20.0 };		// working
+	double K[6] = {10.0, 10.0, 10.0, 10.0, 10.0, 10.0 };		// working
+	
 	//double K[6] = {10.0, 10.0, 10.0, 10.0, 10.0, 10.0 };		// working
 	//double K[6] = { 5.0, 5.0, 5.0, 5.0, 5.0, 5.0 };				// For sensor feedback + estimator
 	//double K[6] = { 1.5, 1.5, 1.5, 0.1, 0.1, 0.1 };				// For sensor feedback + estimator
@@ -1585,7 +1585,7 @@ void CCTRDoc::dJangTodCnt(const double* dJ, double* dCnt)
 {
 	// CKim - dJ = { da21, da31, dL31, da1, dL1 }, dCnt = { L1, L3, 0, a1, a2, a3, 0 }
 	double da1, da2, da3, dL1, dL3;			
-	double scl, tmp;		double maxLinVel = 10.0;		double maxRotVel = 4.0*3.141592;
+	double scl, tmp;		double maxLinVel = 50.0;		double maxRotVel = 4.0*3.141592;
 
 	da1 = dJ[3];			da2 = dJ[0] + da1;			da3 = dJ[1] + da1;
 	dL1 = dJ[4];			dL3 = dJ[2] + dL1;
@@ -1673,6 +1673,7 @@ void CCTRDoc::SwitchTeleOpMode(bool onoff)
 		{
 			AfxMessageBox("Sparta!! TeleOp thread");
 		}
+		this->m_bCLIK = false;
 	}
 }
 

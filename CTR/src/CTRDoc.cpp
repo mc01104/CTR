@@ -929,9 +929,9 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 	double dCnt[7];		
 	
 	//double K[6] = {5.0, 5.0, 5.0, 0.5, 0.5, 0.5 };	// working
-	double K[6] = {10.0, 10.0, 10.0, 10.0, 10.0, 10.0 };		// working
+	//double K[6] = {10.0, 10.0, 10.0, 1.0, 1.0, 1.0 };		// working
 	
-	//double K[6] = {10.0, 10.0, 10.0, 10.0, 10.0, 10.0 };		// working
+	double K[6] = {10.0, 10.0, 10.0, 10.0, 10.0, 10.0 };		// working
 	//double K[6] = { 5.0, 5.0, 5.0, 5.0, 5.0, 5.0 };				// For sensor feedback + estimator
 	//double K[6] = { 1.5, 1.5, 1.5, 0.1, 0.1, 0.1 };				// For sensor feedback + estimator
 	//double K[6] = {1.0, 1.0, 1.0, 0.5, 0.5, 0.5 };	// working	
@@ -1032,6 +1032,10 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 			// CKim - Invert jacobian, handle singularity and solve
 			//mySelf->m_kinLib->ApplyKinematicControl(J,err,dq);
 			mySelf->m_kinLWPR->ApplyKinematicControl(J,err,dq);
+	/*		std::cout << "q = ";
+			PrintCArray(localStat.currJang, 5);
+			std::cout << "dq = ";
+			PrintCArray(dq,5);*/
 
 			// CKim - Convert dotq into motor velocity
 			mySelf->dJangTodCnt(dq, dCnt);
@@ -1585,7 +1589,7 @@ void CCTRDoc::dJangTodCnt(const double* dJ, double* dCnt)
 {
 	// CKim - dJ = { da21, da31, dL31, da1, dL1 }, dCnt = { L1, L3, 0, a1, a2, a3, 0 }
 	double da1, da2, da3, dL1, dL3;			
-	double scl, tmp;		double maxLinVel = 50.0;		double maxRotVel = 4.0*3.141592;
+	double scl, tmp;		double maxLinVel = 50.0;		double maxRotVel = 1.0*3.141592;
 
 	da1 = dJ[3];			da2 = dJ[0] + da1;			da3 = dJ[1] + da1;
 	dL1 = dJ[4];			dL3 = dJ[2] + dL1;

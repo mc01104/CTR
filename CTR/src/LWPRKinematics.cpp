@@ -253,7 +253,7 @@ LWPRKinematics::TipFwdKinJac(const double* jAng, double* posOrt, Eigen::MatrixXd
 				if(i==col)
 				{
 					//dq = FLT_EPSILON*fabs(jAng[i]);
-					dq = 0.0001;
+					dq = 0.01;
 
 					//if(dq==0.0) {	dq = FLT_EPSILON;	}
 				
@@ -265,8 +265,9 @@ LWPRKinematics::TipFwdKinJac(const double* jAng, double* posOrt, Eigen::MatrixXd
 		
 			TipFwdKinEx(q, Fq);
 			//PrintCArray(Fq, 6);
-			for(int i=0; i<6; i++)	{	J(i,col) = (Fq[i] - posOrt[i])/dq;	}
+			for(int i=0; i<6; i++)	{	J(i,col) = (Fq[i] - posOrt[i])/dq;}
 		}
+		//std::cout << "J = " << J << std::endl;
 	}
 	//::std::cout << "---------------" << ::std::endl;
 	ReleaseMutex(this->m_hLWPRMutex);

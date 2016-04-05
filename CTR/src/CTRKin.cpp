@@ -990,45 +990,98 @@ void CTRKin::EvalCurrentKinematicsModel_NEW(const double* jAng,  const double* t
 
 void CTRKin::ApplyKinematicControl(const Eigen::MatrixXd& J, const Eigen::MatrixXd& err, double* dq)
 {
+	//::std::cout << "err = " << err.transpose() << ::std::endl;
+
+	// George - ignoring small errors
+	Eigen::VectorXd localErr = err.col(0);
+	for(int i = 0; i < 3 ; ++i)
+		if(fabs(localErr(i)) < 0.1)
+			localErr(i) = 0;
+
+	if(localErr.segment(3,3).norm() < 1 * M_PI / 180)
+		localErr.segment(3,3).setZero();
+
 	// CKim - This function is called when I use 6 x 5 Jacobian
 	Eigen::Matrix<double,5,5> JtJ;	Eigen::Matrix<double,5,1> b;		Eigen::Matrix<double,5,1> dotq;		
-	Eigen::Matrix<double,5,5> A;	double lambda = 0.1;				Eigen::Matrix<double,5,1> sv;
+	Eigen::Matrix<double,5,5> A;	double lambda = 10;				Eigen::Matrix<double,5,1> sv;
 	double eps;						double condNum;
 
 	//::std::cout << J << ::std::endl;
 	// CKim - Invert jacobian, handle singularity and solve
-	double scalarWeight = 100.0;
+	double scalarWeight = 50.0;
 	Eigen::Matrix<double, 6,6> weights;
 	weights.setIdentity();
 	for (int i = 3; i < 6; ++i)
 		weights(i,i) = pow(scalarWeight,2);
 
 	//JtJ = J.transpose()*J;			b = J.transpose()*err;
-	JtJ = J.transpose() * weights * J;			b = J.transpose()* weights * err;
+	JtJ = J.transpose() * weights * J;			b = J.transpose()* weights * localErr;
 
 	Eigen::JacobiSVD<Eigen::Matrix<double,5,5>> Jsvd(JtJ,Eigen::ComputeThinU | Eigen::ComputeThinV);
 	sv = Jsvd.singularValues();	
 
+	//for(int i = 0 ; i < 5 ; ++i)
+	//	::std::cout << sv(i,i)  << "\t";
+	//::std::cout << ::std::endl;
+	//std::cout << "sv = " << sv.transpose() << ::std::endl;
+	//std::cout << "U = " << Jsvd.matrixV() << ::std::endl;
+	//std::cout << "J = " << J << ::std::endl;
+
+	//double minimunSV = 1;
+	//int index = 5;
+	//for(int i = 0 ; i < 5 ; ++i)
+	//	if(sv(i,0) < minimunSV)
+	//	{
+	//		index = i;
+	//		::std::cout << index << ::std::endl;
+	//		break;
+	//	}
+
+	//Eigen::MatrixXd Xns = Jsvd.matrixV().block(0,0,5,index);
+	//Eigen::MatrixXd invSVns(index,index);
+	//invSVns.setZero();
+	//for(int i = 0; i < index; ++i)
+	//	invSVns(i,i) = 1/sv(i,0);
+
+	//dotq = Xns * invSVns * Xns.transpose() * b;
+	
+
 	double conditionNumber = sv(0, 0)/sv(4, 0);
 	//double conditionNumber = sv(4, 0)/sv(0, 0);
-	double conditionThreshold = 1e06;
+	double conditionThreshold = 2e4;
 	
+/*	for (int i = 0; i < 5; ++i)
+		JtJ(i,i) += lambda;
+
+	Jsvd.compute(JtJ);*/
 	//::std::cout << conditionNumber << ::std::endl;
 	//os << conditionNumber << ::std::endl;
 	if (conditionNumber >= conditionThreshold)
 	//if(false)
 	{
-		::std::cout << conditionNumber << ::std::endl;
-		double epsilon = conditionThreshold * sv(4, 0) - sv(0, 0);
-		epsilon /= 1 - conditionThreshold;
-		A = JtJ;
-		for(int i=0; i<5; i++)	
-			A(i,i) += epsilon;
+		::std::cout << "TRANSPOSE" << ::std::endl;
+		//::std::cout << " before" << ::std::endl;
+		//::std::cout << conditionNumber << ::std::endl;
+		//double epsilon = conditionThreshold * sv(4, 0) - sv(0, 0);
+		//epsilon /= 1 - conditionThreshold;
+		//A = JtJ;
+		//for(int i=0; i<5; i++)	
+		//	A(i,i) += epsilon;
 
-		Jsvd.compute(A);
+		//Jsvd.compute(A);
+		//sv = Jsvd.singularValues();	
+		//::std::cout << " after" << ::std::endl;
+		//::std::cout << sv(0, 0)/sv(4, 0) << ::std::endl;
+
+		dotq = 0.0005*b;
+		dotq(2) *= 1000;
+		dotq(4) *= 1000;
+
+		for(int i=0; i<5; i++)	{	dq[i] = dotq(i,0);	}
+
+		return;
 	}
-	sv = Jsvd.singularValues();	
-	::std::cout << sv(0, 0)/sv(4, 0) << ::std::endl;
+
 	//eps = sv(0,0)*Eigen::NumTraits<double>::epsilon();
 	//
 	////::std::cout << JtJ.determinant() << ::std::endl;
@@ -1050,6 +1103,7 @@ void CTRKin::ApplyKinematicControl(const Eigen::MatrixXd& J, const Eigen::Matrix
 	//	//localStat.invKinOK = true;
 	//}
 	//::std::cout << J.col(2) << ::std::endl;
+	::std::cout << "INVERSE" << ::std::endl;
 	dotq = Jsvd.solve(b);
 	//::std::cout << dotq << ::std::endl;
 	for(int i=0; i<5; i++)	{	dq[i] = dotq(i,0);	}

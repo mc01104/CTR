@@ -48,7 +48,7 @@ BEGIN_MESSAGE_MAP(CCTRView, CFormView)
 	ON_BN_CLICKED(IDC_BUTTON7, &CCTRView::OnClickedBtnGoToRecConf)
 
 	ON_BN_CLICKED(IDC_BTN_MOVE2, &CCTRView::OnClickedBtnStopRobot)
-	ON_BN_CLICKED(IDC_BTN_MOVE5, &CCTRView::OnClickedBtnStopRobot)
+	ON_BN_CLICKED(IDC_BTN_MOVE5, &CCTRView::OnClickedBtnResetEStop)
 	ON_BN_CLICKED(IDC_BTN_MOVE3, &CCTRView::OnClickedBtnStartLog)
 	ON_BN_CLICKED(IDC_BTN_MOVE4, &CCTRView::OnClickedBtnStopLog)
 
@@ -72,6 +72,7 @@ CCTRView::CCTRView()
 	m_blogData = false;
 	this->logDataFlag = false;
 
+	this->eStopPressed = false;
 	
 	for(int i = 0; i < 5; ++i)
 		this->recConfiguration[i] = 0.0;
@@ -95,8 +96,8 @@ void CCTRView::DoDataExchange(CDataExchange* pDX)
 		for(int i=0; i<5; i++)	{	DDX_Text(pDX, m_idCmdJang[i], m_cmdJang[i]);	}
 	}
 
-
-	DDX_Radio(pDX, IDC_RADIO_JA, m_ctrlMode);
+	if (!this->eStopPressed)
+		DDX_Radio(pDX, IDC_RADIO_JA, m_ctrlMode);
 
 	DDV_MinMaxInt(pDX, m_ctrlMode, 0, 1);
 
@@ -464,11 +465,17 @@ void CCTRView::OnClickedBtnStopLog()
 
 void CCTRView::OnClickedBtnStopRobot()
 {
-	this->GetDlgItem(IDC_RADIO_JA)->EnableWindow();
-	this->GetDlgItem(IDC_RADIO_TELE)->EnableWindow(false);
+	//this->eStopPressed = true;
+	//CheckRadioButton(IDC_RADIO_JA, IDC_RADIO_TELE, IDC_RADIO_JA);
 	
 	this->GetDocument()->ToggleEmergencyStop();
 }
 void CCTRView::LogData(::std::ofstream& os)
 {
+}
+
+void CCTRView::OnClickedBtnResetEStop()
+{
+	this->eStopPressed = false;
+	this->GetDocument()->ToggleEmergencyStop();
 }

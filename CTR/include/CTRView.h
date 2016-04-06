@@ -63,7 +63,7 @@ public:
 	afx_msg void OnClickedBtnStopRobot();
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	afx_msg void OnViewGraphicwin();
-	
+	afx_msg void OnClickedBtnResetEStop();
 	afx_msg void OnUpdateViewGraphicwin(CCmdUI *pCmdUI);
 	afx_msg void OnBnClickedRadioModes();
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
@@ -96,7 +96,7 @@ public:
 	CString m_sysMsg;
 	int m_ctrlMode;
 	bool m_Warning[2];
-
+	bool eStopPressed;
 	std::ofstream	m_logfstr;
 	bool			m_blogData;
 

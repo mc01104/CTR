@@ -48,6 +48,7 @@ BEGIN_MESSAGE_MAP(CCTRView, CFormView)
 	ON_BN_CLICKED(IDC_BUTTON7, &CCTRView::OnClickedBtnGoToRecConf)
 
 	ON_BN_CLICKED(IDC_BTN_MOVE2, &CCTRView::OnClickedBtnStopRobot)
+	ON_BN_CLICKED(IDC_BTN_MOVE5, &CCTRView::OnClickedBtnStopRobot)
 	ON_BN_CLICKED(IDC_BTN_MOVE3, &CCTRView::OnClickedBtnStartLog)
 	ON_BN_CLICKED(IDC_BTN_MOVE4, &CCTRView::OnClickedBtnStopLog)
 
@@ -445,18 +446,13 @@ void CCTRView::OnClickedBtnGoToRecConf()
 
 void CCTRView::OnClickedBtnStartLog()
 {
-	static int id = 1;
-	char buffer[5];
-	itoa(id, buffer, 10);
-	::std::string filename = ::std::string(buffer) + ".txt";
+	::std::string filename = GetDateString() + ".txt";
 	this->logStream  = ::std::ofstream(filename.c_str());
 	
 	this->logDataFlag = true;
-	::std::string dateStr = GetDateString();
-	::std::cout << dateStr << ::std::endl;
+	
 	GetDlgItem(IDC_BTN_MOVE3)->EnableWindow(FALSE);
 	GetDlgItem(IDC_BTN_MOVE4)->EnableWindow(TRUE);
-	id++;
 }
 
 void CCTRView::OnClickedBtnStopLog()
@@ -468,7 +464,10 @@ void CCTRView::OnClickedBtnStopLog()
 
 void CCTRView::OnClickedBtnStopRobot()
 {
-	::std::cout << "emergency stop" << ::std::endl;
+	this->GetDlgItem(IDC_RADIO_JA)->EnableWindow();
+	this->GetDlgItem(IDC_RADIO_TELE)->EnableWindow(false);
+	
+	this->GetDocument()->ToggleEmergencyStop();
 }
 void CCTRView::LogData(::std::ofstream& os)
 {

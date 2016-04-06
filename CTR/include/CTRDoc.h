@@ -69,6 +69,7 @@ private:
 	bool				m_bStaticPlayBack;
 	bool				m_bRunExperiment;
 	bool				m_bCLIK;
+	bool				emergencyStop;
 
 	HANDLE				m_hTeleOpThread;	// CKim - Handle to the thread for teleoperation
 	HANDLE				m_hEMTrck;
@@ -125,6 +126,8 @@ public:
 
 	void	SaveModel();
 	void	ClearCommandQueue();
+	void	ToggleEmergencyStop();
+
 #ifdef _DEBUG
 	virtual void AssertValid() const;
 	virtual void Dump(CDumpContext& dc) const;

@@ -80,7 +80,7 @@ CCTRDoc::CCTRDoc()
 	// it enters a loop which iterates spin count times, checking to see if the lock is released. 
 	// If the lock is not released before the loop finishes, the thread goes to sleep to wait for the lock to be released.
 	InitializeCriticalSectionAndSpinCount(&m_cSection,16);
-	
+	this->emergencyStop = false;
 	// CKim - Initialize Haptic device
 	ChunHaptic::InitDevice();		m_Omni = new ChunHaptic();		m_Omni->StartLoop();
 
@@ -942,6 +942,19 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 	int navg = 50;		
 	timer.ResetTime();		
 	long endTime;		
+
+	if (mySelf->emergencyStop)
+	{
+		double vel[7] = {0};
+		mySelf->m_motionCtrl->DoTeleOpMotion(vel);	
+
+		while(!mySelf->m_cmdQueue.empty())
+			mySelf->m_cmdQueue.pop();
+
+		AfxMessageBox("EMERGENCY STOP");
+
+		return 0;
+	}
 
 	while(mySelf->m_motorConnected)
 	{
@@ -2109,4 +2122,9 @@ void CCTRDoc::SwitchAllControlFlagsOff()
 	m_bStaticPlayBack = false;
 	m_bRunExperiment = false;
 	m_bCLIK = false;
+}
+
+void CCTRDoc::ToggleEmergencyStop()
+{
+	this->emergencyStop = !this->emergencyStop;
 }

@@ -14,6 +14,7 @@
 #include "ChunVtkDlg.h"
 #include "ChunHaptic.h"
 #include "ChunMotion.h"
+#include "Utilities.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -45,6 +46,8 @@ BEGIN_MESSAGE_MAP(CCTRView, CFormView)
 	ON_BN_CLICKED(IDC_BUTTON8, &CCTRView::OnClickedBtnRight)
 	ON_BN_CLICKED(IDC_BUTTON9, &CCTRView::OnClickedBtnRecConf)
 	ON_BN_CLICKED(IDC_BUTTON7, &CCTRView::OnClickedBtnGoToRecConf)
+
+	ON_BN_CLICKED(IDC_BTN_MOVE2, &CCTRView::OnClickedBtnStopRobot)
 	ON_BN_CLICKED(IDC_BTN_MOVE3, &CCTRView::OnClickedBtnStartLog)
 	ON_BN_CLICKED(IDC_BTN_MOVE4, &CCTRView::OnClickedBtnStopLog)
 
@@ -173,7 +176,7 @@ void CCTRView::OnTimer(UINT_PTR nIDEvent)
 	jAng[3] *= 180.0/3.141592;
 	
 	for (int i = 0; i < 5; ++i)
-		m_actJang[i].Format("%.3f",stat.currJang[i]);
+		m_actJang[i].Format("%.3f",jAng[i]);
 
 
 	UpdateData(false);
@@ -188,10 +191,10 @@ void CCTRView::OnTimer(UINT_PTR nIDEvent)
 
 		for(int i=0; i<6; i++)	
 			this->logStream << stat.tgtTipPosDir[i] << "\t";		
-		this->logStream << ::std::endl;
+		//this->logStream << ::std::endl;
 
 		for(int i = 0; i < 5; ++i)
-			this->logStream << stat.currJang[i] < "\t";
+			this->logStream << stat.currJang[i] << "\t";
 		this->logStream << ::std::endl;
 
 	}
@@ -335,7 +338,7 @@ void CCTRView::OnBnClickedRadioModes()
 		this->GetDocument()->SwitchTeleOpMode(1);	
 		return;		
 	}
-	else if(prevMode == 2)	
+	else if(prevMode == 1)	
 	{	
 		this->GetDocument()->SwitchTeleOpMode(0);	
 		return;		
@@ -395,21 +398,15 @@ void CCTRView::OnClickedBtnHome()
 
 void CCTRView::OnClickedBtnLeft()
 {
+	CTR_status stat;
+	this->GetDocument()->GetCurrentStatus(stat);
+
 	CString str;
 	double p[10] = {0};
+	memcpy(p, stat.currJang, sizeof(double) * 5); 
+
 	if(m_ctrlMode == 0)	
 	{
-		for(int i=0; i<5; i++)	
-		{
-			this->GetDlgItemTextA(m_idCmdJang[i], str);		
-
-			p[i] = 	atof(str);		
-
-			p[i+5] = 0;		
-		}
-
-		p[0] *= (3.141592/180.0);	p[1] *= (3.141592/180.0);	p[3] *= (3.141592/180.0);
-
 		p[4] += this->transIncrement;
 		this->GetDocument()->SendCommand(0,p);
 	}
@@ -417,38 +414,27 @@ void CCTRView::OnClickedBtnLeft()
 
 void CCTRView::OnClickedBtnRight()
 {
+	CTR_status stat;
+	this->GetDocument()->GetCurrentStatus(stat);
+
 	CString str;
 	double p[10] = {0};
+	memcpy(p, stat.currJang, sizeof(double) * 5); 
+
 	if(m_ctrlMode == 0)	
 	{
-		for(int i=0; i<5; i++)	
-		{
-			this->GetDlgItemTextA(m_idCmdJang[i], str);		
-
-			p[i] = 	atof(str);		
-
-			p[i+5] = 0;		
-		}
-
-		p[0] *= (3.141592/180.0);	p[1] *= (3.141592/180.0);	p[3] *= (3.141592/180.0);
-
 		p[4] -= this->transIncrement;
 		this->GetDocument()->SendCommand(0,p);
 	}
-
 }
 
 void CCTRView::OnClickedBtnRecConf()
 {
+	CTR_status stat;
+	this->GetDocument()->GetCurrentStatus(stat);
+
 	CString str;
-	
-	for(int i=0; i<5; i++)	
-	{
-		this->GetDlgItemTextA(m_idCmdJang[i], str);		
-
-		this->recConfiguration[i] = 	atof(str);		
-	}
-
+	memcpy(this->recConfiguration, stat.currJang, sizeof(double) * 5); 
 }
 
 void CCTRView::OnClickedBtnGoToRecConf()
@@ -460,21 +446,30 @@ void CCTRView::OnClickedBtnGoToRecConf()
 void CCTRView::OnClickedBtnStartLog()
 {
 	static int id = 1;
-	char* buffer;
-	::std::string filename = ::std::string(itoa(id, buffer, 10)) + ".txt";
+	char buffer[5];
+	itoa(id, buffer, 10);
+	::std::string filename = ::std::string(buffer) + ".txt";
 	this->logStream  = ::std::ofstream(filename.c_str());
 	
 	this->logDataFlag = true;
-
-	GetDlgItem(IDC_BTN_MOVE4)->EnableWindow(FALSE);
+	::std::string dateStr = GetDateString();
+	::std::cout << dateStr << ::std::endl;
+	GetDlgItem(IDC_BTN_MOVE3)->EnableWindow(FALSE);
+	GetDlgItem(IDC_BTN_MOVE4)->EnableWindow(TRUE);
+	id++;
 }
 
 void CCTRView::OnClickedBtnStopLog()
 {
 	this->logStream.close();
-	GetDlgItem(IDC_BTN_MOVE3)->EnableWindow(FALSE);
+	GetDlgItem(IDC_BTN_MOVE4)->EnableWindow(FALSE);
+	GetDlgItem(IDC_BTN_MOVE3)->EnableWindow(TRUE);
 }
 
+void CCTRView::OnClickedBtnStopRobot()
+{
+	::std::cout << "emergency stop" << ::std::endl;
+}
 void CCTRView::LogData(::std::ofstream& os)
 {
 }

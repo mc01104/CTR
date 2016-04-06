@@ -54,12 +54,25 @@ public:
 	afx_msg void OnDestroy();
 	afx_msg void OnClickedBtnHome();
 	afx_msg void OnClickedBtnMove();
+	afx_msg void OnClickedBtnLeft();
+	afx_msg void OnClickedBtnRight();
+	afx_msg void OnClickedBtnRecConf();
+	afx_msg void OnClickedBtnGoToRecConf();
+	afx_msg void OnClickedBtnStartLog();
+	afx_msg void OnClickedBtnStopLog();
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	afx_msg void OnViewGraphicwin();
 	
 	afx_msg void OnUpdateViewGraphicwin(CCmdUI *pCmdUI);
 	afx_msg void OnBnClickedRadioModes();
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
+	
+	bool logDataFlag;
+	void LogData(::std::ofstream& os);
+	::std::ofstream logStream;
+
+	double transIncrement;
+	double recConfiguration[5];
 
 	// Ckim - Control IDs and variables
 	static int		m_idActMotor[7];		CString		m_actMotor[7];
@@ -89,9 +102,9 @@ public:
 	LARGE_INTEGER m_Stime, m_Etime, m_Elapsed, m_Freq;
 
 	afx_msg void OnEnKillfocusForget();
-	afx_msg void OnBnClickedCheckLWPR();
-	afx_msg void OnBnClickedButtonSave();
-	afx_msg void OnCheckTraj();
+	//afx_msg void OnBnClickedCheckLWPR();
+	//afx_msg void OnBnClickedButtonSave();
+	//afx_msg void OnCheckTraj();
 
 	CComboBox m_traj_type;
 	CString IDC_CIRCLE;

@@ -49,12 +49,6 @@ BEGIN_MESSAGE_MAP(CCTRDoc, CDocument)
 
 	ON_BN_CLICKED(IDC_INIT_EM, &CCTRDoc::OnBnClickedInitEm)
 	ON_BN_CLICKED(IDC_REGST, &CCTRDoc::OnBnClickedRegst)
-	ON_BN_CLICKED(IDC_CHK_ADAPT, &CCTRDoc::OnBnClickedChkAdapt)
-	ON_BN_CLICKED(IDC_BTN_PLAY, &CCTRDoc::OnBnClickedBtnPlay)
-	ON_BN_CLICKED(IDC_BTN_EXP, &CCTRDoc::OnBnClickedExp)
-	ON_BN_CLICKED(IDC_BTN_MDLRESET, &CCTRDoc::OnBnClickedBtnMdlreset)
-	ON_BN_CLICKED(IDC_CHK_FEEDBACK, &CCTRDoc::OnBnClickedChkFeedback)
-	ON_BN_CLICKED(IDC_CHK_INVKINON, &CCTRDoc::OnBnClickedChkInvkinon)
 	
 END_MESSAGE_MAP()
 
@@ -74,13 +68,14 @@ CCTRDoc::CCTRDoc()
 	m_ioRunning = false;		m_teleOpMode = false;
 	
 	m_date = GetDateString();
+
 	// CKim - Initialize critical section
 	// Initializes a critical section object and sets the spin count for the critical section.
 	// When a thread tries to acquire a critical section that is locked, the thread spins: 
 	// it enters a loop which iterates spin count times, checking to see if the lock is released. 
 	// If the lock is not released before the loop finishes, the thread goes to sleep to wait for the lock to be released.
 	InitializeCriticalSectionAndSpinCount(&m_cSection,16);
-	this->emergencyStop = false;
+
 	// CKim - Initialize Haptic device
 	ChunHaptic::InitDevice();		m_Omni = new ChunHaptic();		m_Omni->StartLoop();
 
@@ -90,26 +85,20 @@ CCTRDoc::CCTRDoc()
 
 	m_kinLib = new CTRKin;
 
-	// paths for LWPR models
-	//::std::string pathToForwardModel("../models/model_ct_2015_11_9_14_0_40.bin");
-	//::std::string pathToForwardModel("../models/model_ct_2015_11_19_9_17_44.bin");
-	//::std::string pathToForwardModel("../models/model_ct_2015_11_19_12_58_45.bin");
-	//::std::string pathToForwardModel("../models/model_ct_2015_11_27_13_9_5_update_metric.bin");
-	::std::string pathToForwardModel("../models/model_ct_2015_11_27_17_24_54.bin");
-	//::std::string pathToForwardModel("../models/model_ct_2015_12_1_10_5_15.bin");
-	//::std::string pathToForwardModel("../models/model_ct_2015_12_2_12_12_35.bin");
-	//::std::string pathToForwardModel("../models/2016-02-11-11-12-45_adapted.bin");
-	//::std::string pathToForwardModel("../models/2016-02-11-14-28-28_adapted.bin");
+	// paths for LWPR models (TIP AND BALANCED PAIR)
+	::std::string pathToForwardModel("../models/model_ct_2016_4_6_17_25_29TIP.bin");
+	::std::string pathToForwardModelBP("../models/model_ct_2016_4_7_14_48_43BP.bin");
 	
 	try
 	{
 		m_kinLWPR = new LWPRKinematics(pathToForwardModel);
+		m_kinLWPR_BP = new LWPRKinematics(pathToForwardModelBP);
 	}
 	catch(LWPR_Exception& e)
 	{
 		::std::cout << ::std::string(e.getString()) << ::std::endl;
-		::std::cout << "memory" << ::std::endl;
 	}
+
 	m_Tracker = new ChunTracker;
 	m_TrjGen = new TrjGenerator;
 	
@@ -443,15 +432,8 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 	bool adaptModelFlag = false;
 
 	// CKim - Get handle to current view window
-	CFrameWnd * pFrame = (CFrameWnd *)(AfxGetApp()->m_pMainWnd);
+	CFrameWnd * pFrame = (CFrameWnd *) (AfxGetApp()->m_pMainWnd);
 	mySelf->m_hWndView = pFrame->GetActiveView()->m_hWnd;
-
-	// CKim - Log files
-	//::std::string fileName = "ExperimentData/" + GetDateString() + "-Teleop.txt";
-	::std::string fileName = "ExperimentData/" + mySelf->m_date + "-Teleop.txt";
-	//std::ofstream ofstr;	ofstr.open("TeleOpLog.txt");
-	//std::ofstream ofstrLWPR;	ofstrLWPR.open("TeleOpLogLPWR.txt");
-	std::ofstream ofstr;	ofstr.open(fileName.c_str());
 
 	// CKim - Parameters for loop speed measurement
 	ChunTimer timer;	int perfcnt = 0;	int navg = 5;		long loopTime = 0;
@@ -460,19 +442,11 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 	while(mySelf->m_teleOpMode)
 	{
 
-		//int flag = WaitForSingleObject(mySelf->m_hEMevent,1000);
-		//if(flag == WAIT_TIMEOUT)	
-		//{
-		//		AfxMessageBox("No event from EM Loop!");	return 0;
-		//}
-		// CKim - Read the shared variable (current cnt, jAng, .. ) that is used in this loop. 
 		EnterCriticalSection(&m_cSection);
 		for(int i=0; i<7; i++)	{	localStat.currMotorCnt[i] = mySelf->m_Status.currMotorCnt[i];	}
 		for(int i=0; i<5; i++)	{	localStat.currJang[i] = mySelf->m_Status.currJang[i];	}
 		for(int i=0; i<6; i++)	{	localStat.currTipPosDir[i] = mySelf->m_Status.currTipPosDir[i];	}
-		for(int i=0; i<6; i++)  {   localStat.sensedTipPosDir[i] = mySelf->m_Status.sensedTipPosDir[i]; }
 		LeaveCriticalSection(&m_cSection);
-		//mySelf->m_kinLWPR->TipFwdKin(localStat.currJang, localStat.currTipPosDir);
 
 		// CKim - Synch with haptic device by executing function in haptic device scheduler
 		// Exchange state with the device
@@ -485,8 +459,6 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 				mySelf->m_motionCtrl->StopMotion();			teleOpCtrl = false;		}
 		}
 	
-		//mySelf->m_kinLWPR->TipFwdKin(localStat.currJang, localStat.currTipPosDir);
-
 		// --------------------------------------------------------------- //
 		// CKim - Handle haptic device events. 
 		// 0/1: Button 1 down/up, 2/3: Button 2 down/up
@@ -549,8 +521,6 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 			// CKim - In teleop mode, command comes as a desired tip position and orientation, 
 			// defined in Haptic device system, transform haptic device input into the 
 			// target position and direction of the robot
-	
-
 			mySelf->MasterToSlave(localStat, scl);		// Updates robotStat.tgtTipPosDir
 			
 			// CKim - Update proxy location from current tip position.....
@@ -561,20 +531,9 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 			// and applies joint limit to the solution. Two flags, invKinOK and limitOK will be raised
 			// if least square error is larger than 1 and if joints has been limited. 
 
-			//mySelf->SolveInverseKin(localStat);			// Updates localStat.tgtMotorCnt, tgtJang
-			mySelf->m_bCLIK = true;
+			mySelf->SolveInverseKin(localStat);			// Updates localStat.tgtMotorCnt, tgtJang
 
-			int flag = WaitForSingleObject(mySelf->m_hEMevent,1000);
-			if(flag == WAIT_TIMEOUT)	
-			{
-				AfxMessageBox("No event from EM Loop!");	return 0;
-			}
-			else
-			{
-				if (mySelf->m_adapt_LWPR)
-					mySelf->m_kinLWPR->AdaptForwardModel(localStat.sensedTipPosDir, localStat.currJang);
-			}
-
+			// CHECK THIS PART OF THE CODE
 			// CKim - Teleoperation safety check - gradually increase the resistance and decrease controller gain
 			// when the leastSquare error is above threshold and jont limit is reached. This is to prevent any 
 			// sudden jump that may occur when the tip exits from such singular configuration
@@ -593,38 +552,6 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 			//	//if(kp > 10.0)	{	kp = 10.0;	}
 			//}
 
-			// CKim - Log
-			if(perfcnt==navg)
-			{
-				loopTime = timer.GetTime();
-				//loopTime /= navg;
-			
-//				ofstr<<loopTime<<" ";
-//				ofstr<<localStat.invKinOK<<" ";
-				for(int i=0; i<5; i++)	{	ofstr<<localStat.currJang[i]<<" ";	}
-				for(int i=0; i<6; i++)	{	ofstr<<localStat.sensedTipPosDir[i]<<" ";	}
-				for(int i=0; i<6; i++)	{	ofstr<<localStat.currTipPosDir[i]<<" ";	}
-				ofstr << mySelf->m_adapt_LWPR;
-				//for(int i = 0; i < 6; ++i) { ofstr << localStat.currTipPosDirLWPR[i] << " ";}
-				//for(int i=0; i<7; i++)	{	ofstr<<robotStat.tgtMotorCnt[i]<<" ";	}
-//				ofstr<<localStat.condNum<<" ";
-//				ofstr<<localStat.limitOK<<" ";
-				ofstr<<"\n";
-				
-				perfcnt = 0;		timer.ResetTime();
-
-/*				for (int i = 0; i < 6; i++)
-					ofstrLWPR << localStat.posOrLWPR[i] << " ";	
-
-				for (int i = 0; i < 3; i++)	
-					ofstrLWPR << localStat.currJang[i] << " ";	
-
-				ofstrLWPR << mySelf->m_adapt_LWPR;
-
-				ofstrLWPR << "\n";
-	*/			
-			}
-			else	{	perfcnt++;	}
 		}
 
 					
@@ -642,7 +569,7 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 			mySelf->m_Status.tgtJang[i] = localStat.tgtJang[i];		}
 		for(int i=0; i<7; i++)	{
 			mySelf->m_Status.tgtMotorCnt[i] = localStat.tgtMotorCnt[i];		}
-		//for(int i = 0; i < 6; i++) {mySelf->m_Status.currTipPosDir[i] = localStat.currTipPosDir[i];}
+
 
 		mySelf->m_Status.invKinOK = localStat.invKinOK;
 		mySelf->m_Status.limitOK = localStat.limitOK;
@@ -654,9 +581,6 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 	
 		LeaveCriticalSection(&m_cSection);
 	}
-	
-	ofstr.close();
-	//ofstrLWPR.close();
 
 	return 0;
 
@@ -941,24 +865,10 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 	int perfcnt = 0;	
 	int navg = 50;		
 	timer.ResetTime();		
-	long endTime;		
-
-	if (mySelf->emergencyStop)
-	{
-		double vel[7] = {0};
-		mySelf->m_motionCtrl->DoTeleOpMotion(vel);	
-
-		while(!mySelf->m_cmdQueue.empty())
-			mySelf->m_cmdQueue.pop();
-
-		AfxMessageBox("EMERGENCY STOP");
-
-		return 0;
-	}
+	long endTime = 0;		
 
 	while(mySelf->m_motorConnected)
 	{
-	
 		// CKim - Read from the motors - blocking function
 		mySelf->m_motionCtrl->GetMotorPos(localStat.currMotorCnt);	
 		mySelf->m_motionCtrl->GetErrorFlag(localStat.errFlag);
@@ -968,12 +878,13 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 
 		// TODO: learn an LWPR model for the balanced pair as well
 		// CKim - Evaluate Kinematics Model for balanced pair position and orientation
-		mySelf->m_kinLib->BalancedPairFwdKin(localStat.currJang, localStat.bpTipPosDir);
+		//mySelf->m_kinLib->BalancedPairFwdKin(localStat.currJang, localStat.bpTipPosDir);
+		mySelf->m_kinLWPR_BP->TipFwdKin(localStat.currJang, localStat.bpTipPosDir);
 
 		// CKim - Apply Control Law to calculate joint velocity
 		// CKim - Position FeedForward Control.
-		if(mySelf->m_InvKinOn)
-		//if(mySelf->m_InvKinOn || mySelf->m_teleOpMode)
+		
+		if(mySelf->m_InvKinOn || mySelf->m_teleOpMode)
 		{
 			// CKim - Read shared variable (Motor Count Setpoint and gain)
 			// Motor count setpoint is updated from another loop that reads desired configuration from 
@@ -1045,10 +956,6 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 			// CKim - Invert jacobian, handle singularity and solve
 			//mySelf->m_kinLib->ApplyKinematicControl(J,err,dq);
 			mySelf->m_kinLWPR->ApplyKinematicControl(J,err,dq);
-	/*		std::cout << "q = ";
-			PrintCArray(localStat.currJang, 5);
-			std::cout << "dq = ";
-			PrintCArray(dq,5);*/
 
 			// CKim - Convert dotq into motor velocity
 			mySelf->dJangTodCnt(dq, dCnt);
@@ -1551,6 +1458,8 @@ void CCTRDoc::InvKinJangToMtr(const double* jA, const double* currCnt, double* t
 	// L31 : Relative protrusion length of the tube 3 w.r.t. tube 1, Joint Angle [2] = Initial protrusion 'L31_MAX' -  Motor Count [0-1] 
 	// This is normalized L31/L31_MAX*0.5*pi and passed to Fourier series. Therefore it could be possible that L31 we get from
 	// inverse kinematics solution can be L31' such that L31'/L31_MAX*0.5*pi = L31/L31_MAX*0.5*pi + 2pi
+
+	// POSSIBLE BUG!!!!
 	tmp = jA[2]/L31_MAX*0.5*c_PI;
 	L31 = atan2(sin(tmp),cos(tmp)) / (0.5*c_PI) * L31_MAX;
 	//L31 = jA[2];
@@ -1575,9 +1484,7 @@ void CCTRDoc::InvKinJangToMtr(const double* jA, const double* currCnt, double* t
 
 	// Motor 2,6 are not used
 	tgtCnt[2] = tgtCnt[6] = 0;
-	
-	//::std::cout << isInLimFlag << ::std::endl;
-	
+		
 }
 
 
@@ -1811,16 +1718,8 @@ void CCTRDoc::SolveInverseKin(CTR_status& stat)
 
 	// CKim - Update initial point - 1: as current joint angle
 	for(int i=0; i<5; i++)	{	stat.initJang[i] = stat.currJang[i];		}
-
-	// ------------------------------------------------------------------------------------------ //
-	//m_kinLib->InverseKinematicsLSQ(stat.tgtTipPosDir, stat.initJang, jAng, Err, exitCond);
-
-
-	/*stat.condNum = Err[0];		stat.invKinErr[0] = Err[1];		stat.invKinErr[1] = Err[2];*/
-	 
 	
 	m_kinLWPR->InverseKinematicsLSQ(stat.tgtTipPosDir, stat.initJang, jAng, Err, exitCond);
-	//PrintCArray(stat.jAngLWPR, 5);
 
 	stat.condNum = Err[0];		stat.invKinErr[0] = Err[1];		stat.invKinErr[1] = Err[2];
 
@@ -1828,27 +1727,14 @@ void CCTRDoc::SolveInverseKin(CTR_status& stat)
 	if( (stat.invKinErr[0] > maxPosErr) || (stat.invKinErr[1] > maxOrtErr)  )	{	isConverged = false;	}
 	else																		{	isConverged = true;		}
 	
-	// CKim - or Check convergence from leastr square error magnitude
-	//if(stat.condNum > 0.5)	{	isConverged = false;	}
-	//else						{	isConverged = true;		}
 
 	// CKim - Update initial point - 2: to a last solution
-	//for(int i=0; i<5; i++)	{	stat.initJang[i] = jAng[i];		}
 	for(int i=0; i<5; i++)	{	stat.initJang[i] = stat.currJang[i];		}
-	//for(int i=0; i<5; i++)	{	stat.initJAngLWPR[i] = stat.jAngLWPR[i];		}
-
-	//for(int i=0; i<5; i++)	{	stat.jAngLWPR[i] = jAngLWPR[i];		}
-
-	//m_kinLib->TipFwdKin(jAng,stat.solvedTipPosDir);	// CKim - Evaluate FwdKin at the solution. For debugging invkin algorithm
 	
 	// CKim - Normalize, Apply Joint limits and covert to motor counts. 
 	InvKinJangToMtr(jAng,stat.currMotorCnt,stat.tgtJang,stat.tgtMotorCnt, isInLimit);
-	//InvKinJangToMtr(stat.jAngLWPR,stat.currMotorCntLWPR,stat.tgtJangLWPR,stat.tgtMotorCntLWPR, isInLimitLWPR);
-	//printCArray(stat.tgtJangLWPR, 5);
 
 	stat.exitCond = exitCond;		stat.invKinOK = isConverged;		stat.limitOK = isInLimit;
-	// ------------------------------------------------------------------------------------------ //
-	//printCArray(jAng, 5);
 }
 
 
@@ -1864,9 +1750,6 @@ void CCTRDoc::MasterToSlave(CTR_status& stat, double scl, bool absolute)
 		t(i) = stat.hapticState.tfMat[12+i];
 		p(i) = stat.refTipPosDir[i];	
 	}
-	//MtoS(0,0) =	0;		MtoS(0,1) =	1;		MtoS(0,2) = 0;
-	//MtoS(1,0) =	1;		MtoS(1,1) =	0;		MtoS(1,2) =	0;
-	//MtoS(2,0) =	0;		MtoS(2,1) = 0;		MtoS(2,2) = -1;
 
 	MtoS(0,0) =	0;		MtoS(0,1) =	1;		MtoS(0,2) = 0;
 	MtoS(1,0) =	0;		MtoS(1,1) =	0;		MtoS(1,2) =	-1;
@@ -1894,7 +1777,6 @@ void CCTRDoc::MasterToSlave(CTR_status& stat, double scl, bool absolute)
 	else
 	{
 		tipDir = MtoS*Ro.transpose()*R*MtoS.transpose()*v;
-		//tipDir = MtoS*Ro.transpose()*R*MtoS.transpose()*(-z);
 	}
 
 	for(int i=0; i<3; i++)	{	stat.tgtTipPosDir[i] = tipPos(i);		stat.tgtTipPosDir[i+3] = tipDir(i);		}
@@ -2007,124 +1889,3 @@ bool CCTRDoc::TeleOpSafetyCheck()
 }	
 
 
-void CCTRDoc::OnBnClickedChkAdapt()
-{
-	m_AdaptiveOn = !m_AdaptiveOn;
-}
-
-
-void CCTRDoc::OnBnClickedChkFeedback()
-{
-	m_FeedbackOn = !m_FeedbackOn;
-	// TODO: Add your control notification handler code here
-}
-
-
-void CCTRDoc::OnBnClickedChkInvkinon()
-{
-	m_InvKinOn = !m_InvKinOn;
-	// TODO: Add your control notification handler code here
-}
-
-
-void CCTRDoc::OnBnClickedBtnPlay()
-{
-	if(m_bStaticPlayBack)
-	{
-		::std::cout << "static playback" << ::std::endl;
-		m_TrjGen->Initialize("C:\\03. OnlineCalibration\\OnlineCalib\\PlayBack.txt",6);
-		m_hEMevent = CreateEvent(NULL,false,false,NULL);	// Auto reset event (2nd argument false means...)
-		m_hAdaptive = (HANDLE)_beginthreadex(NULL, 0, CCTRDoc::StaticPlaybackLoop, this, 0, NULL);
-		return;
-	}
-
-	else if (m_jointPlayback)
-	{
-		::std::cout << "joint space trajectory playback" << ::std::endl;
-		m_TrjGen->Initialize("PlayBackJang.txt", 5);
-
-		m_hEMevent = CreateEvent(NULL,false,false,NULL);	// Auto reset event (2nd argument false means...)
-		
-		m_hAdaptive = (HANDLE)_beginthreadex(NULL, 0, CCTRDoc::JointSpacePlayback, this, 0, NULL);
-		
-		return;
-	}
-
-	if(m_playBack)	
-	{
-		m_playBack = false;
-		if( WaitForSingleObject(m_hAdaptive,1000) )	// CKim - Did not return 0
-		{
-			AfxMessageBox("Sparta!! Adaptive thread");
-		}
-		m_kinLib->ReInitializeEstimator();
-	}
-	else
-	{
-		switch(m_traj_type)
-		{
-		case 0:
-				m_TrjGen->Initialize("slowCircle.txt",6);
-				break;
-		case 1:
-				m_TrjGen->Initialize("superSlowSquare.txt",6);
-				break;
-		default:
-				m_TrjGen->Initialize("random_trajectory_4.txt",6);
-				break;
-		}
-		
-		m_hEMevent = CreateEvent(NULL,false,false,NULL);	// Auto reset event (2nd argument false means...)
-		m_playBack = true;
-
-		m_hAdaptive = (HANDLE)_beginthreadex(NULL, 0, CCTRDoc::ClosedLoopControlLoop, this, 0, NULL);
-	}
-
-}
-
-
-void CCTRDoc::OnBnClickedExp()
-{
-
-	for(int i=0; i<6; i++)	{	m_SetPt[i] = m_Status.tgtTipPosDir[i];		}
-
-	if(!m_bRunExperiment)
-	{
-		m_hEMevent = CreateEvent(NULL,false,false,NULL);	// Auto reset event (2nd argument false means...)
-		m_bRunExperiment = true;
-	}
-
-	m_hAdaptive = (HANDLE)_beginthreadex(NULL, 0, CCTRDoc::SettlingTestLoop, this, 0, NULL);
-
-}
-
-
-void CCTRDoc::OnBnClickedBtnMdlreset()
-{
-	// CKim - Reinitialize the kinematics model
-	m_kinLib->ReInitializeModel();
-	m_kinLib->ReInitializeEstimator();
-}
-
-
-void CCTRDoc::SetForgettingFactor(double val)
-{
-	m_kinLib->m_forgettingFactor = val;
-}
-
-void CCTRDoc::SwitchAllControlFlagsOff()
-{
-	m_teleOpMode = false;
-	m_playBack = false;
-	m_jointPlayback = false;
-	m_FeedbackOn = false;
-	m_InvKinOn = false;
-	m_bStaticPlayBack = false;
-	m_bRunExperiment = false;
-	m_bCLIK = false;
-}
-
-void CCTRDoc::ToggleEmergencyStop()
-{
-	this->emergencyStop = !this->emergencyStop;
-}

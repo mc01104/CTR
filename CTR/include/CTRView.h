@@ -60,16 +60,15 @@ public:
 	afx_msg void OnClickedBtnGoToRecConf();
 	afx_msg void OnClickedBtnStartLog();
 	afx_msg void OnClickedBtnStopLog();
-	afx_msg void OnClickedBtnStopRobot();
+
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	afx_msg void OnViewGraphicwin();
-	afx_msg void OnClickedBtnResetEStop();
+
 	afx_msg void OnUpdateViewGraphicwin(CCmdUI *pCmdUI);
 	afx_msg void OnBnClickedRadioModes();
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 	
 	bool logDataFlag;
-	void LogData(::std::ofstream& os);
 	::std::ofstream logStream;
 
 	double transIncrement;

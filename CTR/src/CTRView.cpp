@@ -47,8 +47,6 @@ BEGIN_MESSAGE_MAP(CCTRView, CFormView)
 	ON_BN_CLICKED(IDC_BUTTON9, &CCTRView::OnClickedBtnRecConf)
 	ON_BN_CLICKED(IDC_BUTTON7, &CCTRView::OnClickedBtnGoToRecConf)
 
-	ON_BN_CLICKED(IDC_BTN_MOVE2, &CCTRView::OnClickedBtnStopRobot)
-	ON_BN_CLICKED(IDC_BTN_MOVE5, &CCTRView::OnClickedBtnResetEStop)
 	ON_BN_CLICKED(IDC_BTN_MOVE3, &CCTRView::OnClickedBtnStartLog)
 	ON_BN_CLICKED(IDC_BTN_MOVE4, &CCTRView::OnClickedBtnStopLog)
 
@@ -126,16 +124,16 @@ void CCTRView::OnInitialUpdate()
 	this->SetDlgItemTextA(m_idCmdJang[2],"10");			this->SetDlgItemTextA(m_idCmdJang[3],"0");			this->SetDlgItemTextA(m_idCmdJang[4],"0");
 	
 	//// CKim - Open the graphics dialog
-	//if(!m_vtkDlg)
-	//{
-	//	// CKim - This creates modeless dialog using ChunVtkDlg class
-	//	m_vtkDlg = new ChunVtkDlg();		m_vtkDlg->Create(ChunVtkDlg::IDD);		
-	//	
-	//	// CKim - Move to (640,480) and don't change size. Show window and draw
-	//	m_vtkDlg->SetWindowPos(&CWnd::wndTop,900,200,0,0,SWP_NOSIZE);		
-	//	m_vtkDlg->ShowWindow(SW_SHOW);
-	//	m_vtkDlg->Invalidate();
-	//}
+	if(!m_vtkDlg)
+	{
+		// CKim - This creates modeless dialog using ChunVtkDlg class
+		m_vtkDlg = new ChunVtkDlg();		m_vtkDlg->Create(ChunVtkDlg::IDD);		
+		
+		// CKim - Move to (640,480) and don't change size. Show window and draw
+		m_vtkDlg->SetWindowPos(&CWnd::wndTop,900,200,0,0,SWP_NOSIZE);		
+		m_vtkDlg->ShowWindow(SW_SHOW);
+		m_vtkDlg->Invalidate();
+	}
 
 	this->SetTimer(100,30,NULL);
 	QueryPerformanceFrequency(&m_Freq);
@@ -201,13 +199,13 @@ void CCTRView::OnTimer(UINT_PTR nIDEvent)
 
 	}
 
-	///////////// FIC TO UPDATE GRAPHICS //////////////////
+	///////////// FIX TO UPDATE GRAPHICS //////////////////
 	// CKim - Update 3D graphics
 	if(m_vtkDlg)
 	{
-		//m_vtkDlg->RenderBalancedPair(stat.bpTipPosDir);
-		//m_vtkDlg->RenderTip(stat.bpTipPosDir,stat.currTipPosDir);
-		//m_vtkDlg->RenderProxy(stat.tgtTipPosDir);
+		m_vtkDlg->RenderBalancedPair(stat.bpTipPosDir);
+		m_vtkDlg->RenderTip(stat.bpTipPosDir,stat.currTipPosDir);
+		m_vtkDlg->RenderProxy(stat.tgtTipPosDir);
 			
 		//m_vtkDlg->MoveCursor(stat.bpTipPosDir[0], stat.bpTipPosDir[1], stat.bpTipPosDir[2]);
 		//if(stat.mode ==1)	// CKim - under teleop
@@ -222,21 +220,17 @@ void CCTRView::OnTimer(UINT_PTR nIDEvent)
 
 		m_vtkDlg->Invalidate();
 
-				//if( (!omni.btn[0]) && (omni.btn[1]) )
+		//if( (!omni.btn[0]) && (omni.btn[1]) )
 		//{
-		//	// CKim - Update camera here
-		//		}
+
+		//}
 		//	else
 		//{
-			// CKim - Function for drawing robot should be here
-			//m_vtkDlg->MoveCsys(stat.currOmniInput);
-			//m_vtkDlg->MovePointer(stat.currOmniInput);//		}
+		//	 CKim - Function for drawing robot should be here
+		//	m_vtkDlg->MoveCsys(stat.currOmniInput);
+		//	m_vtkDlg->MovePointer(stat.currOmniInput);//		}
 
 	}
-	
-	
-	//if (this->GetDocument()->GetVtkPlot()) 
-	//	this->GetDocument()->GetVtkPlot()->PlotData(stat.sensedTipPosDir, stat.currTipPosDir);
 
 }
 
@@ -463,19 +457,3 @@ void CCTRView::OnClickedBtnStopLog()
 	GetDlgItem(IDC_BTN_MOVE3)->EnableWindow(TRUE);
 }
 
-void CCTRView::OnClickedBtnStopRobot()
-{
-	//this->eStopPressed = true;
-	//CheckRadioButton(IDC_RADIO_JA, IDC_RADIO_TELE, IDC_RADIO_JA);
-	
-	this->GetDocument()->ToggleEmergencyStop();
-}
-void CCTRView::LogData(::std::ofstream& os)
-{
-}
-
-void CCTRView::OnClickedBtnResetEStop()
-{
-	this->eStopPressed = false;
-	this->GetDocument()->ToggleEmergencyStop();
-}

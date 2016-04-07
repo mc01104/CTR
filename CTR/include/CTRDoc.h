@@ -50,7 +50,11 @@ private:
 	HWND				m_hWndView;		// CKim - handle to view window
 	ChunMotion*			m_motionCtrl;
 	CTRKin*				m_kinLib;
+
 	LWPRKinematics*		m_kinLWPR;
+	LWPRKinematics*		m_kinLWPR_BP;
+
+
 	ChunTracker*		m_Tracker;
 	TrjGenerator*		m_TrjGen;
 
@@ -69,7 +73,6 @@ private:
 	bool				m_bStaticPlayBack;
 	bool				m_bRunExperiment;
 	bool				m_bCLIK;
-	bool				emergencyStop;
 
 	HANDLE				m_hTeleOpThread;	// CKim - Handle to the thread for teleoperation
 	HANDLE				m_hEMTrck;
@@ -126,7 +129,7 @@ public:
 
 	void	SaveModel();
 	void	ClearCommandQueue();
-	void	ToggleEmergencyStop();
+	
 
 #ifdef _DEBUG
 	virtual void AssertValid() const;
@@ -209,12 +212,6 @@ public:
 	afx_msg void OnUpdateViewTeleop(CCmdUI *pCmdUI);
 	afx_msg void OnBnClickedInitEm();
 	afx_msg void OnBnClickedRegst();
-	afx_msg void OnBnClickedChkAdapt();
-	afx_msg void OnBnClickedBtnPlay();
-	afx_msg void OnBnClickedExp();
-	afx_msg void OnBnClickedBtnMdlreset();
-	afx_msg void OnBnClickedChkFeedback();
-	afx_msg void OnBnClickedChkInvkinon();
 
 	afx_msg void OnViewPlot();
 	afx_msg void OnUpdateViewPlot(CCmdUI *pCmdUI);

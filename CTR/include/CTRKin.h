@@ -10,8 +10,7 @@
 
 class ChunTimer;
 
-#define L31_MAX 86.39	// CKim - pi/2*55. Maximum protrusion of third tube from balanced pair
-//#define L31_MAX 86	// CKim - pi/2*55. Maximum protrusion of third tube from balanced pair
+#define L31_MAX 35	// CKim - pi/2*55. Maximum protrusion of third tube from balanced pair
 #define L31_MIN 5.00	// CKim - Minimum protrusion of third tube from balanced pair
 
 class CTRKin

@@ -387,9 +387,28 @@ HBRUSH CCTRView::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 // TODO: refactor that to move tubes one by one
 void CCTRView::OnClickedBtnHome()
 {
-	double p[10] = {0, 0, 86.34, 0 , 0,};
-	p[0] *= (3.141592/180.0);	p[1] *= (3.141592/180.0);	p[3] *= (3.141592/180.0);
-	this->GetDocument()->SendCommand(0,p);
+
+	double home[5] =  {M_PI, 0, 5, 0, 0};
+
+	CString str;
+	double p[10] = {0};
+	for (int i = 0; i < 5; ++i)
+	{
+		this->GetDlgItemTextA(m_idActJang[i], str);		
+		p[i] = atof(str);
+	}
+	p[2] = home[2];
+	this->GetDocument()->SendCommand(0, p);
+	p[1] = home[1];
+	this->GetDocument()->SendCommand(0, p);
+	p[0] = home[0];
+	this->GetDocument()->SendCommand(0, p);
+	p[3] = home[3];
+	this->GetDocument()->SendCommand(0, p);
+	p[4] = home[4];
+	this->GetDocument()->SendCommand(0, p);
+
+
 }
 
 void CCTRView::OnClickedBtnLeft()

@@ -427,7 +427,7 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 	CTR_status localStat;		
 	
 	// CKim - Flags
-	bool teleOpCtrl = false;		bool safeToTeleOp = false;			double scl = 1.0;	double kp = 3.0;
+	bool teleOpCtrl = false;		bool safeToTeleOp = false;			double scl = 0.3;	double kp = 5.0;
 
 	bool adaptModelFlag = false;
 
@@ -537,19 +537,21 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 			// CKim - Teleoperation safety check - gradually increase the resistance and decrease controller gain
 			// when the leastSquare error is above threshold and jont limit is reached. This is to prevent any 
 			// sudden jump that may occur when the tip exits from such singular configuration
+
+			::std::cout << localStat.invKinOK  << "\t" << localStat.limitOK << ::std::endl;
 			//if(!localStat.invKinOK || !localStat.limitOK)
 			//{
 			//	localStat.hapticState.forceMag += 0.01;	//robotStat.condNum;
-			////	kp -= 1.0;
+			//	kp -= 1.0;
 			//	if(localStat.hapticState.forceMag > 0.1)	{	localStat.hapticState.forceMag = 0.1;	}
-			////	if(kp < 1.0)	{	kp = 1.0;	}
+			//	if(kp < 1.0)	{	kp = 1.0;	}
 			//}
 			//else
 			//{
 			//	localStat.hapticState.forceMag -= 0.01;
-			////	kp += 1.0;
+			//	kp += 1.0;
 			//	if(localStat.hapticState.forceMag < 0.01)	{	localStat.hapticState.forceMag = 0.01;	}
-			//	//if(kp > 10.0)	{	kp = 10.0;	}
+			//	if(kp > 10.0)	{	kp = 10.0;	}
 			//}
 
 		}

@@ -118,7 +118,7 @@ protected:
 	  *@param[in] Parameters of Fourier model - not used for LWPR
 	  *@param[out] value of objective function
 	  */
-	//virtual void EvalF_LSQ(const double* jAng, const double* tgtPosOrt, const Eigen::MatrixXd& Coeff, Eigen::Matrix<double,4,1>& F);
+	virtual void EvalF_LSQ(const double* jAng, const double* tgtPosOrt, const Eigen::MatrixXd& Coeff, Eigen::Matrix<double,4,1>& F);
 
 	/**
 	  *@brief Check if the joint values (input to the forward kinematics) are in limit and if not cap their values accordingly

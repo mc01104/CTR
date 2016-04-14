@@ -160,24 +160,24 @@ LWPRKinematics::SaveModel()
 }
 
 
-//void LWPRKinematics::EvalF_LSQ(const double* jAng, const double* tgtPosOrt, const Eigen::MatrixXd& Coeff, Eigen::Matrix<double,4,1>& F)
-//{
-//	double posOrt[6];
-//	double pmax = m_MaxPosErr;		
-//	double thmax = m_MaxOrtErr*3.141592/180.0;		
-//	double sum = 0.0;
-//	
-//	TipFwdKinEx(jAng, posOrt);
-//	//TipFwdKin(jAng, posOrt);
-//
-//	for(int i = 0; i < 3; i++)	
-//	{	
-//		F(i,0) = posOrt[i] - tgtPosOrt[i];				
-//		sum += (posOrt[i+3] * tgtPosOrt[i+3]);
-//	}
-//
-//	F(3,0) = pmax/(1 - cos(thmax)) * (1 - sum);
-//}
+void LWPRKinematics::EvalF_LSQ(const double* jAng, const double* tgtPosOrt, const Eigen::MatrixXd& Coeff, Eigen::Matrix<double,4,1>& F)
+{
+	double posOrt[6];
+	double pmax = m_MaxPosErr;		
+	double thmax = m_MaxOrtErr*3.141592/180.0;		
+	double sum = 0.0;
+	
+	//TipFwdKinEx(jAng, posOrt);
+	TipFwdKin(jAng, posOrt);
+
+	for(int i = 0; i < 3; i++)	
+	{	
+		F(i,0) = posOrt[i] - tgtPosOrt[i];				
+		sum += (posOrt[i+3] * tgtPosOrt[i+3]);
+	}
+
+	F(3,0) = pmax/(1 - cos(thmax)) * (1 - sum);
+}
 
 // this will be removed once I fix the mutex
 //void

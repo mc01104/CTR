@@ -80,7 +80,10 @@ CCTRDoc::CCTRDoc()
 	// it enters a loop which iterates spin count times, checking to see if the lock is released. 
 	// If the lock is not released before the loop finishes, the thread goes to sleep to wait for the lock to be released.
 	InitializeCriticalSectionAndSpinCount(&m_cSection,16);
-	
+	this->trajectoryMap[0] = "slow circle";
+	this->trajectoryMap[1] = "slow square";
+	this->trajectoryMap[2] = "random teleoperated trajectory";
+
 	// CKim - Initialize Haptic device
 	ChunHaptic::InitDevice();		m_Omni = new ChunHaptic();		m_Omni->StartLoop();
 
@@ -1241,11 +1244,23 @@ unsigned int WINAPI	CCTRDoc::ClosedLoopControlLoop(void* para)
 	// CKim - Pointer to self
 	CCTRDoc* mySelf = (CCTRDoc*) para;		
 
-	// CKim - Log files
-	::std::string filename = "ExperimentData/" + mySelf->m_date + "-ClosedLoopChun.txt";
 
+	// CKim - Log files
+	::std::string dateStr = GetDateString();
+	::std::string filename = "ExperimentData/" + dateStr + "-CL_LWPR.txt";
 	std::ofstream ofstr;	
 	ofstr.open(filename);
+
+	::std::string filenameMeta = "ExperimentData/" + dateStr + "-CL_LWPR_METADATA.txt";
+	::std::ofstream metaStream(filenameMeta);
+
+	if (mySelf->m_traj_type == 1 || mySelf->m_traj_type == 2)
+		metaStream << "Trajectory type:" << mySelf->trajectoryMap[mySelf->m_traj_type] << ::endl;
+	else
+		metaStream << "Trajectory type:" << mySelf->trajectoryMap[2] << ::endl;
+
+	metaStream << "Forgetting factor:" << mySelf->m_kinLWPR->GetForwardModel()->finalLambda() << ::std::endl;
+	metaStream.close();
 
 	// CKim - Parameters for loop speed measurement
 	ChunTimer timer;	int perfcnt = 20;		int navg = 20;		long loopTime = 0;
@@ -1292,11 +1307,6 @@ unsigned int WINAPI	CCTRDoc::ClosedLoopControlLoop(void* para)
 			AfxMessageBox("Joint out of limit!");	
 			break;
 		}
-
-		//if (mySelf->m_adapt_LWPR)
-		//	mySelf->m_kinLWPR->AdaptForwardModel(localStat.sensedTipPosDir, localStat.currJang);
-
-		//mySelf->m_kinLWPR->TipFwdKin(localStat.currJang, predTipPosDir);
 
 		// CKim - Read trajectory from the 'Playback.txt'. Returns false when the end of trajectory is reached
 		mySelf->m_playBack = mySelf->m_TrjGen->InterpolateNextPoint(localStat.tgtTipPosDir);	// Update tgtTipPosDir
@@ -2091,12 +2101,17 @@ void CCTRDoc::OnBnClickedBtnMdlreset()
 	// CKim - Reinitialize the kinematics model
 	m_kinLib->ReInitializeModel();
 	m_kinLib->ReInitializeEstimator();
+
+	m_kinLWPR->ResetModel();
 }
 
 
 void CCTRDoc::SetForgettingFactor(double val)
 {
 	m_kinLib->m_forgettingFactor = val;
+
+	double ffactor[3] = {val, val, 1.0};
+	m_kinLWPR->SetForgettingFactor(ffactor);
 }
 
 void CCTRDoc::SwitchAllControlFlagsOff()

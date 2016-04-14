@@ -21,9 +21,7 @@
 class LWPRKinematics : public CTRKin
 {
 	LWPR_Object* forwardModel;
-	
-	//this is ugly --> FIX IT
-	LWPR_Object* forwardModelforInverse;
+	LWPR_Object* originalModel;
 	
 	HANDLE m_hLWPRMutex;	
 	HANDLE m_hLWPRInvMutex;	
@@ -82,10 +80,12 @@ public:
 	int GetJoinspaceDim() {return this->forwardModel->nIn() + 2;};
 
 	//HACK - currently only used because of thread safety -> CHANGE
-	void TipFwdKinInv(const double* jAng, double* posOrt);
+	//void TipFwdKinInv(const double* jAng, double* posOrt);
+
+	void ResetModel();
 
 	//void InverseKinematicsLSQ(const double* tgtPosOrt, const double* init, double* jAng, double* Err, int& exitCond);
-private:
+protected:
 
 	// Copy operation is not allowed at this point
     LWPRKinematics(LWPRKinematics* lwprKinematics);
@@ -118,7 +118,7 @@ private:
 	  *@param[in] Parameters of Fourier model - not used for LWPR
 	  *@param[out] value of objective function
 	  */
-	virtual void EvalF_LSQ(const double* jAng, const double* tgtPosOrt, const Eigen::MatrixXd& Coeff, Eigen::Matrix<double,4,1>& F);
+	//virtual void EvalF_LSQ(const double* jAng, const double* tgtPosOrt, const Eigen::MatrixXd& Coeff, Eigen::Matrix<double,4,1>& F);
 
 	/**
 	  *@brief Check if the joint values (input to the forward kinematics) are in limit and if not cap their values accordingly
@@ -130,7 +130,7 @@ private:
 		inputData[0] = 1 * atan2(sin(inputData[0]), cos(inputData[0]));
 		inputData[1] = 1 * atan2(sin(inputData[1]), cos(inputData[1]));
 
-		if (inputData[2] < 0) {inputData[2] = 1;}
+		if (inputData[2] < 0) {inputData[2] = L31_MIN;}
 		if (abs(inputData[2]) > L31_MAX) {inputData[2] = L31_MAX;}
 	}
 

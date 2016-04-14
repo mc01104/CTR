@@ -540,6 +540,8 @@ void CCTRView::OnEnKillfocusForget()
 	this->GetDlgItemTextA(IDC_FORGET, str);		
 	this->GetDocument()->SetForgettingFactor(atof(str));
 	::std::cout << "Setting model forgetting factor:" <<  atof(str) <<::std::endl;
+
+	this->GetDocument()->SetForgettingFactor(atof(str));
 }
 
 

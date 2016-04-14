@@ -285,7 +285,13 @@ class LWPR_Object {
          throw LWPR_Exception(LWPR_Exception::OUT_OF_MEMORY);
       }
    }
-   
+
+   LWPR_Object(const LWPR_Object* otherObj) {
+      if (!lwpr_duplicate_model(&(this->model), &(otherObj->model))) {
+         throw LWPR_Exception(LWPR_Exception::OUT_OF_MEMORY);
+      }
+   }
+
    /** \brief Creates an LWPR_Object from a binary file, or if compiled
               with support for EXPAT, an XML file.
       \param filename  Name of file to read the model from

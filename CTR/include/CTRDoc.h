@@ -6,6 +6,7 @@
 #pragma once
 
 #include <queue>
+#include <map>
 #include "CTR_Common.h"
 #include <fstream>
 #include <Eigen/Dense>
@@ -32,6 +33,7 @@ protected: // create from serialization only
 // Attributes
 public:
 	::std::queue<::std::string, ::std::deque< ::std::string> > setPointsQ;
+	::std::map<int, ::std::string> trajectoryMap;
 	double durationLWPR;
 
 private:

@@ -1390,8 +1390,10 @@ unsigned int WINAPI	CCTRDoc::ClosedLoopControlLoop(void* para)
 
 unsigned int WINAPI	CCTRDoc::JointSpacePlayback(void* para)
 {
-	CCTRDoc* mySelf = (CCTRDoc*) para;		
-	
+	CCTRDoc* mySelf = (CCTRDoc*) para;	
+	::std::string dateStr = GetDateString() + "_record_joint.txt";
+	::std::ofstream os(dateStr.c_str());
+
 	// CKim - Robot status and Haptic device status
 	CTR_status localStat;		
 	
@@ -1438,22 +1440,16 @@ unsigned int WINAPI	CCTRDoc::JointSpacePlayback(void* para)
 			localStat.tgtJang[i] = pos[i];
 		//memcpy(localStat.tgtJang , pos, 5 * sizeof(double));
 
+		for (int i = 0; i < 6; ++i)
+			os << localStat.sensedTipPosDir[i] << "\t";
+		for (int i = 0; i < 5; ++i)
+			os << localStat.currJang[i] << "\t";
+
+		os << ::std::endl;
+
 		bool isInLim = true;
 		mySelf->InvKinJangToMtr(pos, localStat.currMotorCnt, localStat.tgtJang, localStat.tgtMotorCnt, isInLim);
 
-/*		::std::cout << "motors" << ::std::endl;		
-		for (int i = 0; i < 7 ; ++i) {::std::cout << localStat.currMotorCnt[i] << " "; }
-		::std::cout << ::std::endl;
-
-		for (int i = 0; i < 7 ; ++i) {::std::cout << localStat.tgtMotorCnt[i] << " "; }
-		::std::cout << ::std::endl;
-		::std::cout << "angles" << ::std::endl;
-		for (int i = 0; i < 5 ; ++i) {::std::cout << localStat.currJang[i] << " "; }
-		::std::cout << ::std::endl;
-
-		for (int i = 0; i < 5 ; ++i) {::std::cout << localStat.tgtJang[i] << " "; }
-		::std::cout << ::std::endl;
-*/
 		if (isInLim) {safeToTeleOp = true;}
 
 		//mySelf->MtrAngToCnt(localStat.tgtJang, localStat.tgtMotorCnt);
@@ -1468,6 +1464,8 @@ unsigned int WINAPI	CCTRDoc::JointSpacePlayback(void* para)
 			mySelf->m_Status.tgtJang[i] = localStat.tgtJang[i];	
 		for(int i=0; i<7; i++)	
 			mySelf->m_Status.tgtMotorCnt[i] = localStat.tgtMotorCnt[i];	
+
+
 
 		mySelf->m_Status.limitOK = localStat.limitOK;
 		mySelf->m_Status.isTeleOpMoving = safeToTeleOp;
@@ -2038,7 +2036,7 @@ void CCTRDoc::OnBnClickedBtnPlay()
 	else if (m_jointPlayback)
 	{
 		::std::cout << "joint space trajectory playback" << ::std::endl;
-		m_TrjGen->Initialize("PlayBackJang.txt", 5);
+		m_TrjGen->Initialize("trajectory_slow.txt", 5);
 
 		m_hEMevent = CreateEvent(NULL,false,false,NULL);	// Auto reset event (2nd argument false means...)
 		

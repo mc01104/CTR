@@ -86,7 +86,8 @@ CCTRDoc::CCTRDoc()
 	m_kinLib = new CTRKin;
 
 	// paths for LWPR models (TIP AND BALANCED PAIR)
-	::std::string pathToForwardModel("../models/model_ct_2016_4_6_17_25_29TIP.bin");
+	//::std::string pathToForwardModel("../models/model_ct_2016_4_6_17_25_29TIP.bin");
+	::std::string pathToForwardModel("../models/lwpr_surgery_final_model.bin");
 	::std::string pathToForwardModelBP("../models/model_ct_2016_4_7_14_48_43BP.bin");
 	
 	try

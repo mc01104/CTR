@@ -129,7 +129,7 @@ public:
 
 	void	SaveModel();
 	void	ClearCommandQueue();
-	
+	ChunMotion*	GetMotionController() {return this->m_motionCtrl;};
 
 #ifdef _DEBUG
 	virtual void AssertValid() const;

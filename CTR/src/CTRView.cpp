@@ -399,15 +399,23 @@ void CCTRView::OnClickedBtnHome()
 	}
 	p[2] = home[2];
 	this->GetDocument()->SendCommand(0, p);
+	Sleep(20000)	;
+
 	p[1] = home[1];
 	this->GetDocument()->SendCommand(0, p);
+	this->GetDocument()->GetMotionController()->WaitMotionDone();
+
 	p[0] = home[0];
 	this->GetDocument()->SendCommand(0, p);
+	this->GetDocument()->GetMotionController()->WaitMotionDone();
+
 	p[3] = home[3];
 	this->GetDocument()->SendCommand(0, p);
+	this->GetDocument()->GetMotionController()->WaitMotionDone();
+
 	p[4] = home[4];
 	this->GetDocument()->SendCommand(0, p);
-
+	this->GetDocument()->GetMotionController()->WaitMotionDone();
 
 }
 

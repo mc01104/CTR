@@ -491,14 +491,14 @@ void CTRKin::InverseKinematicsLSQ(const double* tgtPosOrt, const double* init, d
 		
 		// CKim - Find the update direction. update = - inv ( (JtJ + lambda*diag(JtJ) ) Jt*fx
 
-
 		b = -1.0 * J.transpose()*fx;
 		JtJ = J.transpose()*J;		A = JtJ;
 		for(int i=0; i<5; i++)	{	A(i,i) += lambda*JtJ(i,i);	}
 
 		// CKim - Calculate Update step. Use JacobiSVD.solve to get least square solution
 		Eigen::JacobiSVD<Eigen::Matrix<double,5,5>> Jsvd(A,Eigen::ComputeFullU | Eigen::ComputeFullV);
-		update = Jsvd.solve(b);
+		//update = Jsvd.solve(b);
+		update = 0.01*b;
 
 		// CKim - If the magnitude of the update direction is small, exit
 		if(update.norm() < 0.001)	{	exitCond = 2;	break;		}
@@ -535,6 +535,8 @@ void CTRKin::InverseKinematicsLSQ(const double* tgtPosOrt, const double* init, d
 		}
 	}
 	if(iter == maxiter)	{		exitCond = 3;		}
+
+	::std::cout << "iter = " << iter << ::std::endl;
 }
 
 

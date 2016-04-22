@@ -177,6 +177,9 @@ protected:
 	// George - joint space trajectory playback
 	static unsigned int WINAPI	JointSpacePlayback(void* para);
 
+	// George - joint space trajectory playback
+	static unsigned int WINAPI	NetworkCommunication(void* para);
+
 	// CKim - Following functions encapsulates various caclulations performed inside the loop
 	// It takes reference to the CTR_status structure and updates it
 

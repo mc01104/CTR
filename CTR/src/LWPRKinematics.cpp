@@ -43,6 +43,8 @@ LWPRKinematics::TipFwdKin(const double* jAng, double* posOrt)
 	this->CheckJointLimits(inputData);
 
 #ifdef _SCALED_
+	inputData[0] /= M_PI;
+	inputData[1] /= M_PI;
 	inputData[2] = inputData[2]/L31_MAX ;
 #endif
 	
@@ -50,6 +52,7 @@ LWPRKinematics::TipFwdKin(const double* jAng, double* posOrt)
 	::std::vector<double> outputData = this->forwardModel->predict(inputData, 0.001);
 	ReleaseMutex(this->m_hLWPRMutex);
 
+	//::std::cout << outputData << ::std::endl;
 	::std::vector<double> orientation = ::std::vector<double> (outputData.begin() + 3, outputData.end());
 	
 	this->CompensateForRigidBodyMotion(jAng, outputData.data(), posOrt);
@@ -201,7 +204,9 @@ LWPRKinematics::TipFwdKinInv(const double* jAng, double* posOrt)
 	this->CheckJointLimits(inputData);
 
 #ifdef _SCALED_
-	inputData[2] = inputData[2]/L31_MAX;
+	inputData[0] /= M_PI;
+	inputData[1] /= M_PI;
+	inputData[2] = inputData[2]/L31_MAX ;
 #endif
 
 	::std::vector<double> outputData = this->forwardModelforInverse->predict(inputData, 0.001);
@@ -220,6 +225,8 @@ LWPRKinematics::TipFwdKinEx(const double* jAng, double* posOrt)
 	//this->CheckJointLimits(inputData);
 
 #ifdef _SCALED_
+	inputData[0] /= M_PI;
+	inputData[1] /= M_PI;
 	inputData[2] = inputData[2]/L31_MAX ;
 #endif
 	

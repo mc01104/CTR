@@ -101,7 +101,7 @@ HDCallbackCode HDCALLBACK ChunHaptic::updateCallback(void *pData)
 		//for(int i=0; i<3; i++)	{	forces[i] = -k*forces[i]/sum;			}
 
 		double k = m_currentState.forceMag;			HDfloat forces[3];
-		k = 0.004;
+		k = 0*0.004;
 		for(int i=0;i<3; i++)	
 		{	
 			forces[i] = (m_currentState.tfMat[12+i] - m_currentState.slavePos[i]);	
@@ -112,9 +112,9 @@ HDCallbackCode HDCALLBACK ChunHaptic::updateCallback(void *pData)
 			else
 				forces[i] = -k * pow((forces[i] - 15.0), 2);
 		}
-		for(int i = 0; i < 3; ++i)
-			::std::cout << forces[i] << " ";
-		::std::cout << ::std::endl;
+		//for(int i = 0; i < 3; ++i)
+		//	::std::cout << forces[i] << " ";
+		//::std::cout << ::std::endl;
 		hdSetFloatv(HD_CURRENT_FORCE,forces);
 	}
 

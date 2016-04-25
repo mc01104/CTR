@@ -1876,7 +1876,7 @@ void CCTRDoc::MasterToSlave(CTR_status& stat, double scl, bool absolute)
 	// CKim - Relative tip position - displacement of the stylus T from its reference point T0
 	// (location when the button was pressed, w.r.t master csys, stored in M_T and M_T0)
 	// is scaled and mapped to position of the slave end-effector
-	Eigen::Vector3d to, t, p, tipPos;	Eigen::Matrix3d MtoS;
+	Eigen::Vector3d to, t, p, tipPos;	Eigen::Matrix3d MtoS, MtoSOr;
 	for(int i=0; i<3; i++)	
 	{
 		to(i) = stat.M_T0[12+i];
@@ -1886,13 +1886,16 @@ void CCTRDoc::MasterToSlave(CTR_status& stat, double scl, bool absolute)
 
 	::Eigen::Matrix<double, 3, 3> MtipToBase;
 	this->GetTipTransformation(MtipToBase);
-	
 	MtoS(0,0) =	0;		MtoS(0,1) =	1;		MtoS(0,2) = 0;
-	MtoS(1,0) =	0;		MtoS(1,1) =	0;		MtoS(1,2) =	-1;
-	MtoS(2,0) =	-1;		MtoS(2,1) = 0;		MtoS(2,2) = 0;
+	MtoS(1,0) =	1;		MtoS(1,1) =	0;		MtoS(1,2) =	0;
+	MtoS(2,0) =	0;		MtoS(2,1) = 0;		MtoS(2,2) = -1;
+
+	MtoSOr(0,0) =	0;		MtoSOr(0,1) =	1;		MtoSOr(0,2) = 0;
+	MtoSOr(1,0) =	0;		MtoSOr(1,1) =	0;		MtoSOr(1,2) =	-1;
+	MtoSOr(2,0) =	-1;		MtoSOr(2,1) = 0;		MtoSOr(2,2) = 0;
 
 	//tipPos = MtoS*scl*(t-to) + p;
-	tipPos = MtipToBase*scl*(t-to) + p;
+	tipPos = MtipToBase*MtoS*scl*(t-to) + p;
 
 	// CKim - Relative tip orientation - Rotation of the stylus R from its reference orientation Ro
 	// (location when the button was pressed, w.r.t reference stylus csys, Ro'*R.
@@ -1909,7 +1912,7 @@ void CCTRDoc::MasterToSlave(CTR_status& stat, double scl, bool absolute)
 
 	if(absolute)
 	{
-		tipDir = MtoS*R*(-z);
+		tipDir = MtoSOr*R*(-z);
 	}
 	else
 	{
@@ -1970,19 +1973,19 @@ void CCTRDoc::SlaveToMaster(CTR_status& stat, double scl)
 	{
 		to(i) = stat.M_T0[12+i];	p(i) = stat.refTipPosDir[i];	tipPos(i) = stat.currTipPosDir[i];
 	}
-	//MtoS(0,0) =	0;		MtoS(0,1) =	1;		MtoS(0,2) = 0;
-	//MtoS(1,0) =	1;		MtoS(1,1) =	0;		MtoS(1,2) =	0;
-	//MtoS(2,0) =	0;		MtoS(2,1) = 0;		MtoS(2,2) = -1;
+	MtoS(0,0) =	0;		MtoS(0,1) =	1;		MtoS(0,2) = 0;
+	MtoS(1,0) =	1;		MtoS(1,1) =	0;		MtoS(1,2) =	0;
+	MtoS(2,0) =	0;		MtoS(2,1) = 0;		MtoS(2,2) = -1;
 
 	::Eigen::Matrix<double, 3, 3> MtipToBase;
 	this->GetTipTransformation(MtipToBase);
 
-	MtoS(0,0) =	0;		MtoS(0,1) =	1;		MtoS(0,2) = 0;
-	MtoS(1,0) =	0;		MtoS(1,1) =	0;		MtoS(1,2) =	-1;
-	MtoS(2,0) =	-1;		MtoS(2,1) = 0;		MtoS(2,2) = 0;
+	//MtoS(0,0) =	0;		MtoS(0,1) =	1;		MtoS(0,2) = 0;
+	//MtoS(1,0) =	0;		MtoS(1,1) =	0;		MtoS(1,2) =	-1;
+	//MtoS(2,0) =	-1;		MtoS(2,1) = 0;		MtoS(2,2) = 0;
 
 	//t = MtoS.transpose()*(tipPos - p)/scl + to;
-	t = MtipToBase.transpose()*(tipPos - p)/scl + to;
+	t =  MtoS.transpose() * MtipToBase.transpose()*(tipPos - p)/scl + to;
 
 	for(int i=0; i<3; i++)	
 	{

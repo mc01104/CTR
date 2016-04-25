@@ -138,6 +138,7 @@ public:
 
 
 protected:
+	void GetTipTransformation(::Eigen::Matrix<double, 3, 3>& trans);
 
 	// CKim - Conversion between motor angle and motor count by transmission ratios
 	void	MtrAngToCnt(const double* jA, double* cnt);  

@@ -5,6 +5,7 @@
 // #pragma comment (lib, "Mswsock.lib")
 
 #include "stdafx.h"
+#include <Eigen/Geometry> 
 
 #include <windows.h>
 #include <winsock2.h>
@@ -678,34 +679,6 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 			// if least square error is larger than 1 and if joints has been limited. 
 
 			mySelf->SolveInverseKin(localStat);			// Updates localStat.tgtMotorCnt, tgtJang
-
-			double forces[3] = {0};
-			for(int i=0;i<3; i++)	
-				forces[i] = -1.0*(localStat.hapticState.tfMat[12+i] - localStat.hapticState.slavePos[i]);	
-			localStat.hapticState.forceMag = 0.1;
-
-			//PrintCArray(forces, 3);
-			// CHECK THIS PART OF THE CODE
-			// CKim - Teleoperation safety check - gradually increase the resistance and decrease controller gain
-			// when the leastSquare error is above threshold and jont limit is reached. This is to prevent any 
-			// sudden jump that may occur when the tip exits from such singular configuration
-
-			//::std::cout << localStat.invKinOK  << "\t" << localStat.limitOK << ::std::endl;
-			//if(!localStat.invKinOK || !localStat.limitOK)
-			//{
-			//	localStat.hapticState.forceMag += 0.01;	//robotStat.condNum;
-			//	kp -= 1.0;
-			//	if(localStat.hapticState.forceMag > 0.1)	{	localStat.hapticState.forceMag = 0.1;	}
-			//	if(kp < 1.0)	{	kp = 1.0;	}
-			//}
-			//else
-			//{
-			//	localStat.hapticState.forceMag -= 0.01;
-			//	kp += 1.0;
-			//	if(localStat.hapticState.forceMag < 0.01)	{	localStat.hapticState.forceMag = 0.01;	}
-			//	if(kp > 10.0)	{	kp = 10.0;	}
-			//}
-
 		}
 
 					
@@ -1891,6 +1864,12 @@ void CCTRDoc::SolveInverseKin(CTR_status& stat)
 	stat.exitCond = exitCond;		stat.invKinOK = isConverged;		stat.limitOK = isInLimit;
 }
 
+void CCTRDoc::GetTipTransformation(::Eigen::Matrix<double, 3, 3>& trans)
+{
+	::Eigen::Vector3d zAxis = ::Eigen::Vector3d(this->m_Status.currTipPosDir[3], this->m_Status.currTipPosDir[4], this->m_Status.currTipPosDir[5]);
+		
+	trans = ::Eigen::AngleAxis<double>( this->m_Status.currJang[1], zAxis.normalized());
+}
 
 void CCTRDoc::MasterToSlave(CTR_status& stat, double scl, bool absolute)
 {
@@ -1905,11 +1884,15 @@ void CCTRDoc::MasterToSlave(CTR_status& stat, double scl, bool absolute)
 		p(i) = stat.refTipPosDir[i];	
 	}
 
+	::Eigen::Matrix<double, 3, 3> MtipToBase;
+	this->GetTipTransformation(MtipToBase);
+	
 	MtoS(0,0) =	0;		MtoS(0,1) =	1;		MtoS(0,2) = 0;
 	MtoS(1,0) =	0;		MtoS(1,1) =	0;		MtoS(1,2) =	-1;
 	MtoS(2,0) =	-1;		MtoS(2,1) = 0;		MtoS(2,2) = 0;
 
-	tipPos = MtoS*scl*(t-to) + p;
+	//tipPos = MtoS*scl*(t-to) + p;
+	tipPos = MtipToBase*scl*(t-to) + p;
 
 	// CKim - Relative tip orientation - Rotation of the stylus R from its reference orientation Ro
 	// (location when the button was pressed, w.r.t reference stylus csys, Ro'*R.
@@ -1947,6 +1930,8 @@ void CCTRDoc::MasterToSlave(const CTR_status& stat, double* slavePosDir, double 
 	for(int i=0; i<3; i++)	{
 		to(i) = stat.M_T0[12+i];	t(i) = stat.hapticState.tfMat[12+i];	p(i) = stat.refTipPosDir[i];	}
 	
+
+
 	Eigen::Matrix3d MtoS;
 	MtoS(0,0) =	0;		MtoS(0,1) =	1;		MtoS(0,2) = 0;
 	MtoS(1,0) =	0;		MtoS(1,1) =	0;		MtoS(1,2) =	-1;
@@ -1989,11 +1974,16 @@ void CCTRDoc::SlaveToMaster(CTR_status& stat, double scl)
 	//MtoS(1,0) =	1;		MtoS(1,1) =	0;		MtoS(1,2) =	0;
 	//MtoS(2,0) =	0;		MtoS(2,1) = 0;		MtoS(2,2) = -1;
 
+	::Eigen::Matrix<double, 3, 3> MtipToBase;
+	this->GetTipTransformation(MtipToBase);
+
 	MtoS(0,0) =	0;		MtoS(0,1) =	1;		MtoS(0,2) = 0;
 	MtoS(1,0) =	0;		MtoS(1,1) =	0;		MtoS(1,2) =	-1;
 	MtoS(2,0) =	-1;		MtoS(2,1) = 0;		MtoS(2,2) = 0;
 
-	t = MtoS.transpose()*(tipPos - p)/scl + to;
+	//t = MtoS.transpose()*(tipPos - p)/scl + to;
+	t = MtipToBase.transpose()*(tipPos - p)/scl + to;
+
 	for(int i=0; i<3; i++)	
 	{
 		stat.hapticState.slavePos[i] = t(i);

@@ -679,6 +679,12 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 
 			mySelf->SolveInverseKin(localStat);			// Updates localStat.tgtMotorCnt, tgtJang
 
+			double forces[3] = {0};
+			for(int i=0;i<3; i++)	
+				forces[i] = -1.0*(localStat.hapticState.tfMat[12+i] - localStat.hapticState.slavePos[i]);	
+			localStat.hapticState.forceMag = 0.1;
+
+			//PrintCArray(forces, 3);
 			// CHECK THIS PART OF THE CODE
 			// CKim - Teleoperation safety check - gradually increase the resistance and decrease controller gain
 			// when the leastSquare error is above threshold and jont limit is reached. This is to prevent any 

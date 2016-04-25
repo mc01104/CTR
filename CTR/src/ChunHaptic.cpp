@@ -1,5 +1,6 @@
 #include "StdAfx.h"
 #include "ChunHaptic.h"
+#include "Utilities.h"
 
 // CKim - Eigen Header. Located at "C:\Chun\ChunLib"
 #include <Eigen/Dense>
@@ -100,7 +101,20 @@ HDCallbackCode HDCALLBACK ChunHaptic::updateCallback(void *pData)
 		//for(int i=0; i<3; i++)	{	forces[i] = -k*forces[i]/sum;			}
 
 		double k = m_currentState.forceMag;			HDfloat forces[3];
-		for(int i=0;i<3; i++)	{	forces[i] = -k*(m_currentState.tfMat[12+i] - m_currentState.slavePos[i]);	}
+		k = 0.004;
+		for(int i=0;i<3; i++)	
+		{	
+			forces[i] = (m_currentState.tfMat[12+i] - m_currentState.slavePos[i]);	
+			if (fabs(forces[i]) < 15.0)
+				forces[i] = 0.0;
+			else if (forces[i] < 0)
+				forces[i] = k * pow((forces[i] + 15.0), 2);
+			else
+				forces[i] = -k * pow((forces[i] - 15.0), 2);
+		}
+		for(int i = 0; i < 3; ++i)
+			::std::cout << forces[i] << " ";
+		::std::cout << ::std::endl;
 		hdSetFloatv(HD_CURRENT_FORCE,forces);
 	}
 

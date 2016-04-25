@@ -19,6 +19,7 @@ LWPRKinematics::LWPRKinematics(const ::std::string& pathToForwardModel):
 	this->m_hLWPRMutex = CreateMutex(NULL,false,"LWPR_Mutex");
 
 	double ffactor[3] = {1.0, 1.0, 0.1};
+	this->forwardModel->updateD(true);
 	this->SetForgettingFactor(ffactor);
 }
 
@@ -88,6 +89,7 @@ LWPRKinematics::SetForgettingFactor(double* ffactor)
 	this->forwardModel->initLambda(ffactor[0]);
 	this->forwardModel->finalLambda(ffactor[1]);
 	this->forwardModel->tauLambda(ffactor[2]);
+	::std::cout << "forgetting factor applied" << ::std::endl;
 }
 
 void

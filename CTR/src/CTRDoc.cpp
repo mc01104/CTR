@@ -98,8 +98,8 @@ CCTRDoc::CCTRDoc()
 	//::std::string pathToForwardModel("../models/model_ct_2015_11_19_9_17_44.bin");
 	//::std::string pathToForwardModel("../models/model_ct_2015_11_19_12_58_45.bin");
 	//::std::string pathToForwardModel("../models/model_ct_2015_11_27_13_9_5_update_metric.bin");
-	::std::string pathToForwardModel("../models/model_ct_2015_11_27_17_24_54.bin");
-	//::std::string pathToForwardModel("../models/model_ct_2015_12_1_10_5_15.bin");
+	//::std::string pathToForwardModel("../models/model_ct_2015_11_27_17_24_54.bin");
+	::std::string pathToForwardModel("../models/model_ct_2015_12_1_10_5_15.bin");
 	//::std::string pathToForwardModel("../models/model_ct_2015_12_2_12_12_35.bin");
 	//::std::string pathToForwardModel("../models/2016-02-11-11-12-45_adapted.bin");
 	//::std::string pathToForwardModel("../models/2016-02-11-14-28-28_adapted.bin");
@@ -1253,8 +1253,8 @@ unsigned int WINAPI	CCTRDoc::ClosedLoopControlLoop(void* para)
 
 	::std::string filenameMeta = "ExperimentData/" + dateStr + "-CL_LWPR_METADATA.txt";
 	::std::ofstream metaStream(filenameMeta);
-
-	if (mySelf->m_traj_type == 1 || mySelf->m_traj_type == 2)
+	
+	if (mySelf->m_traj_type < 2)
 		metaStream << "Trajectory type:" << mySelf->trajectoryMap[mySelf->m_traj_type] << ::endl;
 	else
 		metaStream << "Trajectory type:" << mySelf->trajectoryMap[2] << ::endl;

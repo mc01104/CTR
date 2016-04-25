@@ -1059,7 +1059,7 @@ void CTRKin::ApplyKinematicControl(const Eigen::MatrixXd& J, const Eigen::Matrix
 	if (conditionNumber >= conditionThreshold)
 	//if(false)
 	{
-		::std::cout << "TRANSPOSE" << ::std::endl;
+		//::std::cout << "TRANSPOSE" << ::std::endl;
 		//::std::cout << " before" << ::std::endl;
 		//::std::cout << conditionNumber << ::std::endl;
 		//double epsilon = conditionThreshold * sv(4, 0) - sv(0, 0);
@@ -1103,7 +1103,7 @@ void CTRKin::ApplyKinematicControl(const Eigen::MatrixXd& J, const Eigen::Matrix
 	//	//localStat.invKinOK = true;
 	//}
 	//::std::cout << J.col(2) << ::std::endl;
-	::std::cout << "INVERSE" << ::std::endl;
+	//::std::cout << "INVERSE" << ::std::endl;
 	dotq = Jsvd.solve(b);
 	//::std::cout << dotq << ::std::endl;
 	for(int i=0; i<5; i++)	{	dq[i] = dotq(i,0);	}

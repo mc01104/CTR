@@ -101,7 +101,7 @@ CCTRDoc::CCTRDoc()
 
 	// paths for LWPR models (TIP AND BALANCED PAIR)
 	//::std::string pathToForwardModel("../models/model_ct_2016_4_6_17_25_29TIP.bin");
-	::std::string pathToForwardModel("../models/lwpr_surgery_final_model.bin");
+	::std::string pathToForwardModel("../models/lwpr_surgery_2016_4_26_10_17_23_D40.bin");
 	::std::string pathToForwardModelBP("../models/model_ct_2016_4_7_14_48_43BP.bin");
 	
 	try
@@ -1886,14 +1886,15 @@ void CCTRDoc::MasterToSlave(CTR_status& stat, double scl, bool absolute)
 
 	::Eigen::Matrix<double, 3, 3> MtipToBase;
 	this->GetTipTransformation(MtipToBase);
-	MtoS(0,0) =	0;		MtoS(0,1) =	1;		MtoS(0,2) = 0;
-	MtoS(1,0) =	1;		MtoS(1,1) =	0;		MtoS(1,2) =	0;
-	MtoS(2,0) =	0;		MtoS(2,1) = 0;		MtoS(2,2) = -1;
-
+	MtipToBase.setIdentity();
+	//MtoS(0,0) =	0;		MtoS(0,1) =	1;		MtoS(0,2) = 0;
+	//MtoS(1,0) =	1;		MtoS(1,1) =	0;		MtoS(1,2) =	0;
+	//MtoS(2,0) =	0;		MtoS(2,1) = 0;		MtoS(2,2) = -1;
+	
 	MtoSOr(0,0) =	0;		MtoSOr(0,1) =	1;		MtoSOr(0,2) = 0;
 	MtoSOr(1,0) =	0;		MtoSOr(1,1) =	0;		MtoSOr(1,2) =	-1;
 	MtoSOr(2,0) =	-1;		MtoSOr(2,1) = 0;		MtoSOr(2,2) = 0;
-
+	MtoS = MtoSOr;
 	//tipPos = MtoS*scl*(t-to) + p;
 	tipPos = MtipToBase*MtoS*scl*(t-to) + p;
 
@@ -1979,7 +1980,7 @@ void CCTRDoc::SlaveToMaster(CTR_status& stat, double scl)
 
 	::Eigen::Matrix<double, 3, 3> MtipToBase;
 	this->GetTipTransformation(MtipToBase);
-
+	MtipToBase.setIdentity();
 	//MtoS(0,0) =	0;		MtoS(0,1) =	1;		MtoS(0,2) = 0;
 	//MtoS(1,0) =	0;		MtoS(1,1) =	0;		MtoS(1,2) =	-1;
 	//MtoS(2,0) =	-1;		MtoS(2,1) = 0;		MtoS(2,2) = 0;

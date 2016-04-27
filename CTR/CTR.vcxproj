@@ -90,7 +90,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SolutionDir)\Lib;$(SolutionDir)\lwpr-1.2.6\include;$(SolutionDir)\Utilities;$(ProjectDir)\include;$(SolutionDir)\Lib\Ascension;$(SolutionDir)\Lib\vtk\include\vtk-5.8;$(SolutionDir)\Lib\CopleyMotion\ChunCML\include;$(SolutionDir)\Lib\CopleyMotion\ChunCML\include\can;$(SolutionDir)\Lib\OpenHaptics\include;$(SolutionDir)\Lib\OpenHaptics\utilities\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\MechanicsBasedKinematics;$(SolutionDir)\LieGroup;$(SolutionDir)\Lib;$(SolutionDir)\lwpr-1.2.6\include;$(SolutionDir)\Utilities;$(ProjectDir)\include;$(SolutionDir)\Lib\Ascension;$(SolutionDir)\Lib\vtk\include\vtk-5.8;$(SolutionDir)\Lib\CopleyMotion\ChunCML\include;$(SolutionDir)\Lib\CopleyMotion\ChunCML\include\can;$(SolutionDir)\Lib\OpenHaptics\include;$(SolutionDir)\Lib\OpenHaptics\utilities\include</AdditionalIncludeDirectories>
       <PrecompiledHeaderOutputFile>$(IntDir)$(TargetName).pch</PrecompiledHeaderOutputFile>
       <UndefinePreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS</UndefinePreprocessorDefinitions>
     </ClCompile>
@@ -100,7 +100,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>$(SolutionDir)$(Configuration);$(SolutionDir)\Lib\Ascension;$(SolutionDir)\Lib\vtk\lib\vtk-5.8;$(SolutionDir)\Lib\CopleyMotion\ChunCML\lib\$(Configuration);$(SolutionDir)Lib\OpenHaptics\lib\$(Platform)\$(Configuration)AcademicEdition;$(SolutionDir)\Lib\OpenHaptics\utilities\lib\$(Platform)\$(Configuration)AcademicEdition</AdditionalLibraryDirectories>
-      <AdditionalDependencies>Utilities.lib;lwpr.lib;vtkCharts.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>MechanicsBasedKinematics.lib;Utilities.lib;lwpr.lib;vtkCharts.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
@@ -124,7 +124,7 @@
     <ClCompile Include="src\ChunTimer.cpp" />
     <ClCompile Include="src\ChunTracker.cpp" />
     <ClCompile Include="src\ChunVtkDlg.cpp" />
-    <ClCompile Include="src\CTR.cpp" />
+    <ClCompile Include="src\CTRApp.cpp" />
     <ClCompile Include="src\CTRDoc.cpp" />
     <ClCompile Include="src\CTRKin.cpp" />
     <ClCompile Include="src\CTRView.cpp" />
@@ -146,7 +146,7 @@
     <ClInclude Include="include\ChunTimer.h" />
     <ClInclude Include="include\ChunTracker.h" />
     <ClInclude Include="include\ChunVtkDlg.h" />
-    <ClInclude Include="include\CTR.h" />
+    <ClInclude Include="include\CTRApp.h" />
     <ClInclude Include="include\CTRDoc.h" />
     <ClInclude Include="include\CTRKin.h" />
     <ClInclude Include="include\CTRView.h" />

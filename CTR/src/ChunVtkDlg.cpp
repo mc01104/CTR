@@ -9,7 +9,7 @@
 //
 
 #include "stdafx.h"
-#include "CTR.h"
+#include "CTRApp.h"
 #include "ChunVtkDlg.h"
 #include "afxdialogex.h"
 

@@ -3,7 +3,7 @@
 //
 
 #include "stdafx.h"
-#include "CTR.h"
+#include "CTRApp.h"
 #include <iostream>
 #include <windows.h>
 #include <io.h>

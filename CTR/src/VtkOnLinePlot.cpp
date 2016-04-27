@@ -2,7 +2,7 @@
 //
 
 #include "stdafx.h"
-#include "CTR.h"
+#include "CTRApp.h"
 #include "VtkOnLinePlot.h"
 #include "afxdialogex.h"
 

@@ -4,7 +4,9 @@
 
 // #pragma comment (lib, "Mswsock.lib")
 
+
 #include "stdafx.h"
+#include "LieGroup.h"
 #include <Eigen/Geometry> 
 
 #include <windows.h>
@@ -15,7 +17,7 @@
 // SHARED_HANDLERS can be defined in an ATL project implementing preview, thumbnail
 // and search filter handlers and allows sharing of document code with that project.
 #ifndef SHARED_HANDLERS
-#include "CTR.h"
+#include "CTRApp.h"
 #endif
 
 #include "CTRDoc.h"
@@ -39,6 +41,9 @@
 // CKim - Eigen Header. Located at "C:\Chun\ChunLib"
 #include <Eigen/Dense>
 #include "Utilities.h"
+#include "MechanicsBasedKinematics.h"
+#include "CTRFactory.h"
+
 
 #define DEFAULT_BUFLEN 512
 #define DEFAULT_PORT "27015"
@@ -103,7 +108,9 @@ CCTRDoc::CCTRDoc()
 	//::std::string pathToForwardModel("../models/model_ct_2016_4_6_17_25_29TIP.bin");
 	::std::string pathToForwardModel("../models/lwpr_surgery_2016_4_26_10_17_23_D40.bin");
 	::std::string pathToForwardModelBP("../models/model_ct_2016_4_7_14_48_43BP.bin");
-	
+	robot = CTRFactory::buildCTR("");
+	kinematics = new MechanicsBasedKinematics(robot, 100);
+
 	try
 	{
 		m_kinLWPR = new LWPRKinematics(pathToForwardModel);
@@ -146,6 +153,8 @@ CCTRDoc::~CCTRDoc()
 
 	DeleteCriticalSection(&m_cSection);
 
+	delete robot;
+	delete kinematics;
 	delete m_kinLWPR;
 	
 }
@@ -352,8 +361,8 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
         return 1;
     }
 
-    // Setup the TCP listening socket
-    iResult = bind( ListenSocket, result->ai_addr, (int)result->ai_addrlen);
+    // Setup the TCP listening socket // this conflicts with using namespace std in LieGroup -> FIX IT!
+    iResult = ::bind( ListenSocket, result->ai_addr, (int)result->ai_addrlen);
     if (iResult == SOCKET_ERROR) {
         printf("bind failed with error: %d\n", WSAGetLastError());
         freeaddrinfo(result);
@@ -1869,10 +1878,25 @@ void CCTRDoc::SolveInverseKin(CTR_status& stat)
 
 void CCTRDoc::GetTipTransformation(::Eigen::Matrix<double, 3, 3>& trans)
 {
-	::Eigen::Vector3d zAxis = ::Eigen::Vector3d(this->m_Status.currTipPosDir[3], this->m_Status.currTipPosDir[4], this->m_Status.currTipPosDir[5]);
-		
-	trans = ::Eigen::AngleAxis<double>( this->m_Status.currJang[1], zAxis.normalized());
+	double configuration[5] = {0};
+	memcpy(configuration, this->m_Status.currJang, 5 * sizeof(double));
+
+	double rotation[3] = {0};
+	double translation[3] = {0};
+	MechanicsBasedKinematics::RelativeToAbsolute(this->robot, configuration, rotation, translation);
+	this->kinematics->ComputeKinematics(rotation, translation);
+
+	SE3 tipFrame;
+	this->kinematics->GetBishopFrame(tipFrame);
+
+	SO3ToEigen(tipFrame.GetOrientation(), trans);	
 }
+
+void CCTRDoc::GetImageToCameraTransformation(::Eigen::Matrix<double, 3, 3>& trans)
+{
+	trans = ::Eigen::AngleAxis<double>(-this->kinematics->GetInnerTubeRotation(), ::Eigen::Vector3d::UnitZ());
+}
+
 
 void CCTRDoc::MasterToSlave(CTR_status& stat, double scl, bool absolute)
 {
@@ -1889,7 +1913,7 @@ void CCTRDoc::MasterToSlave(CTR_status& stat, double scl, bool absolute)
 
 	::Eigen::Matrix<double, 3, 3> MtipToBase;
 	this->GetTipTransformation(MtipToBase);
-	MtipToBase.setIdentity();
+
 	MtoS(0,0) =	0;		MtoS(0,1) =	1;		MtoS(0,2) = 0;
 	MtoS(1,0) =	1;		MtoS(1,1) =	0;		MtoS(1,2) =	0;
 	MtoS(2,0) =	0;		MtoS(2,1) = 0;		MtoS(2,2) = -1;

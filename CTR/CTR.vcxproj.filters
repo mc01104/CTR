@@ -39,9 +39,6 @@
     <ClCompile Include="src\ChunTimer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\CTR.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\CTRDoc.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -87,12 +84,12 @@
     <ClCompile Include="src\VtkOnLinePlot.cpp">
       <Filter>01. VTK</Filter>
     </ClCompile>
+    <ClCompile Include="src\CTRApp.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\ChunTimer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\CTR.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\CTR_Common.h">
@@ -151,6 +148,9 @@
     </ClInclude>
     <ClInclude Include="include\VtkOnLinePlot.h">
       <Filter>01. VTK</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CTRApp.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

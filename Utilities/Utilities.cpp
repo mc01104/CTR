@@ -97,3 +97,21 @@ void PrintCArray(const double* toPrint, size_t size, ::std::ostream& os)
 	os << ::std::endl;
 
 }
+
+
+::Eigen::Vector3d Vec3ToEigen(const Vec3& vec3)
+{
+	::Eigen::Vector3d vec3Eigen;
+	for (int i = 0; i < 3; ++i)
+		vec3Eigen(i) = vec3[i];
+
+	return vec3Eigen;
+}
+
+
+void SO3ToEigen(const SO3& rot, ::Eigen::Matrix<double, 3, 3>& rotEigen)
+{
+	rotEigen.col(0) = Vec3ToEigen(rot.GetX());
+	rotEigen.col(1) = Vec3ToEigen(rot.GetY());
+	rotEigen.col(2) = Vec3ToEigen(rot.GetZ());
+}

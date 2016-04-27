@@ -586,7 +586,7 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 	CTR_status localStat;		
 	
 	// CKim - Flags
-	bool teleOpCtrl = false;		bool safeToTeleOp = false;			double scl = 0.3;	double kp = 3.0;
+	bool teleOpCtrl = false;		bool safeToTeleOp = false;			double scl = 0.33;	double kp = 3.0;
 
 	bool adaptModelFlag = false;
 
@@ -1891,9 +1891,9 @@ void CCTRDoc::GetTipTransformation(::Eigen::Matrix<double, 3, 3>& trans)
 
 	SO3ToEigen(tipFrame.GetOrientation(), trans);	
 
-	::std::cout << "Bishop Frame" << ::std::endl;
-	::std::cout << trans << ::std::endl;
-	::std::cout << ::std::endl;
+	//::std::cout << "Bishop Frame" << ::std::endl;
+	//::std::cout << trans << ::std::endl;
+	//::std::cout << ::std::endl;
 }
 
 void CCTRDoc::GetImageToCameraTransformation(::Eigen::Matrix<double, 3, 3>& trans)
@@ -1917,6 +1917,7 @@ void CCTRDoc::MasterToSlave(CTR_status& stat, double scl, bool absolute)
 
 	::Eigen::Matrix<double, 3, 3> MtipToBase;
 	this->GetTipTransformation(MtipToBase);
+	MtipToBase.setIdentity();
 
 	MtoS(0,0) =	0;		MtoS(0,1) =	1;		MtoS(0,2) = 0;
 	MtoS(1,0) =	1;		MtoS(1,1) =	0;		MtoS(1,2) =	0;
@@ -1945,6 +1946,7 @@ void CCTRDoc::MasterToSlave(CTR_status& stat, double scl, bool absolute)
 	if(absolute)
 	{
 		tipDir = MtoSOr*R*(-z);
+		//tipDir = MtipToBase*MtoS*R*(-z);
 	}
 	else
 	{

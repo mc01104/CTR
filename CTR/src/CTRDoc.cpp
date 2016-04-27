@@ -384,10 +384,10 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
     // No longer need server socket
     closesocket(ListenSocket);
 
-	::std::ostringstream ss;
+	
     // Receive until the peer shuts down the connection
     do {
-		ss.clear();
+		::std::ostringstream ss;
 		// update the local joint variables
 		EnterCriticalSection(&m_cSection);
 		for(int i=0; i<5; i++)
@@ -398,10 +398,10 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 		for(int i = 0; i < 5; ++i)
 			ss << localStat.currJang[i] << " ";
 
-		memcpy(recvbuf,	ss.str().c_str(), sizeof(char) * ss.str().size());
+		//memcpy(recvbuf,	ss.str().c_str(), sizeof(char) * ss.str().size());
 		
         // send data
-        iSendResult = send( ClientSocket, recvbuf, iResult, 0 );
+        iSendResult = send( ClientSocket, ss.str().c_str(),  ss.str().size() + 1, 0 );
         if (iSendResult == SOCKET_ERROR) {
             printf("send failed with error: %d\n", WSAGetLastError());
             closesocket(ClientSocket);
@@ -410,14 +410,15 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
         }
         else if (iSendResult == 0)
             printf("Connection closing...\n");
-        else  {
+ /*       else  {
             printf("recv failed with error: %d\n", WSAGetLastError());
             closesocket(ClientSocket);
             WSACleanup();
             return 1;
-        }
-
-    } while (iSendResult > 0);
+        }*/
+		iResult = recv(ClientSocket, recvbuf, DEFAULT_BUFLEN, 0);
+		//::std::cout << recvbuf << ::std::endl;
+    } while (iResult > 0);
 
     //// shutdown the connection since we're done
     //iResult = shutdown(ClientSocket, SD_SEND);
@@ -429,9 +430,11 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
     //}
 
     // cleanup
+
     closesocket(ClientSocket);
     WSACleanup();
 
+	NetworkCommunication(para);
     return 0;
 
 }
@@ -1887,9 +1890,9 @@ void CCTRDoc::MasterToSlave(CTR_status& stat, double scl, bool absolute)
 	::Eigen::Matrix<double, 3, 3> MtipToBase;
 	this->GetTipTransformation(MtipToBase);
 	MtipToBase.setIdentity();
-	//MtoS(0,0) =	0;		MtoS(0,1) =	1;		MtoS(0,2) = 0;
-	//MtoS(1,0) =	1;		MtoS(1,1) =	0;		MtoS(1,2) =	0;
-	//MtoS(2,0) =	0;		MtoS(2,1) = 0;		MtoS(2,2) = -1;
+	MtoS(0,0) =	0;		MtoS(0,1) =	1;		MtoS(0,2) = 0;
+	MtoS(1,0) =	1;		MtoS(1,1) =	0;		MtoS(1,2) =	0;
+	MtoS(2,0) =	0;		MtoS(2,1) = 0;		MtoS(2,2) = -1;
 	
 	MtoSOr(0,0) =	0;		MtoSOr(0,1) =	1;		MtoSOr(0,2) = 0;
 	MtoSOr(1,0) =	0;		MtoSOr(1,1) =	0;		MtoSOr(1,2) =	-1;

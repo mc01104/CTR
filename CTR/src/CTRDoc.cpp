@@ -1890,6 +1890,10 @@ void CCTRDoc::GetTipTransformation(::Eigen::Matrix<double, 3, 3>& trans)
 	this->kinematics->GetBishopFrame(tipFrame);
 
 	SO3ToEigen(tipFrame.GetOrientation(), trans);	
+
+	::std::cout << "Bishop Frame" << ::std::endl;
+	::std::cout << trans << ::std::endl;
+	::std::cout << ::std::endl;
 }
 
 void CCTRDoc::GetImageToCameraTransformation(::Eigen::Matrix<double, 3, 3>& trans)

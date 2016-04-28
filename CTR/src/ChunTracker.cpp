@@ -213,7 +213,7 @@ void ChunTracker::Registration(char* fName, Eigen::Matrix4d& M)
 
 
 	// d. The origin of the robot coordinate system is the center of the circle moved xx mm in - z direction
-	tmp = circ;		tmp(2,0) = -181.0;//	tmp(2,0) = -3.0;
+	tmp = circ;		tmp(2,0) = -168.0;//	tmp(2,0) = -3.0;
 	M.block(0,3,3,1) = R*tmp + cent;
 
 	// CKim - Registration matrix needs to transform EM tracker coordinate to Robot coordinate so...

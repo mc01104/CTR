@@ -99,7 +99,7 @@ CCTRDoc::CCTRDoc()
 	//::std::string pathToForwardModel("../models/model_ct_2015_11_19_12_58_45.bin");
 	//::std::string pathToForwardModel("../models/model_ct_2015_11_27_13_9_5_update_metric.bin");
 	//::std::string pathToForwardModel("../models/model_ct_2015_11_27_17_24_54.bin");
-	::std::string pathToForwardModel("../models/model_ct_2015_12_1_10_5_15.bin");
+	::std::string pathToForwardModel("../models/lwpr_forward_2016_4_20_14_33_39_D40.bin");
 	//::std::string pathToForwardModel("../models/model_ct_2015_12_2_12_12_35.bin");
 	//::std::string pathToForwardModel("../models/2016-02-11-11-12-45_adapted.bin");
 	//::std::string pathToForwardModel("../models/2016-02-11-14-28-28_adapted.bin");

@@ -99,9 +99,13 @@ LWPRKinematics::SetForgettingFactor(double* ffactor)
 void
 LWPRKinematics::ResetModel()
 {
+	LWPR_Object* temp = this->forwardModel;
 	WaitForSingleObject(m_hLWPRMutex, INFINITE);
-	this->forwardModel = &LWPR_Object(this->originalModel);
+	this->forwardModel = this->originalModel;
 	ReleaseMutex(m_hLWPRMutex);
+	::std::string pathToForwardModel("../models/lwpr_forward_2016_4_28_14_32_16_D80.bin");
+	this->originalModel = new LWPR_Object(pathToForwardModel.c_str());
+	delete temp;
 }
 
 void 

@@ -23,6 +23,8 @@ class LWPRKinematics : public CTRKin
 	LWPR_Object* forwardModel;
 	LWPR_Object* originalModel;
 	
+	::std::string modelPath;
+
 	HANDLE m_hLWPRMutex;	
 	HANDLE m_hLWPRInvMutex;	
 public:

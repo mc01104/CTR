@@ -11,7 +11,7 @@
 
 
 LWPRKinematics::LWPRKinematics(const ::std::string& pathToForwardModel):
-	CTRKin()
+	CTRKin(), modelPath(pathToForwardModel)
 {
 	this->forwardModel = new LWPR_Object(pathToForwardModel.c_str());
 	this->originalModel = new LWPR_Object(pathToForwardModel.c_str());
@@ -20,7 +20,8 @@ LWPRKinematics::LWPRKinematics(const ::std::string& pathToForwardModel):
 
 	double ffactor[3] = {1.0, 1.0, 0.1};
 	this->forwardModel->updateD(true);
-	//this->SetForgettingFactor(ffactor);
+	
+	this->SetForgettingFactor(ffactor);
 }
 
 
@@ -53,7 +54,6 @@ LWPRKinematics::TipFwdKin(const double* jAng, double* posOrt)
 	return true;
 
 }
-
 
 void 
 LWPRKinematics::AdaptForwardModel(const double* posOrt, const double* jAng)
@@ -93,18 +93,19 @@ LWPRKinematics::SetForgettingFactor(double* ffactor)
 	this->forwardModel->initLambda(ffactor[0]);
 	this->forwardModel->finalLambda(ffactor[1]);
 	this->forwardModel->tauLambda(ffactor[2]);
-	::std::cout << "forgetting factor applied" << ::std::endl;
 }
 
 void
 LWPRKinematics::ResetModel()
 {
 	LWPR_Object* temp = this->forwardModel;
+
 	WaitForSingleObject(m_hLWPRMutex, INFINITE);
 	this->forwardModel = this->originalModel;
 	ReleaseMutex(m_hLWPRMutex);
-	::std::string pathToForwardModel("../models/lwpr_forward_2016_4_28_14_32_16_D80.bin");
-	this->originalModel = new LWPR_Object(pathToForwardModel.c_str());
+
+	this->originalModel = new LWPR_Object(this->modelPath.c_str());
+
 	delete temp;
 }
 
@@ -190,26 +191,6 @@ void LWPRKinematics::EvalF_LSQ(const double* jAng, const double* tgtPosOrt, cons
 
 	F(3,0) = pmax/(1 - cos(thmax)) * (1 - sum);
 }
-
-// this will be removed once I fix the mutex
-//void
-//LWPRKinematics::TipFwdKinInv(const double* jAng, double* posOrt)
-//{
-//	::std::vector< double> inputData(jAng, jAng + this->forwardModel->nIn());
-//
-//	this->CheckJointLimits(inputData);
-//
-//#ifdef _SCALED_
-//	inputData[2] = inputData[2]/L31_MAX;
-//#endif
-//
-//	::std::vector<double> outputData = this->forwardModelforInverse->predict(inputData, 0.001);
-//
-//	::std::vector<double> orientation = ::std::vector<double> (outputData.begin() + 3, outputData.end());
-//	
-//	this->CompensateForRigidBodyMotion(jAng, outputData.data(), posOrt);
-//		
-//}
 
 bool 
 LWPRKinematics::TipFwdKinEx(const double* jAng, double* posOrt)

@@ -541,7 +541,7 @@ void CCTRView::OnEnKillfocusForget()
 	this->GetDocument()->SetForgettingFactor(atof(str));
 	::std::cout << "Setting model forgetting factor:" <<  atof(str) <<::std::endl;
 
-	this->GetDocument()->SetForgettingFactor(atof(str));
+	//this->GetDocument()->SetForgettingFactor(atof(str));
 }
 
 

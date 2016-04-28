@@ -1,0 +1,2 @@
+Trajectory type:slow circle
+Forgetting factor:0.99999

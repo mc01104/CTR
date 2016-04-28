@@ -624,7 +624,7 @@ void CTRKin::UpdateFAC(const double jAng[5], const double measTipPosDir[6], doub
 	meas[5] = measTipPosDir[5];
 
 	// Actual Update
-	m_forgettingFactor = 1.00;	//0.998;	//1.00;	//0.997;	//1.00;	//1.0;	//0.98;	//0.6;
+	//m_forgettingFactor = 1.00;	//0.998;	//1.00;	//0.997;	//1.00;	//1.0;	//0.98;	//0.6;
 	for(int i=0; i<6; i++)		
 	{
 		// 1. Calculate prediction error

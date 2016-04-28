@@ -110,9 +110,9 @@ CCTRDoc::CCTRDoc()
 	}
 	catch(LWPR_Exception& e)
 	{
-		::std::cout << ::std::string(e.getString()) << ::std::endl;
-		::std::cout << "memory" << ::std::endl;
+		::std::cout << ::std::string(e.getString()) << ::std::endl;		
 	}
+
 	m_Tracker = new ChunTracker;
 	m_TrjGen = new TrjGenerator;
 	

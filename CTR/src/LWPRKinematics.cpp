@@ -20,7 +20,7 @@ LWPRKinematics::LWPRKinematics(const ::std::string& pathToForwardModel):
 
 	double ffactor[3] = {1.0, 1.0, 0.1};
 	this->forwardModel->updateD(true);
-	this->SetForgettingFactor(ffactor);
+	//this->SetForgettingFactor(ffactor);
 }
 
 
@@ -99,7 +99,9 @@ LWPRKinematics::SetForgettingFactor(double* ffactor)
 void
 LWPRKinematics::ResetModel()
 {
+	WaitForSingleObject(m_hLWPRMutex, INFINITE);
 	this->forwardModel = &LWPR_Object(this->originalModel);
+	ReleaseMutex(m_hLWPRMutex);
 }
 
 void 

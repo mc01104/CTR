@@ -1334,6 +1334,7 @@ unsigned int WINAPI	CCTRDoc::ClosedLoopControlLoop(void* para)
 			for(int i=0; i<6; i++)	{	ofstr<<localStat.currTipPosDir[i]<<" ";		}
 			for(int i=0; i<6; i++)	{	ofstr<<localStat.sensedTipPosDir[i]<<" ";	}
 			for(int i = 0; i < 5; i++) { ofstr  << localStat.currJang[i] << " "; }
+			ofstr << mySelf->m_adapt_LWPR;	
 			//for(int i=0; i<6; i++)	{	ofstr<<predTipPosDir[i]<<" ";		}
 			//for(int i=0; i<5; i++)	{	ofstr<<localStat.tgtJang[i]<<" ";			}
 			//for(int i=0; i<7; i++)	{	ofstr<<localStat.tgtMotorCnt[i]<<" ";	}
@@ -1344,7 +1345,7 @@ unsigned int WINAPI	CCTRDoc::ClosedLoopControlLoop(void* para)
 			perfcnt = 0;		//timer.ResetTime();
 		}
 		else	{	perfcnt++;	}
-
+		
 
 		// --------------------------------------------------------------- //
 		// CKim - Update shared variable

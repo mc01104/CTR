@@ -1008,8 +1008,8 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 			LeaveCriticalSection(&m_cSection);
 
 			// CKim - Evaluate model
-			mySelf->m_kinLWPR->TipFwdKinJac(localStat.currJang, localStat.currTipPosDir, J,true);
-			//mySelf->m_kinLib->EvalCurrentKinematicsModelNumeric(localStat.currJang, localStat.currTipPosDir, J, mySelf->m_bCLIK);
+			//mySelf->m_kinLWPR->TipFwdKinJac(localStat.currJang, localStat.currTipPosDir, J,true);
+			mySelf->m_kinLib->EvalCurrentKinematicsModelNumeric(localStat.currJang, localStat.currTipPosDir, J, mySelf->m_bCLIK);
 
 			// CKim - Apply Closed Loop Inverse kienmatics control law. dq = inv(J) x (dxd + K(xd - xm))
 
@@ -1033,8 +1033,8 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 			}
 
 			// CKim - Invert jacobian, handle singularity and solve
-			//mySelf->m_kinLib->ApplyKinematicControl(J,err,dq);
-			mySelf->m_kinLWPR->ApplyKinematicControl(J,err,dq);
+			mySelf->m_kinLib->ApplyKinematicControl(J,err,dq);
+			//mySelf->m_kinLWPR->ApplyKinematicControl(J,err,dq);
 	/*		std::cout << "q = ";
 			PrintCArray(localStat.currJang, 5);
 			std::cout << "dq = ";
@@ -1071,8 +1071,8 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 
 		else	// CKim - When control is not running
 		{
-			mySelf->m_kinLWPR->TipFwdKin(localStat.currJang, localStat.currTipPosDir);
-			//mySelf->m_kinLib->EvalCurrentKinematicsModel(localStat.currJang, localStat.currTipPosDir, J, mySelf->m_bCLIK);
+			//mySelf->m_kinLWPR->TipFwdKin(localStat.currJang, localStat.currTipPosDir);
+			mySelf->m_kinLib->EvalCurrentKinematicsModel(localStat.currJang, localStat.currTipPosDir, J, mySelf->m_bCLIK);
 
 			for(int i=0; i<7; i++)	
 				vel[i] = 0.0;		
@@ -2063,7 +2063,7 @@ void CCTRDoc::OnBnClickedBtnPlay()
 				m_TrjGen->Initialize("slowCircle.txt",6);
 				break;
 		case 1:
-				m_TrjGen->Initialize("superSlowSquare.txt",6);
+				m_TrjGen->Initialize("slow_square_3rv.txt",6);
 				break;
 		default:
 				m_TrjGen->Initialize("random_trajectory_4.txt",6);

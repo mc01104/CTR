@@ -80,27 +80,17 @@ CTRKin::~CTRKin(void)
 // this is not robust -> it doesn't check how many lines are in the file
 void CTRKin::ReInitializeEstimator()
 {
-	// CKim - Initialize matrices for recursive least square from file. 
-	double val;
-	std::ifstream ifstr;		ifstr.open("Init_M_for_Estimator.txt");
-	
-	for(int i=0; i < this->coeffSize; i++)	
-		for(int j=0; j < this->coeffSize; j++)	
-		{	
-			ifstr >> val;
-			for(int k=0; k<6; k++)		
-				F[k](i,j) = val;
-		}	
+	for(int i=0; i<6; i++)	{
+		F[i].resize(this->coeffSize, this->coeffSize);	F[i].setIdentity();		F[i] = 0.1*F[i];		}
+
+	Fzero.resize(this->coeffSize, this->coeffSize);
 }
 
 
 void CTRKin::ReInitializeModel()
 {
-	std::string fName = "";
 
-	// CKim - Coefficient file for Tip
-	//fName = "C:\\01. ConcentricTubeRobots\\CTR\\CTR_TIP_FAC.txt";
-	fName = "FK_new_parameters.txt";
+	std::string fName = "fourier_order_5.txt";
 
 	if (readCTR_FAC_file(fName, m_Tip_px, m_Tip_py, m_Tip_pz, m_Tip_ox, m_Tip_oy, m_Tip_oz) == false) //file read error
 		AfxMessageBox("Sparta!!!!");

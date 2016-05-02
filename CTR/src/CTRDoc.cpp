@@ -91,7 +91,7 @@ CCTRDoc::CCTRDoc()
 	m_motionCtrl = new ChunMotion();		m_motorConnected = false;
 	m_motorConnected = m_motionCtrl->Initialize();
 
-	m_kinLib = new CTRKin;
+	m_kinLib = new CTRKin(3);
 
 	// paths for LWPR models
 	//::std::string pathToForwardModel("../models/model_ct_2015_11_9_14_0_40.bin");
@@ -1072,7 +1072,7 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 		else	// CKim - When control is not running
 		{
 			//mySelf->m_kinLWPR->TipFwdKin(localStat.currJang, localStat.currTipPosDir);
-			mySelf->m_kinLib->EvalCurrentKinematicsModel(localStat.currJang, localStat.currTipPosDir, J, mySelf->m_bCLIK);
+			mySelf->m_kinLib->EvalCurrentKinematicsModelNumeric(localStat.currJang, localStat.currTipPosDir, J, mySelf->m_bCLIK);
 
 			for(int i=0; i<7; i++)	
 				vel[i] = 0.0;		

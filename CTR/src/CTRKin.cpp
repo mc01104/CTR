@@ -17,6 +17,9 @@ CTRKin::CTRKin(int modelOrder, int modelInputDim):
 	//std::string fName = "fourier_order_5.txt";
 
 	os.open("conditionNumber.txt");
+	
+	this->AllocateCoefficientMatrices();
+
 
 	if (readCTR_FAC_file(fName, m_Tip_px, m_Tip_py, m_Tip_pz, m_Tip_ox, m_Tip_oy, m_Tip_oz) == false) 
 		AfxMessageBox("Error reading Fourier Model Coefficients for the tip");
@@ -44,8 +47,6 @@ CTRKin::CTRKin(int modelOrder, int modelInputDim):
 
 	SetInvKinThreshold(0.1,3.0);
 	m_forgettingFactor = 1.0;
-
-	this->AllocateCoefficientMatrices();
 
 	m_hFACMutex = CreateMutex(NULL,false,"FAC_Mutex");
 

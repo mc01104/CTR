@@ -4,22 +4,26 @@
 #include "Utilities.h"
 
 
-CTRKin::CTRKin(void)
+CTRKin::CTRKin(int modelOrder, int modelInputDim):
+	modelOrder(modelOrder),
+	modelInputDim(modelInputDim)
 {
-	std::string fName = "";
+	
+	this->coeffSize = ::std::pow(2 * this->modelOrder - 1, this->modelInputDim);
 
 	// CKim - Coefficient file for Tip
-	//fName = "CTR_TIP_FAC.txt";
-	fName = "FK_new_parameters.txt";
+	std::string fName = "fourier_order_3.txt";
+	//std::string fName = "fourier_order_4.txt";
+	//std::string fName = "fourier_order_5.txt";
+
 	os.open("conditionNumber.txt");
-	if (readCTR_FAC_file(fName, m_Tip_px, m_Tip_py, m_Tip_pz, m_Tip_ox, m_Tip_oy, m_Tip_oz) == false) //file read error
-	{
-		AfxMessageBox("Sparta!!!!");
-	}
+
+	if (readCTR_FAC_file(fName, m_Tip_px, m_Tip_py, m_Tip_pz, m_Tip_ox, m_Tip_oy, m_Tip_oz) == false) 
+		AfxMessageBox("Error reading Fourier Model Coefficients for the tip");
 
 	// CKim - Initialize local variable used in adaptive update.
-	m_tmpMat.resize(125,6);
-	for(int i=0; i<125; i++)	
+	m_tmpMat.resize(this->coeffSize, 6);
+	for(int i=0; i<this->coeffSize; i++)	
 	{
 		m_tmpMat(i,0) = m_Tip_px[i];		m_tmpMat(i,1) = m_Tip_py[i];		m_tmpMat(i,2) = m_Tip_pz[i];
 		m_tmpMat(i,3) = m_Tip_ox[i];		m_tmpMat(i,4) = m_Tip_oy[i];		m_tmpMat(i,5) = m_Tip_oz[i];
@@ -29,46 +33,63 @@ CTRKin::CTRKin(void)
 	fName = "C:\\01. ConcentricTubeRobots\\CTR\\CTR_BP_FAC.txt";
 	
 	if (readCTR_FAC_file(fName, m_BP_px, m_BP_py, m_BP_pz, m_BP_ox, m_BP_oy, m_BP_oz) == false) //file read error
-	{
-		AfxMessageBox("Sparta!!!!");
-	}
+		AfxMessageBox("Error reading Fourier Model Coefficients for the balanced pair");
+
 
 	// CKim - Initialize matrices for recursive least square
 	for(int i=0; i<6; i++)	{
-		F[i].resize(125,125);	F[i].setIdentity();		F[i] = 0.1*F[i];		}
+		F[i].resize(this->coeffSize, this->coeffSize);	F[i].setIdentity();		F[i] = 0.1*F[i];		}
 
-	Fzero.resize(125,125);
+	Fzero.resize(this->coeffSize, this->coeffSize);
 
 	SetInvKinThreshold(0.1,3.0);
 	m_forgettingFactor = 1.0;
+
+	this->AllocateCoefficientMatrices();
 
 	m_hFACMutex = CreateMutex(NULL,false,"FAC_Mutex");
 
 }
 
+void CTRKin::AllocateCoefficientMatrices()
+{
+	this->m_Tip_px = new double[this->coeffSize];
+	this->m_Tip_py = new double[this->coeffSize];
+	this->m_Tip_pz = new double[this->coeffSize];
+	this->m_Tip_ox = new double[this->coeffSize];
+	this->m_Tip_oy = new double[this->coeffSize];
+	this->m_Tip_oz = new double[this->coeffSize];
+
+	int BPCoeffZize = 125;
+	this->m_BP_px = new double[BPCoeffZize];
+	this->m_BP_py = new double[BPCoeffZize];
+	this->m_BP_pz = new double[BPCoeffZize];
+	this->m_BP_ox = new double[BPCoeffZize];
+	this->m_BP_oy = new double[BPCoeffZize];
+	this->m_BP_oz = new double[BPCoeffZize];
+}
 
 CTRKin::~CTRKin(void)
 {
+	delete[] m_Tip_px, m_Tip_py, m_Tip_pz, m_Tip_ox, m_Tip_oy, m_Tip_oz;
+	delete[] m_BP_px, m_BP_py, m_BP_pz, m_BP_ox, m_BP_oy, m_BP_oz;
 }
 
 
+// this is not robust -> it doesn't check how many lines are in the file
 void CTRKin::ReInitializeEstimator()
 {
 	// CKim - Initialize matrices for recursive least square from file. 
 	double val;
 	std::ifstream ifstr;		ifstr.open("Init_M_for_Estimator.txt");
-	//if(ifstr.fail())		{	return false;	}
 	
-	for(int i=0; i<125; i++)	{
-		for(int j=0; j<125; j++)	{	ifstr >> val;
-			for(int k=0; k<6; k++)		{	F[k](i,j) = val;	}	}	}
-
-
-	//// CKim - Initialize matrices for recursive least square
-	//for(int i=0; i<6; i++)	{
-	//	F[i].resize(125,125);	F[i].setIdentity();		F[i] = 0.1*F[i];		}
-
-	//Fzero.resize(125,125);		Fzero.setZero();
+	for(int i=0; i < this->coeffSize; i++)	
+		for(int j=0; j < this->coeffSize; j++)	
+		{	
+			ifstr >> val;
+			for(int k=0; k<6; k++)		
+				F[k](i,j) = val;
+		}	
 }
 
 
@@ -81,53 +102,39 @@ void CTRKin::ReInitializeModel()
 	fName = "FK_new_parameters.txt";
 
 	if (readCTR_FAC_file(fName, m_Tip_px, m_Tip_py, m_Tip_pz, m_Tip_ox, m_Tip_oy, m_Tip_oz) == false) //file read error
-	{
 		AfxMessageBox("Sparta!!!!");
-	}
+
 
 	// CKim - Initialize local variable used in adaptive update.
-	m_tmpMat.resize(125,6);
-	for(int i=0; i<125; i++)	
+	m_tmpMat.resize(this->coeffSize,6);
+	for(int i=0; i<this->coeffSize; i++)	
 	{
 		m_tmpMat(i,0) = m_Tip_px[i];		m_tmpMat(i,1) = m_Tip_py[i];		m_tmpMat(i,2) = m_Tip_pz[i];
 		m_tmpMat(i,3) = m_Tip_ox[i];		m_tmpMat(i,4) = m_Tip_oy[i];		m_tmpMat(i,5) = m_Tip_oz[i];
 	}
 
-
 	// CKim  Coefficients for Balance Pair
 	fName = "C:\\01. ConcentricTubeRobots\\CTR\\CTR_BP_FAC.txt";
 	
 	if (readCTR_FAC_file(fName, m_BP_px, m_BP_py, m_BP_pz, m_BP_ox, m_BP_oy, m_BP_oz) == false) //file read error
-	{
 		AfxMessageBox("Sparta!!!!");
-	}
+
 }
 
 
-bool CTRKin::readCTR_FAC_file(std::string fileName,  double px[125], double py[125],  double pz[125],  double ox[125],  double oy[125],  double oz[125])
+bool CTRKin::readCTR_FAC_file(std::string fileName,  double px[], double py[],  double pz[],  double ox[],  double oy[],  double oz[])
 {
 	std::string junkS;	
 	std::ifstream CTR_FAC_id;	CTR_FAC_id.open(fileName);
-	if(CTR_FAC_id.fail())		{	return false;	}
+	if(CTR_FAC_id.fail())		
+		return false;	
 	
-	for(int i = 0; i <125; i++)
+	for(int i = 0; i < this->coeffSize; i++)
 	{
 		CTR_FAC_id >> junkS >> junkS >> junkS >> junkS;
 		CTR_FAC_id >> px[i] >>  junkS >> py[i] >> junkS >> pz[i] >> junkS >> ox[i] >> junkS >> oy[i] >> junkS >> oz[i];
 		CTR_FAC_id >> junkS;
 	}
-
-	//// CKim - Random numbers....
-	//for(int i = 0; i <125; i++)
-	//{
-	//	Eigen::MatrixXd M = Eigen::MatrixXd::Random(6,1);
-	//	px[i] = M(0,0);		py[i] = M(1,0);		pz[i] = M(2,0);	
-	//	//ox[i] = M(3,0);		oy[i] = M(4,0);		oz[i] = M(5,0);
-
-	//	//CTR_FAC_id >> junkS >> junkS >> junkS >> junkS;
-	//	//CTR_FAC_id >> px[i] >>  junkS >> py[i] >> junkS >> pz[i] >> junkS >> ox[i] >> junkS >> oy[i] >> junkS >> oz[i];
-	//	//CTR_FAC_id >> junkS;
-	//}
 
 	CTR_FAC_id.close();
 	return true;
@@ -139,18 +146,24 @@ void CTRKin::GetFAC(Eigen::MatrixXd& Coeff)
 	WaitForSingleObject(m_hFACMutex,INFINITE);
 	for(int i=0; i<6; i++)
 	{
-		if(i==0)	{
-			for(int j=0; j<125; j++)	{	Coeff(j,i) = m_Tip_px[j];	}	}
-		if(i==1)	{
-			for(int j=0; j<125; j++)	{	Coeff(j,i) = m_Tip_py[j];	}	}
-		if(i==2)	{
-			for(int j=0; j<125; j++)	{	Coeff(j,i) = m_Tip_pz[j];	}	}
-		if(i==3)	{
-			for(int j=0; j<125; j++)	{	Coeff(j,i) = m_Tip_ox[j];	}	}
-		if(i==4)	{
-			for(int j=0; j<125; j++)	{	Coeff(j,i) = m_Tip_oy[j];	}	}
-		if(i==5)	{
-			for(int j=0; j<125; j++)	{	Coeff(j,i) = m_Tip_oz[j];	}	}
+		if(i==0)	
+			for(int j = 0; j < this->coeffSize; j++)	
+				Coeff(j,i) = m_Tip_px[j];		
+		if(i==1)	
+			for(int j = 0; j < this->coeffSize; j++)
+				Coeff(j,i) = m_Tip_py[j];		
+		if(i==2)	
+			for(int j = 0; j < this->coeffSize; j++)
+				Coeff(j,i) = m_Tip_pz[j];	
+		if(i==3)	
+			for(int j = 0; j < this->coeffSize; j++)
+				Coeff(j,i) = m_Tip_ox[j];	
+		if(i==4)	
+			for(int j = 0; j < this->coeffSize; j++)
+				Coeff(j,i) = m_Tip_oy[j];
+		if(i==5)	
+			for(int j = 0; j < this->coeffSize; j++)
+				Coeff(j,i) = m_Tip_oz[j];
 	}
 	ReleaseMutex(m_hFACMutex);
 }
@@ -164,13 +177,18 @@ bool CTRKin::TipFwdKin(const double* jAng, double* posOrt)
 
 	// 1. First evaluate harmonic basis function at joint angle. A = [1, cos(a21), sin(a21), cos(2*a21), sin(2*a21) .... ]
 	// The length of protrusion is normalized so that its range falls into [0,pi/2]. L31_max = 80.0;
-	double A[5], B[5], C[5];	A[0] = B[0] = C[0] = 1.0;
+	int basisFunctionLength = 2 * this->modelOrder - 1;
+	double* A = new double[basisFunctionLength]; 
+	double* B = new double[basisFunctionLength];
+	double* C = new double[basisFunctionLength];
+
+	A[0] = B[0] = C[0] = 1.0;
+
 	double L_normalized;		int n,r;	
 
-	for(int i=1; i<5; i++)	
+	for(int i=1; i < basisFunctionLength; i++)	
 	{
-		//n = i/2;	r = i%2;	L_normalized = L31/80.0*0.5*3.141592;
-		n = i/2;	r = i%2;	L_normalized = L31/L31_MAX*0.5*3.141592;
+		n = i/2;	r = i % 2;	L_normalized = L31/L31_MAX*0.5*3.141592;
 		if(r==0)	{	A[i] = sin(n*a21);		B[i] = sin(n*a31);		C[i] = sin(n*L_normalized);		}
 		else		{	A[i] = cos((n+1)*a21);	B[i] = cos((n+1)*a31);	C[i] = cos((n+1)*L_normalized);	}
 	}
@@ -179,19 +197,19 @@ bool CTRKin::TipFwdKin(const double* jAng, double* posOrt)
 
 	// 2. Multiply coefficients
 	double p[3] = { 0, 0, 0 };		double v[3] = { 0, 0, 0 };		double val = 0;
-	for(int i=0; i<5; i++)	{
-		for(int j=0; j<5; j++)	{
-			for(int k=0; k<5; k++)	
+	for(int i=0; i < basisFunctionLength; i++)	{
+		for(int j=0; j < basisFunctionLength; j++)	{
+			for(int k=0; k < basisFunctionLength; k++)	
 			{	
 				val = A[i]*B[j]*C[k];
-				p[0] += (val*m_Tip_px[25*i+5*j+k]);		p[1] += (val*m_Tip_py[25*i+5*j+k]);		p[2] += (val*m_Tip_pz[25*i+5*j+k]);	
-				v[0] += (val*m_Tip_ox[25*i+5*j+k]);		v[1] += (val*m_Tip_oy[25*i+5*j+k]);		v[2] += (val*m_Tip_oz[25*i+5*j+k]);
+				int ind = ::std::pow(basisFunctionLength, 2)*i + basisFunctionLength*j + k;
+				p[0] += (val*m_Tip_px[ind]);		p[1] += (val*m_Tip_py[ind]);		p[2] += (val*m_Tip_pz[ind]);	
+				v[0] += (val*m_Tip_ox[ind]);		v[1] += (val*m_Tip_oy[ind]);		v[2] += (val*m_Tip_oz[ind]);
 			}
 		}
 	}
 
 	ReleaseMutex(m_hFACMutex);
-
 
 	val = sqrt(v[0]*v[0] + v[1]*v[1] + v[2]*v[2]);
 	v[0] /= val;		v[1] /= val;		v[2] /= val;
@@ -202,7 +220,11 @@ bool CTRKin::TipFwdKin(const double* jAng, double* posOrt)
 	posOrt[0] = cos(a1)*p[0] - sin(a1)*p[1];		posOrt[3] = cos(a1)*v[0] - sin(a1)*v[1];
 	posOrt[1] = sin(a1)*p[0] + cos(a1)*p[1];		posOrt[4] = sin(a1)*v[0] + cos(a1)*v[1];
 	posOrt[2] = p[2] + L1;							posOrt[5] = v[2];
-		
+	
+	delete[] A;
+	delete[] B;
+	delete[] C;
+
 	return true;
 }
 
@@ -215,27 +237,32 @@ void CTRKin::TipFwdKinEx(const double* jAng, const Eigen::MatrixXd& Coeff, doubl
 
 	// 1. First evaluate harmonic basis function at joint angle. A = [1, cos(a21), sin(a21), cos(2*a21), sin(2*a21) .... ]
 	// The length of protrusion is normalized so that its range falls into [0,pi/2]. L31_max = 80.0;
-	double A[5], B[5], C[5];	A[0] = B[0] = C[0] = 1.0;
+	int basisFunctionLength = 2 * this->modelOrder - 1;
+	double* A = new double[basisFunctionLength]; 
+	double* B = new double[basisFunctionLength];
+	double* C = new double[basisFunctionLength];
+
+	A[0] = B[0] = C[0] = 1.0;
+
 	double L_normalized;		int n,r;	
 
-	for(int i=1; i<5; i++)	
+	for(int i=1; i < basisFunctionLength; i++)	
 	{
-		n = i/2;	r = i%2;	L_normalized = L31/L31_MAX*0.5*3.141592;
+		n = i/2;	r = i % 2;	L_normalized = L31/L31_MAX*0.5*3.141592;
 		if(r==0)	{	A[i] = sin(n*a21);		B[i] = sin(n*a31);		C[i] = sin(n*L_normalized);		}
 		else		{	A[i] = cos((n+1)*a21);	B[i] = cos((n+1)*a31);	C[i] = cos((n+1)*L_normalized);	}
 	}
 
-
-    // 2. Multiply coefficients
+	// 2. Multiply coefficients
 	double p[3] = { 0, 0, 0 };		double v[3] = { 0, 0, 0 };		double val = 0;
-	for(int i=0; i<5; i++)	{
-		for(int j=0; j<5; j++)	{
-			for(int k=0; k<5; k++)	
+	for(int i=0; i < basisFunctionLength; i++)	{
+		for(int j=0; j < basisFunctionLength; j++)	{
+			for(int k=0; k < basisFunctionLength; k++)	
 			{	
 				val = A[i]*B[j]*C[k];
-				p[0] += (val*Coeff(25*i+5*j+k,0));		p[1] += (val*Coeff(25*i+5*j+k,1));	
-				p[2] += (val*Coeff(25*i+5*j+k,2));		v[0] += (val*Coeff(25*i+5*j+k,3));
-				v[1] += (val*Coeff(25*i+5*j+k,4));		v[2] += (val*Coeff(25*i+5*j+k,5));
+				int ind = ::std::pow(basisFunctionLength, 2)*i + basisFunctionLength*j + k;
+				p[0] += (val*m_Tip_px[ind]);		p[1] += (val*m_Tip_py[ind]);		p[2] += (val*m_Tip_pz[ind]);	
+				v[0] += (val*m_Tip_ox[ind]);		v[1] += (val*m_Tip_oy[ind]);		v[2] += (val*m_Tip_oz[ind]);
 			}
 		}
 	}
@@ -249,9 +276,15 @@ void CTRKin::TipFwdKinEx(const double* jAng, const Eigen::MatrixXd& Coeff, doubl
 	posOrt[0] = cos(a1)*p[0] - sin(a1)*p[1];		posOrt[3] = cos(a1)*v[0] - sin(a1)*v[1];
 	posOrt[1] = sin(a1)*p[0] + cos(a1)*p[1];		posOrt[4] = sin(a1)*v[0] + cos(a1)*v[1];
 	posOrt[2] = p[2] + L1;							posOrt[5] = v[2];
+	
+	delete[] A;
+	delete[] B;
+	delete[] C;
+
 }
 
 
+// needs to be changed to work for arbitrary order
 bool CTRKin::BalancedPairFwdKin(const double* jAng, double* posOrt)
 {
 	// CKim - Evaluate functional approximation at jAng. a21, a31 relative rotation of tube 2 and 3
@@ -328,7 +361,7 @@ void CTRKin::InverseKinematicsRootFinding(const double* tgtPosOrt, const double*
 	Eigen::Matrix<double,5,5> A;		double temp[5];
 
 	// CKim - Load current model, initialize
-	Eigen::MatrixXd Coeff(125,6);		GetFAC(Coeff);
+	Eigen::MatrixXd Coeff(this->coeffSize, 6);		GetFAC(Coeff);
 	for(int i=0; i<5; i++)	{	jAng[i] = init[i];		}
 	lambda = 0.001;		exitCond = 0;
 
@@ -470,7 +503,7 @@ void CTRKin::InverseKinematicsLSQ(const double* tgtPosOrt, const double* init, d
 	Eigen::Matrix<double,5,5> A;		double temp[5];						
 	
 	// CKim - Initialize
-	Eigen::MatrixXd Coeff(125,6);		GetFAC(Coeff);
+	Eigen::MatrixXd Coeff(this->coeffSize, 6);		GetFAC(Coeff);
 	for(int i=0; i<5; i++)	{	jAng[i] = init[i];		}
 	lambda = 0.001;		exitCond = 0;
 	
@@ -595,12 +628,20 @@ void CTRKin::UpdateFAC(const double jAng[5], const double measTipPosDir[6], doub
 {
 	// CKim - Perform recursive least square update on coefficients....
 	// 0. Input vector [ 1, cos(L31), sin(L31) ..... sin(a21)*sin(a31)*sin(L31) ];
-	Eigen::Matrix<double,125,1> x;		double a21 = jAng[0];		double a31 = jAng[1];		double L31 = jAng[2];
+	double a21 = jAng[0];		double a31 = jAng[1];		double L31 = jAng[2];
+	::Eigen::VectorXd x(this->coeffSize);
+	x.setZero();
 
-	double A[5], B[5], C[5];	A[0] = B[0] = C[0] = 1.0;
+	int basisFunctionLength = 2 * this->modelOrder - 1;
+	double* A = new double[basisFunctionLength]; 
+	double* B = new double[basisFunctionLength];
+	double* C = new double[basisFunctionLength];
+
+	A[0] = B[0] = C[0] = 1.0;
+
 	double L_normalized;		int n,r;	
 
-	for(int i=1; i<5; i++)	
+	for(int i=1; i<basisFunctionLength; i++)	
 	{
 		n = i/2;	r = i%2;	L_normalized = L31/L31_MAX*0.5*3.141592;
 		if(r==0)	{	A[i] = sin(n*a21);		B[i] = sin(n*a31);		C[i] = sin(n*L_normalized);		}
@@ -608,9 +649,13 @@ void CTRKin::UpdateFAC(const double jAng[5], const double measTipPosDir[6], doub
 	}
 
 	int cnt = 0;
-	for(int i=0; i<5; i++)	{
-		for(int j=0; j<5; j++)	{
-			for(int k=0; k<5; k++)	{	x(cnt,0) = A[i]*B[j]*C[k];	cnt++;	}	}	}
+	for(int i=0; i < basisFunctionLength; i++)	
+		for(int j=0; j < basisFunctionLength; j++)
+			for(int k=0; k < basisFunctionLength; k++)	
+			{	
+				x(cnt,0) = A[i]*B[j]*C[k];	
+				cnt++;	
+			}
 
 	
 	// 0.5. In measuredData, compensate for the rigid rotation/translation about/along z axis
@@ -659,20 +704,25 @@ void CTRKin::UpdateFAC(const double jAng[5], const double measTipPosDir[6], doub
 	{
 		WaitForSingleObject(m_hFACMutex,INFINITE);
 		for(int i=0; i<6; i++)		// To update position and orientation
-		//for(int i=0; i<3; i++)	// To update position only
 		{
-			if(i==0)	{
-				for(int j=0; j<125; j++)	{	m_Tip_px[j] = m_tmpMat(j,i);	}	}
-			if(i==1)	{
-				for(int j=0; j<125; j++)	{	m_Tip_py[j] = m_tmpMat(j,i);	}	}
-			if(i==2)	{
-				for(int j=0; j<125; j++)	{	m_Tip_pz[j] = m_tmpMat(j,i);	}	}
-			if(i==3)	{
-				for(int j=0; j<125; j++)	{	m_Tip_ox[j] = m_tmpMat(j,i);	}	}
-			if(i==4)	{
-				for(int j=0; j<125; j++)	{	m_Tip_oy[j] = m_tmpMat(j,i);	}	}
-			if(i==5)	{
-				for(int j=0; j<125; j++)	{	m_Tip_oz[j] = m_tmpMat(j,i);	}	}
+			if(i==0)	
+				for(int j=0; j < this->coeffSize; j++)	
+					m_Tip_px[j] = m_tmpMat(j,i);
+			if(i==1)	
+				for(int j=0; j < this->coeffSize; j++)	
+					m_Tip_py[j] = m_tmpMat(j,i);
+			if(i==2)	
+				for(int j=0; j < this->coeffSize; j++)	
+					m_Tip_pz[j] = m_tmpMat(j,i);
+			if(i==3)	
+				for(int j=0; j < this->coeffSize; j++)	
+					m_Tip_ox[j] = m_tmpMat(j,i);	
+			if(i==4)	
+				for(int j=0; j < this->coeffSize; j++)	
+					m_Tip_oy[j] = m_tmpMat(j,i);	
+			if(i==5)
+				for(int j=0; j < this->coeffSize; j++)	
+					m_Tip_oz[j] = m_tmpMat(j,i);	
 		}
 		ReleaseMutex(m_hFACMutex);
 	}
@@ -682,250 +732,31 @@ void CTRKin::UpdateFAC(const double jAng[5], const double measTipPosDir[6], doub
 
 void CTRKin::UpdateInitM(const double jAng[5], bool inv)
 {
-	//Eigen::Matrix<double,125,1> x;		double a21 = jAng[0];		double a31 = jAng[1];		double L31 = jAng[2];
-
-	//double A[5], B[5], C[5];	A[0] = B[0] = C[0] = 1.0;
-	//double L_normalized;		int n,r;	
-
-	//if(inv)
-	//{
-	//	for(int i=0; i<6; i++)	{	F[i] = Fzero.inverse();		}
-
-	//	std::ofstream f;	f.open("Asdf.txt");
-	//	for(int i=0; i<125; i++)	{  f<<"\n";
-	//		for(int j=0; j<125; j++)	{
-	//			f<<F[0](i,j)<<"\t";
-	//		}	}
-
-	//	return;
-	//}
-
-	//for(int i=1; i<5; i++)	
-	//{
-	//	n = i/2;	r = i%2;	L_normalized = L31/L31_MAX*0.5*3.141592;
-	//	if(r==0)	{	A[i] = sin(n*a21);		B[i] = sin(n*a31);		C[i] = sin(n*L_normalized);		}
-	//	else		{	A[i] = cos((n+1)*a21);	B[i] = cos((n+1)*a31);	C[i] = cos((n+1)*L_normalized);	}
-	//}
-
-	//int cnt = 0;
-	//for(int i=0; i<5; i++)	{
-	//	for(int j=0; j<5; j++)	{
-	//		for(int k=0; k<5; k++)	{	x(cnt,0) = A[i]*B[j]*C[k];	cnt++;	}	}	}
-
-	//// CKim - Initialize matrices for recursive least square
-	//Fzero += (x*x.transpose());	
-
 }
 
 
-void CTRKin::EvalAnalyticJacobian(const double* jAng, const Eigen::MatrixXd& Coeff, Eigen::MatrixXd& J)
-{
-	// CKim - Evaluate the jacobian of the functional approximation at jAng. 
-	// Jacobian will be 6 by 5 matrix, that is
-	// J = [ dpx/da21, dpx/da31, dpx/dL31, dpx/da1, dpx/dL1 ;
-	//       dpy/da21,		  ................		dpy/dL1	;
-	//			:		      ................		   :	;
-	//		 dvz/da21,        ................      dvz/dL1   ];
-	
-	double a21 = jAng[0];			double a31 = jAng[1];		double L31 = jAng[2];		
-	double a1 = jAng[3];			double L1 = jAng[4];		double Ln = 0.5*3.141592/L31_MAX;
-
-	// 1. First evaluate the partial derivate of the harmonic basis function at joint angle. 
-	// For example, derivative w.r.t a21 will be dA = [0, -sin(a21), cos(a21), -2*sin(2*a21), 2*cos(2*a21) .... ]
-	// The length of protrusion is normalized so that its range falls into [0,pi/2]. L31_max = 80.0;
-	double A[5], B[5], C[5];	double L_normalized = L31*Ln;		int n,r;
-
-	for(int col=0; col<5; col++)
-	{
-		if(col==0)	{	A[0] = 0.0;		B[0] = C[0] = 1.0;		}	 // derive w.r.t a21
-		if(col==1)	{	B[0] = 0.0;		A[0] = C[0] = 1.0;		}	 // derive w.r.t a31
-		if(col==2)	{	C[0] = 0.0;		A[0] = B[0] = 1.0;		}	 // derive w.r.t L31
-	
-		for(int i=1; i<5; i++)	
-		{
-			n = i/2;	r = i%2;	
-			if(col==0)	// derive by a21
-			{
-				if(r==0)	{	A[i] = n*cos(n*a21);			B[i] = sin(n*a31);		C[i] = sin(n*L_normalized);		}
-				else		{	A[i] = -(n+1)*sin((n+1)*a21);	B[i] = cos((n+1)*a31);	C[i] = cos((n+1)*L_normalized);	}
-			}
-
-			if(col==1)	// derive by a31
-			{
-				if(r==0)	{	A[i] = sin(n*a21);		B[i] = n*cos(n*a31);			C[i] = sin(n*L_normalized);		}
-				else		{	A[i] = cos((n+1)*a21);	B[i] = -(n+1)*sin((n+1)*a31);	C[i] = cos((n+1)*L_normalized);	}
-			}
-
-			if(col==2)	// derive by L31
-			{
-				if(r==0)	{	A[i] = sin(n*a21);		B[i] = sin(n*a31);		C[i] = n*Ln*cos(n*L_normalized);			}
-				else		{	A[i] = cos((n+1)*a21);	B[i] = cos((n+1)*a31);	C[i] = -(n+1)*Ln*sin((n+1)*L_normalized);	}
-			}
-
-			if(col > 2)	// derive by a1 and L1
-			{
-				if(r==0)	{	A[i] = sin(n*a21);		B[i] = sin(n*a31);		C[i] = sin(n*L_normalized);		}
-				else		{	A[i] = cos((n+1)*a21);	B[i] = cos((n+1)*a31);	C[i] = cos((n+1)*L_normalized);	}
-			}
-		}
-
-		// 2. Multiply coefficients
-		double dp[3] = { 0, 0, 0 };		double dv[3] = { 0, 0, 0 };		double val = 0;
-		for(int i=0; i<5; i++)	{
-			for(int j=0; j<5; j++)	{
-				for(int k=0; k<5; k++)	
-				{	
-					val = A[i]*B[j]*C[k];
-					dp[0] += (val*Coeff(25*i+5*j+k,0));		dp[1] += (val*Coeff(25*i+5*j+k,1));		
-					dp[2] += (val*Coeff(25*i+5*j+k,2));		dv[0] += (val*Coeff(25*i+5*j+k,3));
-					dv[1] += (val*Coeff(25*i+5*j+k,4));		dv[2] += (val*Coeff(25*i+5*j+k,5));
-				}
-			}
-		}
-
-		// 3. Fill the columns
-		if(col < 3)	
-		{
-			J(0,col) = cos(a1)*dp[0] - sin(a1)*dp[1];		J(3,col) = cos(a1)*dv[0] - sin(a1)*dv[1];		
-			J(1,col) = sin(a1)*dp[0] + cos(a1)*dp[1];		J(4,col) = sin(a1)*dv[0] + cos(a1)*dv[1];		
-			J(2,col) = dp[2];								J(5,col) = dv[2];	
-		}
-
-		if(col == 3)
-		{
-			J(0,col) = -sin(a1)*dp[0] - cos(a1)*dp[1];		J(3,col) = -sin(a1)*dv[0] - cos(a1)*dv[1];		
-			J(1,col) = cos(a1)*dp[0] - sin(a1)*dp[1];		J(4,col) = cos(a1)*dv[0] - sin(a1)*dv[1];		
-			J(2,col) = 0;									J(5,col) = 0;
-		}
-
-		if(col == 4)
-		{
-			J(0,col) = 0;		J(3,col) = 0;
-			J(1,col) = 0;		J(4,col) = 0;
-			J(2,col) = 1;		J(5,col) = 0;
-		}
-	}
-		
-}
-
-
-//void CTRKin::EvalAnalyticJacobian2(const double* jAng, const double* nd, Eigen::MatrixXd& J)
+//void CTRKin::EvalCurrentKinematicsModel(const double* jAng, double* predTipPosDir, Eigen::MatrixXd& J, bool evalJ)
 //{
-//	// CKim - Evaluate the jacobian of the functional approximation at jAng. 
-//	// Jacobian will be 6 by 5 matrix, that is
-//	// J = [ dpx/da21, dpx/da31, dpx/dL31, dpx/da1, dpx/dL1 ;
-//	//       dpy/da21,		  ................		dpy/dL1	;
-//	//			:		      ................		   :	;
-//	//		 dvz/da21,        ................      dvz/dL1   ];
-//	
-//	double a21 = jAng[0];			double a31 = jAng[1];		double L31 = jAng[2];		
-//	double a1 = jAng[3];			double L1 = jAng[4];		double Ln = 0.5*3.141592/L31_MAX;
+//	// CKim - Obtain the copy of the model
 //	Eigen::MatrixXd Coeff(125,6);	GetFAC(Coeff);
 //
-//	// 1. First evaluate the partial derivate of the harmonic basis function at joint angle. 
-//	// For example, derivative w.r.t a21 will be dA = [0, -sin(a21), cos(a21), -2*sin(2*a21), 2*cos(2*a21) .... ]
-//	// The length of protrusion is normalized so that its range falls into [0,pi/2]. L31_max = 80.0;
-//	double A[5], B[5], C[5];	double L_normalized = L31*Ln;		int n,r;
+//	// CKim - Evaluate forward kinematics
+//	TipFwdKinEx(jAng,Coeff,predTipPosDir);
 //
-//	for(int col=0; col<5; col++)
+//	// CKim - Evaluate Jacobian if requested
+//	if(evalJ)	
 //	{
-//		if(col==0)	{	A[0] = 0.0;		B[0] = C[0] = 1.0;		}	 // derive w.r.t a21
-//		if(col==1)	{	B[0] = 0.0;		A[0] = C[0] = 1.0;		}	 // derive w.r.t a31
-//		if(col==2)	{	C[0] = 0.0;		A[0] = B[0] = 1.0;		}	 // derive w.r.t L31
-//	
-//		for(int i=1; i<5; i++)	
-//		{
-//			n = i/2;	r = i%2;	
-//			if(col==0)	// derive by a21
-//			{
-//				if(r==0)	{	A[i] = n*cos(n*a21);			B[i] = sin(n*a31);		C[i] = sin(n*L_normalized);		}
-//				else		{	A[i] = -(n+1)*sin((n+1)*a21);	B[i] = cos((n+1)*a31);	C[i] = cos((n+1)*L_normalized);	}
-//			}
-//
-//			if(col==1)	// derive by a31
-//			{
-//				if(r==0)	{	A[i] = sin(n*a21);		B[i] = n*cos(n*a31);			C[i] = sin(n*L_normalized);		}
-//				else		{	A[i] = cos((n+1)*a21);	B[i] = -(n+1)*sin((n+1)*a31);	C[i] = cos((n+1)*L_normalized);	}
-//			}
-//
-//			if(col==2)	// derive by L31
-//			{
-//				if(r==0)	{	A[i] = sin(n*a21);		B[i] = sin(n*a31);		C[i] = n*Ln*cos(n*L_normalized);			}
-//				else		{	A[i] = cos((n+1)*a21);	B[i] = cos((n+1)*a31);	C[i] = -(n+1)*Ln*sin((n+1)*L_normalized);	}
-//			}
-//
-//			if(col > 2)	// derive by a1 and L1
-//			{
-//				if(r==0)	{	A[i] = sin(n*a21);		B[i] = sin(n*a31);		C[i] = sin(n*L_normalized);		}
-//				else		{	A[i] = cos((n+1)*a21);	B[i] = cos((n+1)*a31);	C[i] = cos((n+1)*L_normalized);	}
-//			}
-//		}
-//
-//		// 2. Multiply coefficients
-//		double dp[3] = { 0, 0, 0 };		double dv[3] = { 0, 0, 0 };		double val = 0;
-//		for(int i=0; i<5; i++)	{
-//			for(int j=0; j<5; j++)	{
-//				for(int k=0; k<5; k++)	
-//				{	
-//					val = A[i]*B[j]*C[k];
-//					dp[0] += (val*Coeff(25*i+5*j+k,0));		dp[1] += (val*Coeff(25*i+5*j+k,1));		
-//					dp[2] += (val*Coeff(25*i+5*j+k,2));		dv[0] += (val*Coeff(25*i+5*j+k,3));
-//					dv[1] += (val*Coeff(25*i+5*j+k,4));		dv[2] += (val*Coeff(25*i+5*j+k,5));
-//				}
-//			}
-//		}
-//
-//		// 3. Fill the columns
-//		if(col < 3)	
-//		{
-//			J(0,col) = cos(a1)*dp[0] - sin(a1)*dp[1];		
-//			J(1,col) = sin(a1)*dp[0] + cos(a1)*dp[1];		
-//			J(2,col) = dp[2];								
-//			J(3,col) = nd[0]*(cos(a1)*dv[0] - sin(a1)*dv[1]) + nd[1]*(sin(a1)*dv[0] + cos(a1)*dv[1]) + nd[2]*(dv[2]);	
-//		}
-//
-//		if(col == 3)
-//		{
-//			J(0,col) = -sin(a1)*dp[0] - cos(a1)*dp[1];		
-//			J(1,col) = cos(a1)*dp[0] - sin(a1)*dp[1];		
-//			J(2,col) = 0;									
-//			J(3,col) = nd[0]*(-sin(a1)*dv[0] - cos(a1)*dv[1]) + nd[1]*(cos(a1)*dv[0] - sin(a1)*dv[1]) + nd[2]*0.0;
-//		}
-//
-//		if(col == 4)
-//		{
-//			J(0,col) = 0;		
-//			J(1,col) = 0;
-//			J(2,col) = 1;		
-//			J(3,col) = 0;
-//		}
+//		EvalAnalyticJacobian(jAng,Coeff,J);			
 //	}
-//		
+//	
+//	return;
 //}
-
-
-void CTRKin::EvalCurrentKinematicsModel(const double* jAng, double* predTipPosDir, Eigen::MatrixXd& J, bool evalJ)
-{
-	// CKim - Obtain the copy of the model
-	Eigen::MatrixXd Coeff(125,6);	GetFAC(Coeff);
-
-	// CKim - Evaluate forward kinematics
-	TipFwdKinEx(jAng,Coeff,predTipPosDir);
-
-	// CKim - Evaluate Jacobian if requested
-	if(evalJ)	
-	{
-		EvalAnalyticJacobian(jAng,Coeff,J);			
-	}
-	
-	return;
-}
 
 
 void CTRKin::EvalCurrentKinematicsModelNumeric(const double* jAng, double* predTipPosDir, Eigen::MatrixXd& J, bool evalJ)
 {
 	// CKim - Variables
-	Eigen::MatrixXd Coeff(125,6);		double dq = FLT_EPSILON;		double q[5];		double Fq[6];
+	Eigen::MatrixXd Coeff(this->coeffSize,6);		double dq = FLT_EPSILON;		double q[5];		double Fq[6];
 
 	// CKim - Obtain the copy of the model
 	GetFAC(Coeff);
@@ -963,34 +794,8 @@ void CTRKin::EvalCurrentKinematicsModelNumeric(const double* jAng, double* predT
 }
 
 
-void CTRKin::EvalCurrentKinematicsModel_NEW(const double* jAng,  const double* tgtPosDir, double* predTipPosDir, Eigen::MatrixXd& J, bool evalJ)
-{
-	Eigen::MatrixXd tmpJ(6,5);
-	
-	// CKim - Obtain the copy of the model
-	Eigen::MatrixXd Coeff(125,6);	GetFAC(Coeff);
-
-	// CKim - Evaluate forward kinematics
-	TipFwdKinEx(jAng,Coeff,predTipPosDir);
-
-	// CKim - Evaluate Jacobian if requested
-	if(evalJ)	
-	{
-		EvalAnalyticJacobian(jAng,Coeff,tmpJ);			
-
-		for(int i=0; i<3; i++)	{
-			for(int j=0; j<5; j++)	{	J(i,j) = tmpJ(i,j);		J(3,j) = 0;
-				for(int k=0; k<3; k++)	{
-					J(3,j) -= (tgtPosDir[3+k]*J(3+k,j));	}	}	}
-	}
-		
-	return;
-}
-
-
 void CTRKin::ApplyKinematicControl(const Eigen::MatrixXd& J, const Eigen::MatrixXd& err, double* dq)
 {
-	//::std::cout << "err = " << err.transpose() << ::std::endl;
 
 	// George - ignoring small errors
 	Eigen::VectorXd localErr = err.col(0);
@@ -1006,7 +811,6 @@ void CTRKin::ApplyKinematicControl(const Eigen::MatrixXd& J, const Eigen::Matrix
 	Eigen::Matrix<double,5,5> A;	double lambda = 10;				Eigen::Matrix<double,5,1> sv;
 	double eps;						double condNum;
 
-	//::std::cout << J << ::std::endl;
 	// CKim - Invert jacobian, handle singularity and solve
 	double scalarWeight = 50.0;
 	Eigen::Matrix<double, 6,6> weights;
@@ -1020,59 +824,12 @@ void CTRKin::ApplyKinematicControl(const Eigen::MatrixXd& J, const Eigen::Matrix
 	Eigen::JacobiSVD<Eigen::Matrix<double,5,5>> Jsvd(JtJ,Eigen::ComputeThinU | Eigen::ComputeThinV);
 	sv = Jsvd.singularValues();	
 
-	//for(int i = 0 ; i < 5 ; ++i)
-	//	::std::cout << sv(i,i)  << "\t";
-	//::std::cout << ::std::endl;
-	//std::cout << "sv = " << sv.transpose() << ::std::endl;
-	//std::cout << "U = " << Jsvd.matrixV() << ::std::endl;
-	//std::cout << "J = " << J << ::std::endl;
-
-	//double minimunSV = 1;
-	//int index = 5;
-	//for(int i = 0 ; i < 5 ; ++i)
-	//	if(sv(i,0) < minimunSV)
-	//	{
-	//		index = i;
-	//		::std::cout << index << ::std::endl;
-	//		break;
-	//	}
-
-	//Eigen::MatrixXd Xns = Jsvd.matrixV().block(0,0,5,index);
-	//Eigen::MatrixXd invSVns(index,index);
-	//invSVns.setZero();
-	//for(int i = 0; i < index; ++i)
-	//	invSVns(i,i) = 1/sv(i,0);
-
-	//dotq = Xns * invSVns * Xns.transpose() * b;
-	
 
 	double conditionNumber = sv(0, 0)/sv(4, 0);
-	//double conditionNumber = sv(4, 0)/sv(0, 0);
 	double conditionThreshold = 2e4;
 	
-/*	for (int i = 0; i < 5; ++i)
-		JtJ(i,i) += lambda;
-
-	Jsvd.compute(JtJ);*/
-	//::std::cout << conditionNumber << ::std::endl;
-	//os << conditionNumber << ::std::endl;
 	if (conditionNumber >= conditionThreshold)
-	//if(false)
 	{
-		//::std::cout << "TRANSPOSE" << ::std::endl;
-		//::std::cout << " before" << ::std::endl;
-		//::std::cout << conditionNumber << ::std::endl;
-		//double epsilon = conditionThreshold * sv(4, 0) - sv(0, 0);
-		//epsilon /= 1 - conditionThreshold;
-		//A = JtJ;
-		//for(int i=0; i<5; i++)	
-		//	A(i,i) += epsilon;
-
-		//Jsvd.compute(A);
-		//sv = Jsvd.singularValues();	
-		//::std::cout << " after" << ::std::endl;
-		//::std::cout << sv(0, 0)/sv(4, 0) << ::std::endl;
-
 		dotq = 0.0005*b;
 		dotq(2) *= 1000;
 		dotq(4) *= 1000;
@@ -1082,74 +839,9 @@ void CTRKin::ApplyKinematicControl(const Eigen::MatrixXd& J, const Eigen::Matrix
 		return;
 	}
 
-	//eps = sv(0,0)*Eigen::NumTraits<double>::epsilon();
-	//
-	////::std::cout << JtJ.determinant() << ::std::endl;
-	//condNum = fabs(sv(4,0));
-	////eps = 0.00001;
-	//		
-	////for(int i=0; i<5; i++)	{	JtJ(i,i) += lambda;		}
-
-	//if(condNum < eps)	
-	//{
-	//	//localStat.invKinOK = false;
-	//	A = JtJ;
-	//	for(int i=0; i<5; i++)	{	A(i,i) += (1-sv(4,0)/eps)*lambda;	}
-	//			////for(int i=0; i<5; i++)	{	A(i,i) += lambda*JtJ(i,i);		}
-	//	Jsvd.compute(A);
-	//}
-	//else
-	//{
-	//	//localStat.invKinOK = true;
-	//}
-	//::std::cout << J.col(2) << ::std::endl;
-	//::std::cout << "INVERSE" << ::std::endl;
 	dotq = Jsvd.solve(b);
-	//::std::cout << dotq << ::std::endl;
+
 	for(int i=0; i<5; i++)	{	dq[i] = dotq(i,0);	}
-	//PrintCArray(dq, 5);
 }
 
 
-void CTRKin::ApplyKinematicControl_NEW(const Eigen::MatrixXd& J, const Eigen::MatrixXd& err, double* dq)
-{
-	// CKim - This function is called when I use 4 x 5 Jacobian
-	Eigen::Matrix<double,4,4> JJt;	Eigen::Matrix<double,4,1> b;		Eigen::Matrix<double,5,1> dotq;	
-
-	JJt = J*J.transpose();	
-	Eigen::JacobiSVD<Eigen::Matrix<double,4,4>> Jsvd(JJt,Eigen::ComputeThinU | Eigen::ComputeThinV);
-	b = Jsvd.solve(err);
-	dotq = J.transpose()*b;
-		
-	for(int i=0; i<5; i++)	{	dq[i] = dotq(i,0);	}
-
-	////	Eigen::Matrix<double,5,5> A;	double lambda = 0.1;				Eigen::Matrix<double,5,1> sv;
-	////double eps;							double condNum;//
-
-	//// CKim - Invert jacobian, handle singularity and solve
-	//JtJ = J.transpose()*J;			b = J.transpose()*err;
-	//Eigen::JacobiSVD<Eigen::Matrix<double,5,5>> Jsvd(JtJ,Eigen::ComputeThinU | Eigen::ComputeThinV);
-	//sv = Jsvd.singularValues();	
-	//eps = sv(0,0)*Eigen::NumTraits<double>::epsilon();
-
-	//condNum = fabs(sv(4,0));
-	////eps = 0.00001;
-	//		
-	////for(int i=0; i<5; i++)	{	JtJ(i,i) += lambda;		}
-
-	//if(condNum < eps)	
-	//{
-	//	//localStat.invKinOK = false;
-	//	A = JtJ;
-	//	for(int i=0; i<5; i++)	{	A(i,i) += (1-sv(4,0)/eps)*lambda;	}
-	//			////for(int i=0; i<5; i++)	{	A(i,i) += lambda*JtJ(i,i);		}
-	//	Jsvd.compute(A);
-	//}
-	//else
-	//{
-	//	//localStat.invKinOK = true;
-	//}
-	//
-	//dotq = Jsvd.solve(b);
-	//for(int i=0; i<5; i++)	{	dq[i] = dotq(i,0);	}
-}

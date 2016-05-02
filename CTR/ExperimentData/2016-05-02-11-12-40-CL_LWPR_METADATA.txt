@@ -1,0 +1,2 @@
+Trajectory type:slow square
+Forgetting factor:0.99

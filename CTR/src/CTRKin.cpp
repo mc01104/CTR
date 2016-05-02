@@ -12,9 +12,9 @@ CTRKin::CTRKin(int modelOrder, int modelInputDim):
 	this->coeffSize = ::std::pow(2 * this->modelOrder - 1, this->modelInputDim);
 
 	// CKim - Coefficient file for Tip
-	std::string fName = "fourier_order_3.txt";
+	//std::string fName = "fourier_order_3.txt";
 	//std::string fName = "fourier_order_4.txt";
-	//std::string fName = "fourier_order_5.txt";
+	std::string fName = "fourier_order_5.txt";
 
 	os.open("conditionNumber.txt");
 	

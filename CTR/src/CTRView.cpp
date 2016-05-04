@@ -399,19 +399,16 @@ void CCTRView::OnClickedBtnHome()
 	}
 	p[2] = home[2];
 	this->GetDocument()->SendCommand(0, p);
-
+	
+	Sleep(3000);
 	p[1] = home[1];
-	this->GetDocument()->SendCommand(0, p);
-
 	p[0] = home[0];
 	this->GetDocument()->SendCommand(0, p);
-
+	 
+	Sleep(1000);
 	p[3] = home[3];
-	this->GetDocument()->SendCommand(0, p);
-
 	p[4] = home[4];
 	this->GetDocument()->SendCommand(0, p);
-
 }
 
 void CCTRView::OnClickedBtnLeft()

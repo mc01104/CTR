@@ -356,8 +356,13 @@ unsigned int WINAPI	CCTRDoc::EMLoop(void* para)
 
 		LeaveCriticalSection(&m_cSection);
 
+		
 		if(mySelf->m_playBack || mySelf->m_bStaticPlayBack || mySelf->m_bRunExperiment)
+		{
+			::std::cout << "before Fourier adaptation " << ::std::endl;
 			mySelf->m_kinLib->UpdateFAC(jAng,measTipPosDir,predTipPosDir,mySelf->m_bDoUpdate);
+			::std::cout << "after Fourier adaptation " << ::std::endl;
+		}
 
 		rCnt++;
 
@@ -1284,8 +1289,11 @@ unsigned int WINAPI	CCTRDoc::ClosedLoopControlLoop(void* para)
 		//// meaningful only when new EM tracker data and predicted tip posDir is available
 		//// Use WaitForMultipleObjects to wait for this....
 		int flag = WaitForSingleObject(mySelf->m_hEMevent,1000);
-		if(flag == WAIT_TIMEOUT)	{
-			AfxMessageBox("No event from EM Loop!");	return 0;
+		if(flag == WAIT_TIMEOUT)	
+		{
+			AfxMessageBox("No event from EM Loop!");	
+			::std::cout << "thrown by CCL" << ::std::endl;
+			return 0;
 		}
 
 		// CKim - Synch with haptic device. This is for spending 1 ms. 

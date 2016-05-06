@@ -8,7 +8,7 @@ CTRKin::CTRKin(int modelOrder, int modelInputDim):
 	modelOrder(modelOrder),
 	modelInputDim(modelInputDim)
 {
-	
+
 	this->coeffSize = ::std::pow(2 * this->modelOrder - 1, this->modelInputDim);
 
 	// CKim - Coefficient file for Tip
@@ -17,7 +17,7 @@ CTRKin::CTRKin(int modelOrder, int modelInputDim):
 	//std::string fName = "fourier_order_5.txt";
 
 	os.open("conditionNumber.txt");
-	
+
 	this->AllocateCoefficientMatrices();
 
 
@@ -34,7 +34,7 @@ CTRKin::CTRKin(int modelOrder, int modelInputDim):
 
 	// CKim  Coefficients for Balance Pair
 	fName = "C:\\01. ConcentricTubeRobots\\CTR\\CTR_BP_FAC.txt";
-	
+
 	if (readCTR_FAC_file(fName, m_BP_px, m_BP_py, m_BP_pz, m_BP_ox, m_BP_oy, m_BP_oz) == false) //file read error
 		AfxMessageBox("Error reading Fourier Model Coefficients for the balanced pair");
 
@@ -60,6 +60,14 @@ void CTRKin::AllocateCoefficientMatrices()
 	this->m_Tip_ox = new double[this->coeffSize];
 	this->m_Tip_oy = new double[this->coeffSize];
 	this->m_Tip_oz = new double[this->coeffSize];
+
+	int basisFunctionLength = 2 * this->modelOrder - 1;
+	this->A = new double[basisFunctionLength];
+	this->B = new double[basisFunctionLength];
+	this->C = new double[basisFunctionLength];
+	this->AUpdated = new double[basisFunctionLength];
+	this->BUpdated = new double[basisFunctionLength];
+	this->CUpdated = new double[basisFunctionLength];
 
 	int BPCoeffZize = 125;
 	this->m_BP_px = new double[BPCoeffZize];
@@ -106,7 +114,7 @@ void CTRKin::ReInitializeModel()
 
 	// CKim  Coefficients for Balance Pair
 	fName = "C:\\01. ConcentricTubeRobots\\CTR\\CTR_BP_FAC.txt";
-	
+
 	if (readCTR_FAC_file(fName, m_BP_px, m_BP_py, m_BP_pz, m_BP_ox, m_BP_oy, m_BP_oz) == false) //file read error
 		AfxMessageBox("Sparta!!!!");
 
@@ -119,7 +127,7 @@ bool CTRKin::readCTR_FAC_file(std::string fileName,  double px[], double py[],  
 	std::ifstream CTR_FAC_id;	CTR_FAC_id.open(fileName);
 	if(CTR_FAC_id.fail())		
 		return false;	
-	
+
 	for(int i = 0; i < this->coeffSize; i++)
 	{
 		CTR_FAC_id >> junkS >> junkS >> junkS >> junkS;
@@ -169,19 +177,19 @@ bool CTRKin::TipFwdKin(const double* jAng, double* posOrt)
 	// 1. First evaluate harmonic basis function at joint angle. A = [1, cos(a21), sin(a21), cos(2*a21), sin(2*a21) .... ]
 	// The length of protrusion is normalized so that its range falls into [0,pi/2]. L31_max = 80.0;
 	int basisFunctionLength = 2 * this->modelOrder - 1;
-	double* A = new double[basisFunctionLength]; 
-	double* B = new double[basisFunctionLength];
-	double* C = new double[basisFunctionLength];
+	//double* A = new double[basisFunctionLength]; 
+	//double* B = new double[basisFunctionLength];
+	//double* C = new double[basisFunctionLength];
 
-	A[0] = B[0] = C[0] = 1.0;
+	this->A[0] = this->B[0] = this->C[0] = 1.0;
 
 	double L_normalized;		int n,r;	
 
 	for(int i=1; i < basisFunctionLength; i++)	
 	{
 		n = i/2;	r = i % 2;	L_normalized = L31/L31_MAX*0.5*3.141592;
-		if(r==0)	{	A[i] = sin(n*a21);		B[i] = sin(n*a31);		C[i] = sin(n*L_normalized);		}
-		else		{	A[i] = cos((n+1)*a21);	B[i] = cos((n+1)*a31);	C[i] = cos((n+1)*L_normalized);	}
+		if(r==0)	{	this->A[i] = sin(n*a21);		this->B[i] = sin(n*a31);		this->C[i] = sin(n*L_normalized);		}
+		else		{	this->A[i] = cos((n+1)*a21);	this->B[i] = cos((n+1)*a31);	this->C[i] = cos((n+1)*L_normalized);	}
 	}
 
 	WaitForSingleObject(m_hFACMutex,INFINITE);
@@ -192,7 +200,7 @@ bool CTRKin::TipFwdKin(const double* jAng, double* posOrt)
 		for(int j=0; j < basisFunctionLength; j++)	{
 			for(int k=0; k < basisFunctionLength; k++)	
 			{	
-				val = A[i]*B[j]*C[k];
+				val = this->A[i] * this->B[j] * this->C[k];
 				int ind = ::std::pow(basisFunctionLength, 2)*i + basisFunctionLength*j + k;
 				p[0] += (val*m_Tip_px[ind]);		p[1] += (val*m_Tip_py[ind]);		p[2] += (val*m_Tip_pz[ind]);	
 				v[0] += (val*m_Tip_ox[ind]);		v[1] += (val*m_Tip_oy[ind]);		v[2] += (val*m_Tip_oz[ind]);
@@ -207,14 +215,14 @@ bool CTRKin::TipFwdKin(const double* jAng, double* posOrt)
 
 	// 3. Transform the result by rotation about z axis by a1 and translation along z axis by L1
 	double a1 = jAng[3];		double L1 = jAng[4];
-	
+
 	posOrt[0] = cos(a1)*p[0] - sin(a1)*p[1];		posOrt[3] = cos(a1)*v[0] - sin(a1)*v[1];
 	posOrt[1] = sin(a1)*p[0] + cos(a1)*p[1];		posOrt[4] = sin(a1)*v[0] + cos(a1)*v[1];
 	posOrt[2] = p[2] + L1;							posOrt[5] = v[2];
-	
-	delete[] A;
-	delete[] B;
-	delete[] C;
+
+	//delete[] A;
+	//delete[] B;
+	//delete[] C;
 
 	return true;
 }
@@ -229,20 +237,21 @@ void CTRKin::TipFwdKinEx(const double* jAng, const Eigen::MatrixXd& Coeff, doubl
 	// 1. First evaluate harmonic basis function at joint angle. A = [1, cos(a21), sin(a21), cos(2*a21), sin(2*a21) .... ]
 	// The length of protrusion is normalized so that its range falls into [0,pi/2]. L31_max = 80.0;
 	int basisFunctionLength = 2 * this->modelOrder - 1;
-	double* A = new double[basisFunctionLength]; 
-	double* B = new double[basisFunctionLength];
-	double* C = new double[basisFunctionLength];
+	//double* A = new double[basisFunctionLength]; 
+	//double* B = new double[basisFunctionLength];
+	//double* C = new double[basisFunctionLength];
 
-	A[0] = B[0] = C[0] = 1.0;
+	this->A[0] = this->B[0] = this->C[0] = 1.0;
 
 	double L_normalized;		int n,r;	
 
 	for(int i=1; i < basisFunctionLength; i++)	
 	{
 		n = i/2;	r = i % 2;	L_normalized = L31/L31_MAX*0.5*3.141592;
-		if(r==0)	{	A[i] = sin(n*a21);		B[i] = sin(n*a31);		C[i] = sin(n*L_normalized);		}
-		else		{	A[i] = cos((n+1)*a21);	B[i] = cos((n+1)*a31);	C[i] = cos((n+1)*L_normalized);	}
+		if(r==0)	{	this->A[i] = sin(n*a21);		this->B[i] = sin(n*a31);		this->C[i] = sin(n*L_normalized);		}
+		else		{	this->A[i] = cos((n+1)*a21);	this->B[i] = cos((n+1)*a31);	this->C[i] = cos((n+1)*L_normalized);	}
 	}
+
 
 	// 2. Multiply coefficients
 	double p[3] = { 0, 0, 0 };		double v[3] = { 0, 0, 0 };		double val = 0;
@@ -250,7 +259,7 @@ void CTRKin::TipFwdKinEx(const double* jAng, const Eigen::MatrixXd& Coeff, doubl
 		for(int j=0; j < basisFunctionLength; j++)	{
 			for(int k=0; k < basisFunctionLength; k++)	
 			{	
-				val = A[i]*B[j]*C[k];
+				val = this->A[i] * this->B[j] * this->C[k];
 				int ind = ::std::pow(basisFunctionLength, 2)*i + basisFunctionLength*j + k;
 				p[0] += (val*m_Tip_px[ind]);		p[1] += (val*m_Tip_py[ind]);		p[2] += (val*m_Tip_pz[ind]);	
 				v[0] += (val*m_Tip_ox[ind]);		v[1] += (val*m_Tip_oy[ind]);		v[2] += (val*m_Tip_oz[ind]);
@@ -263,15 +272,14 @@ void CTRKin::TipFwdKinEx(const double* jAng, const Eigen::MatrixXd& Coeff, doubl
 
 	// 3. Transform the result by rotation about z axis by a1 and translation along z axis by L1
 	double a1 = jAng[3];		double L1 = jAng[4];
-	
+
 	posOrt[0] = cos(a1)*p[0] - sin(a1)*p[1];		posOrt[3] = cos(a1)*v[0] - sin(a1)*v[1];
 	posOrt[1] = sin(a1)*p[0] + cos(a1)*p[1];		posOrt[4] = sin(a1)*v[0] + cos(a1)*v[1];
 	posOrt[2] = p[2] + L1;							posOrt[5] = v[2];
-	
-	delete[] A;
-	delete[] B;
-	delete[] C;
 
+	//delete[] A;
+	//delete[] B;
+	//delete[] C;
 }
 
 
@@ -313,11 +321,11 @@ bool CTRKin::BalancedPairFwdKin(const double* jAng, double* posOrt)
 
 	// 3. Transform the result by rotation about z axis by a1 and translation along z axis by L1
 	double a1 = jAng[3];		double L1 = jAng[4];
-	
+
 	posOrt[0] = cos(a1)*p[0] - sin(a1)*p[1];		posOrt[3] = cos(a1)*v[0] - sin(a1)*v[1];
 	posOrt[1] = sin(a1)*p[0] + cos(a1)*p[1];		posOrt[4] = sin(a1)*v[0] + cos(a1)*v[1];
 	posOrt[2] = p[2] + L1;							posOrt[5] = v[2];
-		
+
 	return true;
 }
 
@@ -346,7 +354,7 @@ void CTRKin::InverseKinematicsRootFinding(const double* tgtPosOrt, const double*
 
 	// CKim - Parameters for root finding
 	int iter = 0;	int maxiter = 100;		double eps = m_Thresh;		double lambda = 0.001;		double stepSz = 1.0;	
-		
+
 	Eigen::Matrix<double,4,5> J;		Eigen::Matrix<double,4,1> fx;		Eigen::Matrix<double,4,1> fxnew;		
 	Eigen::Matrix<double,5,1> update;	Eigen::Matrix<double,5,1> b;		Eigen::Matrix<double,5,5> JtJ;		
 	Eigen::Matrix<double,5,5> A;		double temp[5];
@@ -365,10 +373,10 @@ void CTRKin::InverseKinematicsRootFinding(const double* tgtPosOrt, const double*
 
 		// CKim - Exit if distance is less than threshold
 		if(sqErr < eps)	{		exitCond = 1;	break;		}
-		
+
 		// CKim - Numerically evalaluate the jacobian dy/dx
 		EvalJ_RootFinding(jAng,tgtPosOrt,Coeff,J);
-		
+
 		// CKim - In Newton-Rhapson method of root finding, update direction update = -Jinv*fx
 		// in our case m != n so it is pseudo inverse, so solve JtJ update = -Jt * fx
 		// to avoid singularity, you may also damp JtJ by adding lamda * identity
@@ -392,7 +400,7 @@ void CTRKin::InverseKinematicsRootFinding(const double* tgtPosOrt, const double*
 		{
 			// CKim - Move by step size. starting from stepSize = 1.0;
 			for(int i=0; i<5; i++)	{	temp[i] = jAng[i] + stepSz*update(i,0);	}
-		
+
 			// CKim - Evalualte function at new updated point
 			EvalF_RootFinding(temp,tgtPosOrt,Coeff,fxnew);
 
@@ -406,7 +414,7 @@ void CTRKin::InverseKinematicsRootFinding(const double* tgtPosOrt, const double*
 			{
 				stepSz *= 0.5;	
 			}
-			
+
 			// CKim - If function is not decreasing, 
 			if(stepSz < 0.0005)	
 			{
@@ -429,7 +437,7 @@ void CTRKin::EvalF_RootFinding(const double* jAng, const double* tgtPosOrt, cons
 	// given the desired tip position '[xd,yd,zd]' and direction 'nd' and maximum position error 'pmax' and angle error 'thmax', 
 
 	double posOrt[6];	double xprod[3];	double pmax = m_MaxPosErr;		double thmax = m_MaxOrtErr*3.141592/180.0;		double sum = 0.0;
-	
+
 	// CKim - Evaluate function
 	TipFwdKinEx(jAng,Coeff,posOrt);
 	xprod[0] = posOrt[4]*tgtPosOrt[5] - posOrt[5]*tgtPosOrt[4];
@@ -447,7 +455,7 @@ void CTRKin::EvalJ_RootFinding(const double* jAng, const double* tgtPosOrt, cons
 {
 	// CKim - Numerically evalaluate the jacobian dy/dx
 	Eigen::Matrix<double,4,1> Fxo;		Eigen::Matrix<double,4,1> Fx;
-	
+
 	double x[5];	double dx = FLT_EPSILON;
 
 	// CKim - First evaluate at current location
@@ -462,14 +470,14 @@ void CTRKin::EvalJ_RootFinding(const double* jAng, const double* tgtPosOrt, cons
 			{
 				dx = FLT_EPSILON*fabs(jAng[i]);
 				if(dx==0.0) {	dx = FLT_EPSILON;	}
-				
+
 				// CKim - This code is said to reduce finite-precision error
 				x[i] = jAng[i] + dx;
 				dx = x[i] - jAng[i];
 			}
 			else		{	x[i] = jAng[i];		}
 		}
-		
+
 		EvalF_RootFinding(x,tgtPosOrt,Coeff,Fx);
 
 		for(int i=0; i<4; i++)	{	J(i,col) = (Fx(i,0) - Fxo(i,0))/dx;	}
@@ -488,16 +496,16 @@ void CTRKin::InverseKinematicsLSQ(const double* tgtPosOrt, const double* init, d
 	// exitCond 1: lsqErr below threshold, 2: update magnitude too small, 3: max iteration
 
 	int iter = 0;	int maxiter = 100;	double eps = m_Thresh;		double lambda = 0.001;		double stepSz = 1.0;
-	
+
 	Eigen::Matrix<double,4,5> J;		Eigen::Matrix<double,4,1> fx;		Eigen::Matrix<double,4,1> fxnew;		
 	Eigen::Matrix<double,5,1> update;	Eigen::Matrix<double,5,1> b;		Eigen::Matrix<double,5,5> JtJ;
 	Eigen::Matrix<double,5,5> A;		double temp[5];						
-	
+
 	// CKim - Initialize
 	Eigen::MatrixXd Coeff(this->coeffSize, 6);		GetFAC(Coeff);
 	for(int i=0; i<5; i++)	{	jAng[i] = init[i];		}
 	lambda = 0.001;		exitCond = 0;
-	
+
 	// CKim - Iterate
 	for(iter = 0; iter < maxiter; iter++)
 	{
@@ -506,13 +514,13 @@ void CTRKin::InverseKinematicsLSQ(const double* tgtPosOrt, const double* init, d
 		Err[0] = fx.norm(); 
 		Err[1] = sqrt( fx(0,0)*fx(0,0) + fx(1,0)*fx(1,0) + fx(2,0)*fx(2,0) );
 		Err[2] = acos(1.0 - fx(3,0)*(1-cos(m_MaxOrtErr*3.141592/180.0))/m_MaxPosErr)*180.0/3.141592;
-		
+
 		// CKim - Exit if distance is less than threshold
 		if(Err[0] < eps)	{	exitCond = 1;	break;		}
-	
+
 		// CKim - Numerically evalaluate the jacobian dy/dx
 		EvalJ_LSQ(jAng,tgtPosOrt,Coeff,J);
-		
+
 		// CKim - Find the update direction. update = - inv ( (JtJ + lambda*diag(JtJ) ) Jt*fx
 
 
@@ -533,7 +541,7 @@ void CTRKin::InverseKinematicsLSQ(const double* tgtPosOrt, const double* init, d
 		while(1)
 		{
 			for(int i=0; i<5; i++)	{	temp[i] = jAng[i] + stepSz*update(i,0);	}
-		
+
 			// CKim - Evalualte distance at new updated point
 			EvalF_LSQ(temp,tgtPosOrt,Coeff,fxnew);	
 
@@ -549,7 +557,7 @@ void CTRKin::InverseKinematicsLSQ(const double* tgtPosOrt, const double* init, d
 			{
 				stepSz *= 0.5;	
 			}
-			
+
 			// CKim - If function is not decreasing, 
 			if(stepSz < 0.005)	
 			{
@@ -570,7 +578,7 @@ void CTRKin::EvalF_LSQ(const double* jAng, const double* tgtPosOrt, const Eigen:
 	// given the desired tip position '[xd,yd,zd]' and direction 'nd' and maximum position error 'pmax' and angle error 'thmax', 
 
 	double posOrt[6];	double pmax = m_MaxPosErr;		double thmax = m_MaxOrtErr*3.141592/180.0;		double sum = 0.0;
-	
+
 	// CKim - Evaluate function
 	TipFwdKinEx(jAng,Coeff,posOrt);
 	for(int i=0; i<3; i++)	{	
@@ -585,7 +593,7 @@ void CTRKin::EvalJ_LSQ(const double* jAng, const double* tgtPosOrt, const Eigen:
 {
 	// CKim - Numerically evalaluate the jacobian dy/dx
 	Eigen::Matrix<double,4,1> Fxo;		Eigen::Matrix<double,4,1> Fx;
-	
+
 	double x[5];	double dx = FLT_EPSILON;
 
 	// CKim - First evaluate at current location
@@ -600,14 +608,14 @@ void CTRKin::EvalJ_LSQ(const double* jAng, const double* tgtPosOrt, const Eigen:
 			{
 				dx = FLT_EPSILON*fabs(jAng[i]);
 				if(dx==0.0) {	dx = FLT_EPSILON;	}
-				
+
 				// CKim - This code is said to reduce finite-precision error
 				x[i] = jAng[i] + dx;
 				dx = x[i] - jAng[i];
 			}
 			else		{	x[i] = jAng[i];		}
 		}
-		
+
 		EvalF_LSQ(x,tgtPosOrt,Coeff,Fx);
 
 		for(int i=0; i<4; i++)	{	J(i,col) = (Fx(i,0) - Fxo(i,0))/dx;	}
@@ -624,19 +632,19 @@ void CTRKin::UpdateFAC(const double jAng[5], const double measTipPosDir[6], doub
 	x.setZero();
 
 	int basisFunctionLength = 2 * this->modelOrder - 1;
-	double* A = new double[basisFunctionLength]; 
-	double* B = new double[basisFunctionLength];
-	double* C = new double[basisFunctionLength];
+	//double* A = new double[basisFunctionLength]; 
+	//double* B = new double[basisFunctionLength];
+	//double* C = new double[basisFunctionLength];
 
-	A[0] = B[0] = C[0] = 1.0;
+	this->AUpdated[0] = this->BUpdated[0] = this->CUpdated[0] = 1.0;
 
 	double L_normalized;		int n,r;	
 
 	for(int i=1; i<basisFunctionLength; i++)	
 	{
 		n = i/2;	r = i%2;	L_normalized = L31/L31_MAX*0.5*3.141592;
-		if(r==0)	{	A[i] = sin(n*a21);		B[i] = sin(n*a31);		C[i] = sin(n*L_normalized);		}
-		else		{	A[i] = cos((n+1)*a21);	B[i] = cos((n+1)*a31);	C[i] = cos((n+1)*L_normalized);	}
+		if(r==0)	{	this->AUpdated[i] = sin(n*a21);		this->BUpdated[i] = sin(n*a31);		this->CUpdated[i] = sin(n*L_normalized);		}
+		else		{	this->AUpdated[i] = cos((n+1)*a21);	this->BUpdated[i] = cos((n+1)*a31);	this->CUpdated[i] = cos((n+1)*L_normalized);	}
 	}
 
 	int cnt = 0;
@@ -644,79 +652,86 @@ void CTRKin::UpdateFAC(const double jAng[5], const double measTipPosDir[6], doub
 		for(int j=0; j < basisFunctionLength; j++)
 			for(int k=0; k < basisFunctionLength; k++)	
 			{	
-				x(cnt,0) = A[i]*B[j]*C[k];	
+				x(cnt,0) = this->AUpdated[i] * this->BUpdated[j] * this->CUpdated[k];	
 				cnt++;	
 			}
 
-	
-	// 0.5. In measuredData, compensate for the rigid rotation/translation about/along z axis
-	double a1 = jAng[3];		double L1 = jAng[4];	double meas[6];		double pred[6];		double err;
-	
-	meas[0] = cos(a1)*measTipPosDir[0] + sin(a1)*measTipPosDir[1];
-	meas[1] = -sin(a1)*measTipPosDir[0] + cos(a1)*measTipPosDir[1];
-	meas[2] = measTipPosDir[2] - L1;
-	meas[3] = cos(a1)*measTipPosDir[3] + sin(a1)*measTipPosDir[4];
-	meas[4] = -sin(a1)*measTipPosDir[3] + cos(a1)*measTipPosDir[4];
-	meas[5] = measTipPosDir[5];
 
-	// Actual Update
-	//m_forgettingFactor = 1.00;	//0.998;	//1.00;	//0.997;	//1.00;	//1.0;	//0.98;	//0.6;
-	for(int i=0; i<6; i++)		
-	{
-		// 1. Calculate prediction error
-		pred[i] = x.dot(m_tmpMat.col(i));
-		err = meas[i] - pred[i];
-		
-		//if(doUpdate && (i < 3))		// i < 3 to update position only
-		if(doUpdate && (i < 6))		// i < 6 to update both position and orientation
-		{
-			// 2. Update Matrix F
-			Eigen::MatrixXd Fold = F[i];
-			double tmp = x.transpose()*Fold*x;
+			// 0.5. In measuredData, compensate for the rigid rotation/translation about/along z axis
+			double a1 = jAng[3];		double L1 = jAng[4];	double meas[6];		double pred[6];		double err;
 
-			F[i] = (1/m_forgettingFactor)*(Fold - (1/(m_forgettingFactor+tmp)) * Fold*(x*x.transpose())*Fold);
+			meas[0] = cos(a1)*measTipPosDir[0] + sin(a1)*measTipPosDir[1];
+			meas[1] = -sin(a1)*measTipPosDir[0] + cos(a1)*measTipPosDir[1];
+			meas[2] = measTipPosDir[2] - L1;
+			meas[3] = cos(a1)*measTipPosDir[3] + sin(a1)*measTipPosDir[4];
+			meas[4] = -sin(a1)*measTipPosDir[3] + cos(a1)*measTipPosDir[4];
+			meas[5] = measTipPosDir[5];
 
-			// 3. Update coefficients
-			Eigen::VectorXd v = err*F[i]*x;
-			m_tmpMat.col(i) += v;
-		}
+			// Actual Update
+			//m_forgettingFactor = 1.00;	//0.998;	//1.00;	//0.997;	//1.00;	//1.0;	//0.98;	//0.6;
+			for(int i=0; i<6; i++)		
+			{
+				// 1. Calculate prediction error
+				pred[i] = x.dot(m_tmpMat.col(i));
+				err = meas[i] - pred[i];
 
-	}
-	
-	predTipPosDir[0] = cos(a1)*pred[0] - sin(a1)*pred[1];
-	predTipPosDir[1] = sin(a1)*pred[0] + cos(a1)*pred[1];
-	predTipPosDir[2] = pred[2] + L1;
-	predTipPosDir[3] = cos(a1)*pred[3] - sin(a1)*pred[4];
-	predTipPosDir[4] = sin(a1)*pred[3] + cos(a1)*pred[4];
-	predTipPosDir[5] = pred[5];
+				if(doUpdate && (i < 6))		// i < 6 to update both position and orientation
+				{
+					// 2. Update Matrix F
+					Eigen::MatrixXd Fold = F[i];
+					double tmp = x.transpose()*Fold*x;
 
-	// CKim - Copy the results to the shared coefficients
-	if(doUpdate)
-	{
-		WaitForSingleObject(m_hFACMutex,INFINITE);
-		for(int i=0; i<6; i++)		// To update position and orientation
-		{
-			if(i==0)	
-				for(int j=0; j < this->coeffSize; j++)	
-					m_Tip_px[j] = m_tmpMat(j,i);
-			if(i==1)	
-				for(int j=0; j < this->coeffSize; j++)	
-					m_Tip_py[j] = m_tmpMat(j,i);
-			if(i==2)	
-				for(int j=0; j < this->coeffSize; j++)	
-					m_Tip_pz[j] = m_tmpMat(j,i);
-			if(i==3)	
-				for(int j=0; j < this->coeffSize; j++)	
-					m_Tip_ox[j] = m_tmpMat(j,i);	
-			if(i==4)	
-				for(int j=0; j < this->coeffSize; j++)	
-					m_Tip_oy[j] = m_tmpMat(j,i);	
-			if(i==5)
-				for(int j=0; j < this->coeffSize; j++)	
-					m_Tip_oz[j] = m_tmpMat(j,i);	
-		}
-		ReleaseMutex(m_hFACMutex);
-	}
+					F[i] = (1/m_forgettingFactor)*(Fold - (1/(m_forgettingFactor+tmp)) * Fold*(x*x.transpose())*Fold);
+
+					// 3. Update coefficients
+					Eigen::VectorXd v = err*F[i]*x;
+					m_tmpMat.col(i) += v;
+				}
+
+			}
+
+			predTipPosDir[0] = cos(a1)*pred[0] - sin(a1)*pred[1];
+			predTipPosDir[1] = sin(a1)*pred[0] + cos(a1)*pred[1];
+			predTipPosDir[2] = pred[2] + L1;
+			predTipPosDir[3] = cos(a1)*pred[3] - sin(a1)*pred[4];
+			predTipPosDir[4] = sin(a1)*pred[3] + cos(a1)*pred[4];
+			predTipPosDir[5] = pred[5];
+
+			// CKim - Copy the results to the shared coefficients
+			if(doUpdate)
+			{
+				WaitForSingleObject(m_hFACMutex,INFINITE);
+				memcpy(m_Tip_px, m_tmpMat.col(0).data(), sizeof(double) * this->coeffSize);
+				memcpy(m_Tip_py, m_tmpMat.col(1).data(), sizeof(double) * this->coeffSize);
+				memcpy(m_Tip_pz, m_tmpMat.col(2).data(), sizeof(double) * this->coeffSize);
+				memcpy(m_Tip_ox, m_tmpMat.col(3).data(), sizeof(double) * this->coeffSize);
+				memcpy(m_Tip_oy, m_tmpMat.col(4).data(), sizeof(double) * this->coeffSize);
+				memcpy(m_Tip_oz, m_tmpMat.col(5).data(), sizeof(double) * this->coeffSize);
+
+				//for(int i=0; i<6; i++)		// To update position and orientation
+				//{
+
+				//	if(i==0)	
+				//		for(int j=0; j < this->coeffSize; j++)	
+				//			m_Tip_px[j] = m_tmpMat(j,i);
+				//	if(i==1)	
+				//		for(int j=0; j < this->coeffSize; j++)	
+				//			m_Tip_py[j] = m_tmpMat(j,i);
+				//	if(i==2)	
+				//		for(int j=0; j < this->coeffSize; j++)	
+				//			m_Tip_pz[j] = m_tmpMat(j,i);
+				//	if(i==3)	
+				//		for(int j=0; j < this->coeffSize; j++)	
+				//			m_Tip_ox[j] = m_tmpMat(j,i);	
+				//	if(i==4)	
+				//		for(int j=0; j < this->coeffSize; j++)	
+				//			m_Tip_oy[j] = m_tmpMat(j,i);	
+				//	if(i==5)
+				//		for(int j=0; j < this->coeffSize; j++)	
+				//			m_Tip_oz[j] = m_tmpMat(j,i);	
+				//}
+				ReleaseMutex(m_hFACMutex);
+			}
 
 }
 
@@ -767,20 +782,20 @@ void CTRKin::EvalCurrentKinematicsModelNumeric(const double* jAng, double* predT
 				{
 					dq = FLT_EPSILON*fabs(jAng[i]);
 					if(dq==0.0) {	dq = FLT_EPSILON;	}
-				
+
 					// CKim - This code is said to reduce finite-precision error
 					q[i] = jAng[i] + dq;
 					dq = q[i] - jAng[i];
 				}
 				else		{	q[i] = jAng[i];		}
 			}
-		
+
 			TipFwdKinEx(q,Coeff,Fq);
 
 			for(int i=0; i<6; i++)	{	J(i,col) = (Fq[i] - predTipPosDir[i])/dq;	}
 		}
 	}
-	
+
 	return;
 }
 
@@ -818,7 +833,7 @@ void CTRKin::ApplyKinematicControl(const Eigen::MatrixXd& J, const Eigen::Matrix
 
 	double conditionNumber = sv(0, 0)/sv(4, 0);
 	double conditionThreshold = 2e4;
-	
+
 	if (conditionNumber >= conditionThreshold)
 	{
 		dotq = 0.0005*b;

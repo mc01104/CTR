@@ -95,4 +95,7 @@ protected:
 	// CKim - Inverse kinematics threshold
 	double m_Thresh;		double m_MaxPosErr;		double m_MaxOrtErr;
 
+	double *A, *B, *C;
+	double *AUpdated, *BUpdated, *CUpdated;
+
 };

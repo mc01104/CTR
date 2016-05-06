@@ -11,7 +11,7 @@
 
 
 LWPRKinematics::LWPRKinematics(const ::std::string& pathToForwardModel):
-	CTRKin(), modelPath(pathToForwardModel)
+	CTRKin(""), modelPath(pathToForwardModel)
 {
 	this->forwardModel = new LWPR_Object(pathToForwardModel.c_str());
 	this->originalModel = new LWPR_Object(pathToForwardModel.c_str());

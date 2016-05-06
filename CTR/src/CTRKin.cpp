@@ -4,20 +4,13 @@
 #include "Utilities.h"
 
 
-CTRKin::CTRKin(int modelInputDim):
-	modelInputDim(modelInputDim)
+CTRKin::CTRKin(const ::std::string& modelStr, int modelInputDim):
+	modelInputDim(modelInputDim),
+	fName(modelStr)
 {
 
-	//this->coeffSize = ::std::pow(2 * this->modelOrder - 1, this->modelInputDim);
-
-	// CKim - Coefficient file for Tip
-	//std::string fName = "fourier_order_3.txt";
-	std::string fName = "fourier_order_4.txt";
-	//std::string fName = "fourier_order_5.txt";
-
-	os.open("conditionNumber.txt");
-
-	if (readCTR_FAC_file(fName, m_Tip_px, m_Tip_py, m_Tip_pz, m_Tip_ox, m_Tip_oy, m_Tip_oz) == false) 
+	if (modelStr.size() == 0) return;
+	if (readCTR_FAC_file(this->fName, m_Tip_px, m_Tip_py, m_Tip_pz, m_Tip_ox, m_Tip_oy, m_Tip_oz) == false) 
 		AfxMessageBox("Error reading Fourier Model Coefficients for the tip");
 
 	this->AllocateCoefficientMatrices();
@@ -38,12 +31,15 @@ CTRKin::CTRKin(int modelInputDim):
 
 
 	// CKim - Initialize matrices for recursive least square
-	for(int i=0; i<6; i++)	{
-		F[i].resize(this->coeffSize, this->coeffSize);	F[i].setIdentity();		F[i] = 0.1*F[i];		}
+	//for(int i=0; i<6; i++)	{
+	//	F[i].resize(this->coeffSize, this->coeffSize);	F[i].setIdentity();		F[i] = 0.1*F[i];		}
 
-	Fzero.resize(this->coeffSize, this->coeffSize);
+	//Fzero.resize(this->coeffSize, this->coeffSize);
+
+	this->ReInitializeEstimator();
 
 	SetInvKinThreshold(0.1,3.0);
+	
 	m_forgettingFactor = 1.0;
 
 	m_hFACMutex = CreateMutex(NULL,false,"FAC_Mutex");
@@ -52,13 +48,6 @@ CTRKin::CTRKin(int modelInputDim):
 
 void CTRKin::AllocateCoefficientMatrices()
 {
-	//this->m_Tip_px = new double[this->coeffSize];
-	//this->m_Tip_py = new double[this->coeffSize];
-	//this->m_Tip_pz = new double[this->coeffSize];
-	//this->m_Tip_ox = new double[this->coeffSize];
-	//this->m_Tip_oy = new double[this->coeffSize];
-	//this->m_Tip_oz = new double[this->coeffSize];
-
 	int basisFunctionLength = 2 * this->modelOrder - 1;
 	this->A = new double[basisFunctionLength];
 	this->B = new double[basisFunctionLength];
@@ -78,12 +67,9 @@ void CTRKin::AllocateCoefficientMatrices()
 
 CTRKin::~CTRKin(void)
 {
-	//delete[] m_Tip_px, m_Tip_py, m_Tip_pz, m_Tip_ox, m_Tip_oy, m_Tip_oz;
-	//delete[] m_BP_px, m_BP_py, m_BP_pz, m_BP_ox, m_BP_oy, m_BP_oz;
 }
 
 
-// this is not robust -> it doesn't check how many lines are in the file
 void CTRKin::ReInitializeEstimator()
 {
 	for(int i=0; i<6; i++)	{
@@ -96,12 +82,9 @@ void CTRKin::ReInitializeEstimator()
 void CTRKin::ReInitializeModel()
 {
 
-	std::string fName = "fourier_order_3.txt";
-
-	if (readCTR_FAC_file(fName, m_Tip_px, m_Tip_py, m_Tip_pz, m_Tip_ox, m_Tip_oy, m_Tip_oz) == false) //file read error
+	if (readCTR_FAC_file(this->fName, m_Tip_px, m_Tip_py, m_Tip_pz, m_Tip_ox, m_Tip_oy, m_Tip_oz) == false) //file read error
 		AfxMessageBox("Sparta!!!!");
-
-
+	
 	// CKim - Initialize local variable used in adaptive update.
 	m_tmpMat.resize(this->coeffSize,6);
 	for(int i=0; i<this->coeffSize; i++)	
@@ -157,8 +140,8 @@ bool CTRKin::readCTR_FAC_file(std::string fileName,  DVec& px, DVec& py,  DVec& 
 	CTR_FAC_id.close();
 
 	this->modelOrder = static_cast<int> (0.5 * (::std::pow(px.size(), 1.0/3.0) + 1));
-	
 	this->coeffSize = ::std::pow(2 * this->modelOrder - 1, this->modelInputDim);
+
 	return true;
 
 }
@@ -201,10 +184,7 @@ bool CTRKin::TipFwdKin(const double* jAng, double* posOrt)
 	// 1. First evaluate harmonic basis function at joint angle. A = [1, cos(a21), sin(a21), cos(2*a21), sin(2*a21) .... ]
 	// The length of protrusion is normalized so that its range falls into [0,pi/2]. L31_max = 80.0;
 	int basisFunctionLength = 2 * this->modelOrder - 1;
-	//double* A = new double[basisFunctionLength]; 
-	//double* B = new double[basisFunctionLength];
-	//double* C = new double[basisFunctionLength];
-	//::std::cout << this->modelOrder << ::std::endl;
+
 	this->A[0] = this->B[0] = this->C[0] = 1.0;
 
 	double L_normalized;		int n,r;	
@@ -244,10 +224,6 @@ bool CTRKin::TipFwdKin(const double* jAng, double* posOrt)
 	posOrt[1] = sin(a1)*p[0] + cos(a1)*p[1];		posOrt[4] = sin(a1)*v[0] + cos(a1)*v[1];
 	posOrt[2] = p[2] + L1;							posOrt[5] = v[2];
 
-	//delete[] A;
-	//delete[] B;
-	//delete[] C;
-
 	return true;
 }
 
@@ -261,9 +237,6 @@ void CTRKin::TipFwdKinEx(const double* jAng, const Eigen::MatrixXd& Coeff, doubl
 	// 1. First evaluate harmonic basis function at joint angle. A = [1, cos(a21), sin(a21), cos(2*a21), sin(2*a21) .... ]
 	// The length of protrusion is normalized so that its range falls into [0,pi/2]. L31_max = 80.0;
 	int basisFunctionLength = 2 * this->modelOrder - 1;
-	//double* A = new double[basisFunctionLength]; 
-	//double* B = new double[basisFunctionLength];
-	//double* C = new double[basisFunctionLength];
 
 	this->A[0] = this->B[0] = this->C[0] = 1.0;
 
@@ -301,9 +274,6 @@ void CTRKin::TipFwdKinEx(const double* jAng, const Eigen::MatrixXd& Coeff, doubl
 	posOrt[1] = sin(a1)*p[0] + cos(a1)*p[1];		posOrt[4] = sin(a1)*v[0] + cos(a1)*v[1];
 	posOrt[2] = p[2] + L1;							posOrt[5] = v[2];
 
-	//delete[] A;
-	//delete[] B;
-	//delete[] C;
 }
 
 
@@ -656,9 +626,6 @@ void CTRKin::UpdateFAC(const double jAng[5], const double measTipPosDir[6], doub
 	x.setZero();
 
 	int basisFunctionLength = 2 * this->modelOrder - 1;
-	//double* A = new double[basisFunctionLength]; 
-	//double* B = new double[basisFunctionLength];
-	//double* C = new double[basisFunctionLength];
 
 	this->AUpdated[0] = this->BUpdated[0] = this->CUpdated[0] = 1.0;
 
@@ -692,7 +659,7 @@ void CTRKin::UpdateFAC(const double jAng[5], const double measTipPosDir[6], doub
 			meas[5] = measTipPosDir[5];
 
 			// Actual Update
-			//m_forgettingFactor = 1.00;	//0.998;	//1.00;	//0.997;	//1.00;	//1.0;	//0.98;	//0.6;
+
 			for(int i=0; i<6; i++)		
 			{
 				// 1. Calculate prediction error
@@ -724,7 +691,6 @@ void CTRKin::UpdateFAC(const double jAng[5], const double measTipPosDir[6], doub
 			// CKim - Copy the results to the shared coefficients
 			if(doUpdate)
 			{
-				//::std::cout << "updating" << ::std::endl;
 				WaitForSingleObject(m_hFACMutex,INFINITE);
 				memcpy(m_Tip_px.data(), m_tmpMat.col(0).data(), sizeof(double) * this->coeffSize);
 				memcpy(m_Tip_py.data(), m_tmpMat.col(1).data(), sizeof(double) * this->coeffSize);
@@ -733,28 +699,6 @@ void CTRKin::UpdateFAC(const double jAng[5], const double measTipPosDir[6], doub
 				memcpy(m_Tip_oy.data(), m_tmpMat.col(4).data(), sizeof(double) * this->coeffSize);
 				memcpy(m_Tip_oz.data(), m_tmpMat.col(5).data(), sizeof(double) * this->coeffSize);
 
-				//for(int i=0; i<6; i++)		// To update position and orientation
-				//{
-
-				//	if(i==0)	
-				//		for(int j=0; j < this->coeffSize; j++)	
-				//			m_Tip_px[j] = m_tmpMat(j,i);
-				//	if(i==1)	
-				//		for(int j=0; j < this->coeffSize; j++)	
-				//			m_Tip_py[j] = m_tmpMat(j,i);
-				//	if(i==2)	
-				//		for(int j=0; j < this->coeffSize; j++)	
-				//			m_Tip_pz[j] = m_tmpMat(j,i);
-				//	if(i==3)	
-				//		for(int j=0; j < this->coeffSize; j++)	
-				//			m_Tip_ox[j] = m_tmpMat(j,i);	
-				//	if(i==4)	
-				//		for(int j=0; j < this->coeffSize; j++)	
-				//			m_Tip_oy[j] = m_tmpMat(j,i);	
-				//	if(i==5)
-				//		for(int j=0; j < this->coeffSize; j++)	
-				//			m_Tip_oz[j] = m_tmpMat(j,i);	
-				//}
 				ReleaseMutex(m_hFACMutex);
 			}
 
@@ -764,24 +708,6 @@ void CTRKin::UpdateFAC(const double jAng[5], const double measTipPosDir[6], doub
 void CTRKin::UpdateInitM(const double jAng[5], bool inv)
 {
 }
-
-
-//void CTRKin::EvalCurrentKinematicsModel(const double* jAng, double* predTipPosDir, Eigen::MatrixXd& J, bool evalJ)
-//{
-//	// CKim - Obtain the copy of the model
-//	Eigen::MatrixXd Coeff(125,6);	GetFAC(Coeff);
-//
-//	// CKim - Evaluate forward kinematics
-//	TipFwdKinEx(jAng,Coeff,predTipPosDir);
-//
-//	// CKim - Evaluate Jacobian if requested
-//	if(evalJ)	
-//	{
-//		EvalAnalyticJacobian(jAng,Coeff,J);			
-//	}
-//	
-//	return;
-//}
 
 
 void CTRKin::EvalCurrentKinematicsModelNumeric(const double* jAng, double* predTipPosDir, Eigen::MatrixXd& J, bool evalJ)

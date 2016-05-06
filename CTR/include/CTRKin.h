@@ -21,8 +21,9 @@ class CTRKin
 
 public:
 	::std::ofstream os;
+	::std::string fName;
 
-	CTRKin(int modelInputDim = 3);
+	CTRKin(const ::std::string& modelStr, int modelInputDim = 3);
 	virtual ~CTRKin();
 	
 	void ReInitializeEstimator();

@@ -1891,9 +1891,6 @@ void CCTRDoc::GetTipTransformation(::Eigen::Matrix<double, 3, 3>& trans)
 
 	SO3ToEigen(tipFrame.GetOrientation(), trans);	
 
-	//::std::cout << "Bishop Frame" << ::std::endl;
-	//::std::cout << trans << ::std::endl;
-	//::std::cout << ::std::endl;
 }
 
 void CCTRDoc::GetImageToCameraTransformation(::Eigen::Matrix<double, 3, 3>& trans)
@@ -1926,8 +1923,8 @@ void CCTRDoc::MasterToSlave(CTR_status& stat, double scl, bool absolute)
 	MtoSOr(0,0) =	0;		MtoSOr(0,1) =	1;		MtoSOr(0,2) = 0;
 	MtoSOr(1,0) =	0;		MtoSOr(1,1) =	0;		MtoSOr(1,2) =	-1;
 	MtoSOr(2,0) =	-1;		MtoSOr(2,1) = 0;		MtoSOr(2,2) = 0;
+
 	MtoS = MtoSOr;
-	//tipPos = MtoS*scl*(t-to) + p;
 	tipPos = MtipToBase*MtoS*scl*(t-to) + p;
 
 	// CKim - Relative tip orientation - Rotation of the stylus R from its reference orientation Ro

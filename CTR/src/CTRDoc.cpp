@@ -2063,7 +2063,7 @@ void CCTRDoc::OnBnClickedBtnPlay()
 				m_TrjGen->Initialize("slowCircle.txt",6);
 				break;
 		case 1:
-				m_TrjGen->Initialize("slow_square_3rv.txt",6);
+				m_TrjGen->Initialize("slow_square_large_3rv.txt",6);
 				break;
 		default:
 				m_TrjGen->Initialize("random_trajectory_4.txt",6);

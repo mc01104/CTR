@@ -12,8 +12,8 @@ CTRKin::CTRKin(int modelOrder, int modelInputDim):
 	this->coeffSize = ::std::pow(2 * this->modelOrder - 1, this->modelInputDim);
 
 	// CKim - Coefficient file for Tip
-	//std::string fName = "fourier_order_3.txt";
-	std::string fName = "fourier_order_4.txt";
+	std::string fName = "fourier_order_3.txt";
+	//std::string fName = "fourier_order_4.txt";
 	//std::string fName = "fourier_order_5.txt";
 
 	os.open("conditionNumber.txt");
@@ -98,7 +98,7 @@ void CTRKin::ReInitializeEstimator()
 void CTRKin::ReInitializeModel()
 {
 
-	std::string fName = "fourier_order_5.txt";
+	std::string fName = "fourier_order_3.txt";
 
 	if (readCTR_FAC_file(fName, m_Tip_px, m_Tip_py, m_Tip_pz, m_Tip_ox, m_Tip_oy, m_Tip_oz) == false) //file read error
 		AfxMessageBox("Sparta!!!!");
@@ -700,6 +700,7 @@ void CTRKin::UpdateFAC(const double jAng[5], const double measTipPosDir[6], doub
 			// CKim - Copy the results to the shared coefficients
 			if(doUpdate)
 			{
+				//::std::cout << "updating" << ::std::endl;
 				WaitForSingleObject(m_hFACMutex,INFINITE);
 				memcpy(m_Tip_px, m_tmpMat.col(0).data(), sizeof(double) * this->coeffSize);
 				memcpy(m_Tip_py, m_tmpMat.col(1).data(), sizeof(double) * this->coeffSize);

@@ -91,7 +91,7 @@ CCTRDoc::CCTRDoc()
 	m_motionCtrl = new ChunMotion();		m_motorConnected = false;
 	m_motorConnected = m_motionCtrl->Initialize();
 
-	m_kinLib = new CTRKin(4);
+	m_kinLib = new CTRKin(3);
 
 	// paths for LWPR models
 	//::std::string pathToForwardModel("../models/model_ct_2015_11_9_14_0_40.bin");
@@ -359,9 +359,9 @@ unsigned int WINAPI	CCTRDoc::EMLoop(void* para)
 		
 		if(mySelf->m_playBack || mySelf->m_bStaticPlayBack || mySelf->m_bRunExperiment)
 		{
-			::std::cout << "before Fourier adaptation " << ::std::endl;
+			//::std::cout << "before Fourier adaptation " << ::std::endl;
 			mySelf->m_kinLib->UpdateFAC(jAng,measTipPosDir,predTipPosDir,mySelf->m_bDoUpdate);
-			::std::cout << "after Fourier adaptation " << ::std::endl;
+			//::std::cout << "after Fourier adaptation " << ::std::endl;
 		}
 
 		rCnt++;

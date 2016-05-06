@@ -5,15 +5,14 @@
 
 
 CTRKin::CTRKin(int modelInputDim):
-	modelOrder(modelOrder),
 	modelInputDim(modelInputDim)
 {
 
 	//this->coeffSize = ::std::pow(2 * this->modelOrder - 1, this->modelInputDim);
 
 	// CKim - Coefficient file for Tip
-	std::string fName = "fourier_order_3.txt";
-	//std::string fName = "fourier_order_4.txt";
+	//std::string fName = "fourier_order_3.txt";
+	std::string fName = "fourier_order_4.txt";
 	//std::string fName = "fourier_order_5.txt";
 
 	os.open("conditionNumber.txt");
@@ -158,6 +157,7 @@ bool CTRKin::readCTR_FAC_file(std::string fileName,  DVec& px, DVec& py,  DVec& 
 	CTR_FAC_id.close();
 
 	this->modelOrder = static_cast<int> (0.5 * (::std::pow(px.size(), 1.0/3.0) + 1));
+	
 	this->coeffSize = ::std::pow(2 * this->modelOrder - 1, this->modelInputDim);
 	return true;
 
@@ -204,7 +204,7 @@ bool CTRKin::TipFwdKin(const double* jAng, double* posOrt)
 	//double* A = new double[basisFunctionLength]; 
 	//double* B = new double[basisFunctionLength];
 	//double* C = new double[basisFunctionLength];
-
+	//::std::cout << this->modelOrder << ::std::endl;
 	this->A[0] = this->B[0] = this->C[0] = 1.0;
 
 	double L_normalized;		int n,r;	

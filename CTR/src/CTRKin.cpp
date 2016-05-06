@@ -4,12 +4,12 @@
 #include "Utilities.h"
 
 
-CTRKin::CTRKin(int modelOrder, int modelInputDim):
+CTRKin::CTRKin(int modelInputDim):
 	modelOrder(modelOrder),
 	modelInputDim(modelInputDim)
 {
 
-	this->coeffSize = ::std::pow(2 * this->modelOrder - 1, this->modelInputDim);
+	//this->coeffSize = ::std::pow(2 * this->modelOrder - 1, this->modelInputDim);
 
 	// CKim - Coefficient file for Tip
 	std::string fName = "fourier_order_3.txt";
@@ -18,11 +18,10 @@ CTRKin::CTRKin(int modelOrder, int modelInputDim):
 
 	os.open("conditionNumber.txt");
 
-	this->AllocateCoefficientMatrices();
-
-
 	if (readCTR_FAC_file(fName, m_Tip_px, m_Tip_py, m_Tip_pz, m_Tip_ox, m_Tip_oy, m_Tip_oz) == false) 
 		AfxMessageBox("Error reading Fourier Model Coefficients for the tip");
+
+	this->AllocateCoefficientMatrices();
 
 	// CKim - Initialize local variable used in adaptive update.
 	m_tmpMat.resize(this->coeffSize, 6);
@@ -54,12 +53,12 @@ CTRKin::CTRKin(int modelOrder, int modelInputDim):
 
 void CTRKin::AllocateCoefficientMatrices()
 {
-	this->m_Tip_px = new double[this->coeffSize];
-	this->m_Tip_py = new double[this->coeffSize];
-	this->m_Tip_pz = new double[this->coeffSize];
-	this->m_Tip_ox = new double[this->coeffSize];
-	this->m_Tip_oy = new double[this->coeffSize];
-	this->m_Tip_oz = new double[this->coeffSize];
+	//this->m_Tip_px = new double[this->coeffSize];
+	//this->m_Tip_py = new double[this->coeffSize];
+	//this->m_Tip_pz = new double[this->coeffSize];
+	//this->m_Tip_ox = new double[this->coeffSize];
+	//this->m_Tip_oy = new double[this->coeffSize];
+	//this->m_Tip_oz = new double[this->coeffSize];
 
 	int basisFunctionLength = 2 * this->modelOrder - 1;
 	this->A = new double[basisFunctionLength];
@@ -80,8 +79,8 @@ void CTRKin::AllocateCoefficientMatrices()
 
 CTRKin::~CTRKin(void)
 {
-	delete[] m_Tip_px, m_Tip_py, m_Tip_pz, m_Tip_ox, m_Tip_oy, m_Tip_oz;
-	delete[] m_BP_px, m_BP_py, m_BP_pz, m_BP_ox, m_BP_oy, m_BP_oz;
+	//delete[] m_Tip_px, m_Tip_py, m_Tip_pz, m_Tip_ox, m_Tip_oy, m_Tip_oz;
+	//delete[] m_BP_px, m_BP_py, m_BP_pz, m_BP_ox, m_BP_oy, m_BP_oz;
 }
 
 
@@ -123,6 +122,7 @@ void CTRKin::ReInitializeModel()
 
 bool CTRKin::readCTR_FAC_file(std::string fileName,  double px[], double py[],  double pz[],  double ox[],  double oy[],  double oz[])
 {
+
 	std::string junkS;	
 	std::ifstream CTR_FAC_id;	CTR_FAC_id.open(fileName);
 	if(CTR_FAC_id.fail())		
@@ -137,6 +137,30 @@ bool CTRKin::readCTR_FAC_file(std::string fileName,  double px[], double py[],  
 
 	CTR_FAC_id.close();
 	return true;
+}
+
+bool CTRKin::readCTR_FAC_file(std::string fileName,  DVec& px, DVec& py,  DVec& pz,  DVec& ox,  DVec& oy,  DVec& oz)
+{
+	std::string junkS;	
+	std::ifstream CTR_FAC_id;	CTR_FAC_id.open(fileName);
+	if(CTR_FAC_id.fail())		
+		return false;	
+
+	double tmpX, tmpY, tmpZ, tmpOX,tmpOY,tmpOZ;
+	while (!CTR_FAC_id.eof())
+	{
+		CTR_FAC_id >> junkS >> junkS >> junkS >> junkS;
+		CTR_FAC_id >> tmpX >>  junkS >> tmpY >> junkS >> tmpZ >> junkS >> tmpOX >>  junkS >> tmpOY >> junkS >> tmpOZ;
+		CTR_FAC_id >> junkS;
+		px.push_back(tmpX); py.push_back(tmpY); pz.push_back(tmpZ); ox.push_back(tmpOX); oy.push_back(tmpOY); oz.push_back(tmpOZ);
+	}
+
+	CTR_FAC_id.close();
+
+	this->modelOrder = static_cast<int> (0.5 * (::std::pow(px.size(), 1.0/3.0) + 1));
+	this->coeffSize = ::std::pow(2 * this->modelOrder - 1, this->modelInputDim);
+	return true;
+
 }
 
 
@@ -702,12 +726,12 @@ void CTRKin::UpdateFAC(const double jAng[5], const double measTipPosDir[6], doub
 			{
 				//::std::cout << "updating" << ::std::endl;
 				WaitForSingleObject(m_hFACMutex,INFINITE);
-				memcpy(m_Tip_px, m_tmpMat.col(0).data(), sizeof(double) * this->coeffSize);
-				memcpy(m_Tip_py, m_tmpMat.col(1).data(), sizeof(double) * this->coeffSize);
-				memcpy(m_Tip_pz, m_tmpMat.col(2).data(), sizeof(double) * this->coeffSize);
-				memcpy(m_Tip_ox, m_tmpMat.col(3).data(), sizeof(double) * this->coeffSize);
-				memcpy(m_Tip_oy, m_tmpMat.col(4).data(), sizeof(double) * this->coeffSize);
-				memcpy(m_Tip_oz, m_tmpMat.col(5).data(), sizeof(double) * this->coeffSize);
+				memcpy(m_Tip_px.data(), m_tmpMat.col(0).data(), sizeof(double) * this->coeffSize);
+				memcpy(m_Tip_py.data(), m_tmpMat.col(1).data(), sizeof(double) * this->coeffSize);
+				memcpy(m_Tip_pz.data(), m_tmpMat.col(2).data(), sizeof(double) * this->coeffSize);
+				memcpy(m_Tip_ox.data(), m_tmpMat.col(3).data(), sizeof(double) * this->coeffSize);
+				memcpy(m_Tip_oy.data(), m_tmpMat.col(4).data(), sizeof(double) * this->coeffSize);
+				memcpy(m_Tip_oz.data(), m_tmpMat.col(5).data(), sizeof(double) * this->coeffSize);
 
 				//for(int i=0; i<6; i++)		// To update position and orientation
 				//{

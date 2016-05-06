@@ -3,6 +3,7 @@
 #include <string>
 #include <iostream>
 #include <fstream>
+#include <vector>
 
 // CKim - Eigen Header. Located at "C:\Chun\ChunLib"
 
@@ -13,6 +14,7 @@ class ChunTimer;
 #define L31_MAX 86.39	// CKim - pi/2*55. Maximum protrusion of third tube from balanced pair
 #define L31_MIN 5.00	// CKim - Minimum protrusion of third tube from balanced pair
 
+typedef ::std::vector<double> DVec;
 
 class CTRKin
 {
@@ -20,7 +22,7 @@ class CTRKin
 public:
 	::std::ofstream os;
 
-	CTRKin(int modelOrder = 3, int modelInputDim = 3);
+	CTRKin(int modelInputDim = 3);
 	virtual ~CTRKin();
 	
 	void ReInitializeEstimator();
@@ -63,6 +65,7 @@ protected:
 	// CKim - read the file that contains 'functional approximation coefficients' (FAC)
 	// functional approximations are 125 term fourier series for each translation and orientation element px[], py[] ...
 	bool readCTR_FAC_file(std::string fileName,  double px[], double py[],  double pz[],  double ox[],  double oy[],  double oz[]);
+	bool readCTR_FAC_file(std::string fileName,  DVec& px, DVec& py,  DVec& pz,  DVec& ox,  DVec& oy,  DVec& oz);
 
 	void EvalF_RootFinding(const double* jAng, const double* tgtPosOrt, const Eigen::MatrixXd& Coeff, Eigen::Matrix<double,4,1>& F);
 	void EvalJ_RootFinding(const double* jAng, const double* tgtPosOrt, const Eigen::MatrixXd& Coeff, Eigen::Matrix<double,4,5>& J);
@@ -80,8 +83,10 @@ protected:
 	int modelInputDim;
 
 	// CKim - Arrays for storing coefficients...
-	double *m_Tip_px, *m_Tip_py, *m_Tip_pz;
-	double *m_Tip_ox, *m_Tip_oy, *m_Tip_oz;
+	//double *m_Tip_px, *m_Tip_py, *m_Tip_pz;
+	//double *m_Tip_ox, *m_Tip_oy, *m_Tip_oz;
+	DVec m_Tip_px, m_Tip_py, m_Tip_pz;
+	DVec m_Tip_ox, m_Tip_oy, m_Tip_oz;
 
 	double *m_BP_px, *m_BP_py, *m_BP_pz;
 	double *m_BP_ox, *m_BP_oy, *m_BP_oz;

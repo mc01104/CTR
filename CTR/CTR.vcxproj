@@ -61,7 +61,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SolutionDir)\Lib;$(SolutionDir)\lwpr-1.2.6\include;$(SolutionDir)\Utilities;$(ProjectDir)\include;$(SolutionDir)\Lib\Ascension;$(SolutionDir)\Lib\vtk\include\vtk-5.8;$(SolutionDir)\Lib\CopleyMotion\ChunCML\include;$(SolutionDir)\Lib\CopleyMotion\ChunCML\include\can;$(SolutionDir)\Lib\OpenHaptics\include;$(SolutionDir)\Lib\OpenHaptics\utilities\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\MechanicsBasedKinematics;$(SolutionDir)\LieGroup;$(SolutionDir)\Lib;$(SolutionDir)\lwpr-1.2.6\include;$(SolutionDir)\Utilities;$(ProjectDir)\include;$(SolutionDir)\Lib\Ascension;$(SolutionDir)\Lib\vtk\include\vtk-5.8;$(SolutionDir)\Lib\CopleyMotion\ChunCML\include;$(SolutionDir)\Lib\CopleyMotion\ChunCML\include\can;$(SolutionDir)\Lib\OpenHaptics\include;$(SolutionDir)\Lib\OpenHaptics\utilities\include</AdditionalIncludeDirectories>
       <PrecompiledHeaderOutputFile>$(ProjectDir)\Debug\$(TargetName).pch</PrecompiledHeaderOutputFile>
       <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
     </ClCompile>
@@ -69,7 +69,7 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SolutionDir)$(Configuration);$(SolutionDir)\Lib\Ascension;$(SolutionDir)\Lib\vtk\lib\vtk-5.8;$(SolutionDir)\Lib\CopleyMotion\ChunCML\lib\$(Configuration);$(SolutionDir)Lib\OpenHaptics\lib\$(Platform)\$(Configuration)AcademicEdition;$(SolutionDir)\Lib\OpenHaptics\utilities\lib\$(Platform)\$(Configuration)AcademicEdition</AdditionalLibraryDirectories>
-      <AdditionalDependencies>vtkCharts.lib;Utilities.lib;lwpr.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>MechanicsBasedKinematics.lib;Utilities.lib;lwpr.lib;vtkCharts.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>

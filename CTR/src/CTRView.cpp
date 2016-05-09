@@ -48,7 +48,7 @@ BEGIN_MESSAGE_MAP(CCTRView, CFormView)
 	ON_BN_CLICKED(IDC_BUTTON7, &CCTRView::OnClickedBtnGoToRecConf)
 	ON_BN_CLICKED(IDC_BUTTON1, &CCTRView::OnClickCopy)
 	
-	ON_EN_KILLFOCUS(IDC_EDIT1, &CCTRView::OnKillFocus)
+	ON_EN_KILLFOCUS(IDC_EDIT1, &CCTRView::OnKillFocusInc)
 
 	ON_BN_CLICKED(IDC_BTN_MOVE3, &CCTRView::OnClickedBtnStartLog)
 	ON_BN_CLICKED(IDC_BTN_MOVE4, &CCTRView::OnClickedBtnStopLog)
@@ -269,9 +269,10 @@ void CCTRView::OnClickCopy()
 		this->GetDlgItemTextA(m_idActJang[i], str);		
 		this->SetDlgItemTextA(m_idCmdJang[i], str);
 	}
+	::std::cout << "copy configuration" << ::std::endl;
 }
 
-void CCTRView::OnKillFocus()
+void CCTRView::OnKillFocusInc()
 {
 	CString str;
 	this->GetDlgItemTextA(IDC_EDIT1, str);		

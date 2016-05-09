@@ -58,8 +58,8 @@ bool ChunMotion::Initialize()
 		::std::getline(f, str);
 		memcpy(offset, DoubleVectorFromString(str).data(), sizeof(double) * AMPCT);
 	}
-	::std::cout << "initial offset" << ::std::endl;
-	PrintCArray(offset, AMPCT);
+	//::std::cout << "initial offset" << ::std::endl;
+	//PrintCArray(offset, AMPCT);
 
 	for(int i=0; i<AMPCT; i++ )
 	{

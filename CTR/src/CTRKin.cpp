@@ -536,7 +536,7 @@ void CTRKin::InverseKinematicsLSQ(const double* tgtPosOrt, const double* init, d
 	}
 	if(iter == maxiter)	{		exitCond = 3;		}
 
-	::std::cout << "iter = " << iter << ::std::endl;
+	//::std::cout << "iter = " << iter << ::std::endl;
 }
 
 

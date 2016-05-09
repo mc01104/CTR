@@ -394,7 +394,8 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
     closesocket(ListenSocket);
 
 	bool teleopOn = false;
-    // Receive until the peer shuts down the connection
+
+	// Receive until the peer shuts down the connection
     do {
 		::std::ostringstream ss;
 		// update the local joint variables
@@ -403,11 +404,6 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 			localStat.currJang[i] = mySelf->m_Status.currJang[i];			
 		teleopOn = mySelf->m_Status.isTeleOpMoving;
 		LeaveCriticalSection(&m_cSection);
-
-		if (teleopOn)
-			::std::cout << "Teleoperation is on" << ::std::endl;
-		else
-			::std::cout << "Teleoperation is off" << ::std::endl;
 
 		//update the buffer
 		for(int i = 0; i < 5; ++i)

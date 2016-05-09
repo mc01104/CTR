@@ -37,7 +37,7 @@ public:
 
 	bool Initialize();
 	void PrintMotionError(const char* msg, const CML::Error* err);
-
+	
 	void GetMotorPos(double* cnt);
 	void GetErrorFlag(int* flag);
 
@@ -49,7 +49,9 @@ public:
 	void StopMotion();
 
 private:
-	
+
+	void DumpConfiguration();
+
 	// CKim - local data
 	int32 canBPS;		// CAN network bit rate
 	int16 canNodeID;	// CANopen node ID

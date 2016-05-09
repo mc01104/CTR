@@ -52,6 +52,8 @@ public:
 	afx_msg LRESULT OnUserMsg1(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnUserMsg2(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnDestroy();
+	afx_msg void OnClickCopy();
+	afx_msg void OnKillFocus();
 	afx_msg void OnClickedBtnHome();
 	afx_msg void OnClickedBtnMove();
 	afx_msg void OnClickedBtnLeft();

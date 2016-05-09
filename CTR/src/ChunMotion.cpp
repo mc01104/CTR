@@ -1,7 +1,7 @@
-
 #include "StdAfx.h"
 #include "ChunMotion.h"
-
+#include <fstream>
+#include "Utilities.h"
 
 ChunMotion::ChunMotion(void) : m_CANHW("CAN")
 {
@@ -50,6 +50,17 @@ bool ChunMotion::Initialize()
 	setting.synchPeriod = 5000;		// default is 10,000 micro sec = 10 ms. 1000 give Generic Can driver level at teleop motion
 	MtrInfo mtrInfo;
 
+	::std::ifstream f("crashDump.txt");
+	CML::uunit offset[AMPCT];
+	::std::string str;
+    if(f.good())
+	{
+		::std::getline(f, str);
+		memcpy(offset, DoubleVectorFromString(str).data(), sizeof(double) * AMPCT);
+	}
+	::std::cout << "initial offset" << ::std::endl;
+	PrintCArray(offset, AMPCT);
+
 	for(int i=0; i<AMPCT; i++ )
 	{
 		// CKim - initialize amp nodes on CANopen network
@@ -66,7 +77,8 @@ bool ChunMotion::Initialize()
 		err = m_Amp[i].SetCountsPerUnit( mtrInfo.ctsPerRev );
 		if(err)	{	PrintMotionError("Setting cpr",err);	return false;	}
 		
-		err= m_Amp[i].SetPositionActual(0);
+		//err= m_Amp[i].SetPositionActual(0);
+		err= m_Amp[i].SetPositionActual(offset[i]);
 		if(err)	{	PrintMotionError("Resetting position",err);	return false;	}
 	}
 
@@ -180,6 +192,19 @@ void ChunMotion::WaitMotionDone()
 }
 
 
+void ChunMotion::DumpConfiguration()
+{
+	::std::ofstream os("crashDump.txt");
+	int x = 0;
+	for (int i = 0; i < AMPCT; ++i)
+	{
+		m_TPDO[i].GetPos(x);
+		os << x << " ";
+	}
+	os << ::std::endl;
+}
+
+
 void ChunMotion::GetMotorPos(double* cnt)
 {
 	int x;
@@ -196,7 +221,11 @@ void ChunMotion::GetMotorPos(double* cnt)
 			cnt[i] = m_Amp[i].PosMtr2User(x);
 		}
 	}
-	else	{	AfxMessageBox("GetPos time out!");		}
+	else	
+	{	
+		AfxMessageBox("GetPos time out!");		
+		this->DumpConfiguration();
+	}
 
 
 	//// CKim - Use PDO

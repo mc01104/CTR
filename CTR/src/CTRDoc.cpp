@@ -393,7 +393,7 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
     // No longer need server socket
     closesocket(ListenSocket);
 
-	
+	bool teleopOn = false;
     // Receive until the peer shuts down the connection
     do {
 		::std::ostringstream ss;
@@ -401,14 +401,20 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 		EnterCriticalSection(&m_cSection);
 		for(int i=0; i<5; i++)
 			localStat.currJang[i] = mySelf->m_Status.currJang[i];			
+		teleopOn = mySelf->m_Status.isTeleOpMoving;
 		LeaveCriticalSection(&m_cSection);
+
+		if (teleopOn)
+			::std::cout << "Teleoperation is on" << ::std::endl;
+		else
+			::std::cout << "Teleoperation is off" << ::std::endl;
 
 		//update the buffer
 		for(int i = 0; i < 5; ++i)
 			ss << localStat.currJang[i] << " ";
 
-		//memcpy(recvbuf,	ss.str().c_str(), sizeof(char) * ss.str().size());
-		
+		ss << teleopOn;
+
         // send data
         iSendResult = send( ClientSocket, ss.str().c_str(),  ss.str().size() + 1, 0 );
         if (iSendResult == SOCKET_ERROR) {
@@ -659,7 +665,7 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 					mySelf->m_motionCtrl->StopMotion();
 				}
 
-				mySelf->m_bLogEMData = teleOpCtrl;
+				//mySelf->m_bLogEMData = teleOpCtrl;
 			}
 
 			if(ev.eventId == 1)		{			}

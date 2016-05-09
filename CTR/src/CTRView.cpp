@@ -46,6 +46,9 @@ BEGIN_MESSAGE_MAP(CCTRView, CFormView)
 	ON_BN_CLICKED(IDC_BUTTON8, &CCTRView::OnClickedBtnRight)
 	ON_BN_CLICKED(IDC_BUTTON9, &CCTRView::OnClickedBtnRecConf)
 	ON_BN_CLICKED(IDC_BUTTON7, &CCTRView::OnClickedBtnGoToRecConf)
+	ON_BN_CLICKED(IDC_BUTTON1, &CCTRView::OnClickCopy)
+	
+	ON_EN_KILLFOCUS(IDC_EDIT1, &CCTRView::OnKillFocus)
 
 	ON_BN_CLICKED(IDC_BTN_MOVE3, &CCTRView::OnClickedBtnStartLog)
 	ON_BN_CLICKED(IDC_BTN_MOVE4, &CCTRView::OnClickedBtnStopLog)
@@ -257,6 +260,24 @@ void CCTRView::OnDestroy()
 
 }
 
+
+void CCTRView::OnClickCopy()
+{
+	CString str;
+	for (int i = 0; i < 5; ++i)
+	{
+		this->GetDlgItemTextA(m_idActJang[i], str);		
+		this->SetDlgItemTextA(m_idCmdJang[i], str);
+	}
+}
+
+void CCTRView::OnKillFocus()
+{
+	CString str;
+	this->GetDlgItemTextA(IDC_EDIT1, str);		
+	this->transIncrement = atof(str);
+	::std::cout << "increment changed to:" << this->transIncrement << ::std::endl;
+}
 
 void CCTRView::OnClickedBtnMove()
 {

@@ -50,14 +50,7 @@ bool ChunMotion::Initialize()
 	setting.synchPeriod = 5000;		// default is 10,000 micro sec = 10 ms. 1000 give Generic Can driver level at teleop motion
 	MtrInfo mtrInfo;
 
-	::std::ifstream f("crashDump.txt");
-	CML::uunit offset[AMPCT];
-	::std::string str;
-    if(f.good())
-	{
-		::std::getline(f, str);
-		memcpy(offset, DoubleVectorFromString(str).data(), sizeof(double) * AMPCT);
-	}
+
 	//::std::cout << "initial offset" << ::std::endl;
 	//PrintCArray(offset, AMPCT);
 
@@ -77,8 +70,10 @@ bool ChunMotion::Initialize()
 		err = m_Amp[i].SetCountsPerUnit( mtrInfo.ctsPerRev );
 		if(err)	{	PrintMotionError("Setting cpr",err);	return false;	}
 		
-		//err= m_Amp[i].SetPositionActual(0);
-		err= m_Amp[i].SetPositionActual(offset[i]);
+		err= m_Amp[i].SetPositionActual(0);
+		//err= m_Amp[i].SetPositionActual(offset[i]);
+		//err= m_Amp[i].SetPositionMotor(offset[i]);
+
 		if(err)	{	PrintMotionError("Resetting position",err);	return false;	}
 	}
 
@@ -115,8 +110,23 @@ bool ChunMotion::Initialize()
 	// CKim - Homing, for right now, use current position as home position (COPLEY_HOME_METHOD::CHM_NONE)
 	CML::HomeConfig cfgHome;
 	cfgHome.method = COPLEY_HOME_METHOD::CHM_NONE;
-	for(int i=0; i<AMPCT; i++)	{	m_Amp[i].GoHome(cfgHome);	}
+	::std::ifstream f("crashDump.txt");
+	CML::uunit offset[AMPCT] = {0};
+	::std::string str;
+    if(f.good())
+	{
+		::std::getline(f, str);
+		memcpy(offset, DoubleVectorFromString(str).data(), sizeof(double) * AMPCT);
+		f.close();
+	}
+	for (int i = 0; i < AMPCT; ++i)
+	{
+		cfgHome.offset = m_Amp[i].PosMtr2User(-offset[i]);
+		
+		m_Amp[i].GoHome(cfgHome);
+	}
 
+	::std::remove("crashDump.txt");
 
 	// CKim - Set software limits - Software limit switches are not used until the amplifier has been homed. 
 	// Set accel limit to zero to disable accel limit

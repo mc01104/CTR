@@ -936,12 +936,12 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 	double dq[5];		
 	double dCnt[7];		
 	
-	//double K[6] = {5.0, 5.0, 5.0, 0.5, 0.5, 0.5 };	// working
+	double K[6] = {5.0, 5.0, 5.0, 0.5, 0.5, 0.5 };	// working
 	//double K[6] = {10.0, 10.0, 10.0, 1.0, 1.0, 1.0 };		// working
 	
-	double K[6] = {10.0, 10.0, 10.0, 5.0, 5.0, 5.0 };		// working
+	//double K[6] = {10.0, 10.0, 10.0, 5.0, 5.0, 5.0 };		// working
 	//double K[6] = { 5.0, 5.0, 5.0, 5.0, 5.0, 5.0 };				// For sensor feedback + estimator
-	//double K[6] = { 1.5, 1.5, 1.5, 0.1, 0.1, 0.1 };				// For sensor feedback + estimator
+	//double K[6] = { 2.5, 2.5, 2.5, 0.1, 0.1, 0.1 };				// For sensor feedback + estimator
 	//double K[6] = {1.0, 1.0, 1.0, 0.5, 0.5, 0.5 };	// working	
 
 	// CKim - Parameters for loop speed measurement
@@ -1050,9 +1050,12 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 				::std::cout << "joint clipping activated" << ::std::endl;
 				dq[2] = 0;
 			}
-
+			//PrintCArray(dq, 5);
 			if (localStat.currJang[2] > L31_MAX - 0.1)
+			{
 				dq[2] = 0;
+				::std::cout << "secondary clipping" << ::std::endl;
+			}
 
 			mySelf->dJangTodCnt(dq, dCnt);
 	

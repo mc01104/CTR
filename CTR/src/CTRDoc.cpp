@@ -2082,7 +2082,7 @@ void CCTRDoc::OnBnClickedBtnPlay()
 		switch(m_traj_type)
 		{
 		case 0:
-				m_TrjGen->Initialize("slowCircle.txt",6);
+				m_TrjGen->Initialize("slowerCircle_scaled.txt",6);
 				break;
 		case 1:
 				m_TrjGen->Initialize("slower_square_large_3rv.txt",6);

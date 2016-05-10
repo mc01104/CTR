@@ -91,7 +91,7 @@ CCTRDoc::CCTRDoc()
 	m_motionCtrl = new ChunMotion();		m_motorConnected = false;
 	m_motorConnected = m_motionCtrl->Initialize();
 
-	m_kinLib = new CTRKin("fourier_order_4.txt");
+	m_kinLib = new CTRKin("fourier_order_5.txt");
 
 	// paths for LWPR models
 	//::std::string pathToForwardModel("../models/model_ct_2015_11_9_14_0_40.bin");
@@ -939,7 +939,7 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 	//double K[6] = {5.0, 5.0, 5.0, 0.5, 0.5, 0.5 };	// working
 	//double K[6] = {10.0, 10.0, 10.0, 1.0, 1.0, 1.0 };		// working
 	
-	double K[6] = {10.0, 10.0, 10.0, 10.0, 10.0, 10.0 };		// working
+	double K[6] = {10.0, 10.0, 10.0, 5.0, 5.0, 5.0 };		// working
 	//double K[6] = { 5.0, 5.0, 5.0, 5.0, 5.0, 5.0 };				// For sensor feedback + estimator
 	//double K[6] = { 1.5, 1.5, 1.5, 0.1, 0.1, 0.1 };				// For sensor feedback + estimator
 	//double K[6] = {1.0, 1.0, 1.0, 0.5, 0.5, 0.5 };	// working	
@@ -1013,8 +1013,8 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 			LeaveCriticalSection(&m_cSection);
 
 			// CKim - Evaluate model
-			mySelf->m_kinLWPR->TipFwdKinJac(localStat.currJang, localStat.currTipPosDir, J,true);
-			//mySelf->m_kinLib->EvalCurrentKinematicsModelNumeric(localStat.currJang, localStat.currTipPosDir, J, mySelf->m_bCLIK);
+			//mySelf->m_kinLWPR->TipFwdKinJac(localStat.currJang, localStat.currTipPosDir, J,true);
+			mySelf->m_kinLib->EvalCurrentKinematicsModelNumeric(localStat.currJang, localStat.currTipPosDir, J, mySelf->m_bCLIK);
 
 			// CKim - Apply Closed Loop Inverse kienmatics control law. dq = inv(J) x (dxd + K(xd - xm))
 
@@ -1038,13 +1038,22 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 			}
 
 			// CKim - Invert jacobian, handle singularity and solve
-			//mySelf->m_kinLib->ApplyKinematicControl(J,err,dq);
-			mySelf->m_kinLWPR->ApplyKinematicControl(J,err,dq);
+			mySelf->m_kinLib->ApplyKinematicControl(J,err,dq);
+			//mySelf->m_kinLWPR->ApplyKinematicControl(J,err,dq);
 
 			// CKim - Convert dotq into motor velocity
 			// Check joint limits
-			if(localStat.currJang[2] + dq[2] > L31_MAX || localStat.currJang[2] + dq[2] < L31_MIN)
+			double dt = 1.0/500;
+			if(localStat.currJang[2] + dt * dq[2] > L31_MAX || localStat.currJang[2] + dt * dq[2] < L31_MIN)
+			{
+				::std::cout << localStat.currJang[2] << " " <<  dt * dq[2] << ::std::endl;
+				::std::cout << "joint clipping activated" << ::std::endl;
 				dq[2] = 0;
+			}
+
+			if (localStat.currJang[2] > L31_MAX - 0.1)
+				dq[2] = 0;
+
 			mySelf->dJangTodCnt(dq, dCnt);
 	
 			if(safeToTeleOp)	{	for(int i=0; i<7; i++)	{	vel[i] = dCnt[i];	}		}
@@ -1075,8 +1084,8 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 
 		else	// CKim - When control is not running
 		{
-			mySelf->m_kinLWPR->TipFwdKin(localStat.currJang, localStat.currTipPosDir);
-			//mySelf->m_kinLib->EvalCurrentKinematicsModelNumeric(localStat.currJang, localStat.currTipPosDir, J, mySelf->m_bCLIK);
+			//mySelf->m_kinLWPR->TipFwdKin(localStat.currJang, localStat.currTipPosDir);
+			mySelf->m_kinLib->EvalCurrentKinematicsModelNumeric(localStat.currJang, localStat.currTipPosDir, J, mySelf->m_bCLIK);
 
 			for(int i=0; i<7; i++)	
 				vel[i] = 0.0;		

@@ -91,7 +91,7 @@ CCTRDoc::CCTRDoc()
 	m_motionCtrl = new ChunMotion();		m_motorConnected = false;
 	m_motorConnected = m_motionCtrl->Initialize();
 
-	m_kinLib = new CTRKin("fourier_order_5.txt");
+	m_kinLib = new CTRKin("fourier_order_3.txt");
 
 	// paths for LWPR models
 	//::std::string pathToForwardModel("../models/model_ct_2015_11_9_14_0_40.bin");
@@ -1340,11 +1340,11 @@ unsigned int WINAPI	CCTRDoc::ClosedLoopControlLoop(void* para)
 		
 		if (mySelf->m_adapt_LWPR)
 			mySelf->m_kinLWPR->AdaptForwardModel(localStat.sensedTipPosDir, localStat.currJang);
-		clock_t start = clock();
+		//clock_t start = clock();
 		if (mySelf->m_bDoUpdate)
 			mySelf->m_kinLib->UpdateFAC(localStat.currJang,localStat.sensedTipPosDir,predTipPosDir,mySelf->m_bDoUpdate);
-		clock_t end = clock();
-		::std::cout << 1000.0 * static_cast<double>(end - start) / CLOCKS_PER_SEC << ::std::endl;;
+		//clock_t end = clock();
+		//::std::cout << 1000.0 * static_cast<double>(end - start) / CLOCKS_PER_SEC << ::std::endl;;
 		// --------------------------------------------------------------- //
 		// CKim - Log the data that was read
 		// --------------------------------------------------------------- //

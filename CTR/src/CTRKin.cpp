@@ -634,6 +634,7 @@ void CTRKin::UpdateFAC(const double jAng[5], const double measTipPosDir[6], doub
 
 	double L_normalized;		int n,r;	
 
+	clock_t start, end;
 	for(int i=1; i<basisFunctionLength; i++)	
 	{
 		n = i/2;	r = i%2;	L_normalized = L31/L31_MAX*0.5*3.141592;
@@ -650,7 +651,6 @@ void CTRKin::UpdateFAC(const double jAng[5], const double measTipPosDir[6], doub
 				cnt++;	
 			}
 
-
 			// 0.5. In measuredData, compensate for the rigid rotation/translation about/along z axis
 			double a1 = jAng[3];		double L1 = jAng[4];	double meas[6];		double pred[6];		double err;
 
@@ -661,11 +661,19 @@ void CTRKin::UpdateFAC(const double jAng[5], const double measTipPosDir[6], doub
 			meas[4] = -sin(a1)*measTipPosDir[3] + cos(a1)*measTipPosDir[4];
 			meas[5] = measTipPosDir[5];
 
+			start = clock();
 			// Actual Update
-
+			Fold = F[0];
+			::Eigen::VectorXd tmpVec = Fold * x;
+			//double tmp = x.transpose()*Fold*x;
+			double tmp = tmpVec.transpose() * x;
+			//F[0] = (1/m_forgettingFactor)*(Fold - (1/(m_forgettingFactor+tmp)) * Fold*(x*x.transpose())*Fold);
+			F[0] = (1/m_forgettingFactor)*(Fold - (1/(m_forgettingFactor+tmp)) * tmpVec*tmpVec.transpose());
+			
 			for(int i=0; i<6; i++)		
 			{
 				// 1. Calculate prediction error
+	
 				pred[i] = x.dot(m_tmpMat.col(i));
 				err = meas[i] - pred[i];
 
@@ -673,19 +681,23 @@ void CTRKin::UpdateFAC(const double jAng[5], const double measTipPosDir[6], doub
 				{
 					// 2. Update Matrix F
 					//Eigen::MatrixXd Fold = F[i];
-					Fold = F[i];
-					double tmp = x.transpose()*Fold*x;
-
-					F[i] = (1/m_forgettingFactor)*(Fold - (1/(m_forgettingFactor+tmp)) * Fold*(x*x.transpose())*Fold);
-
+					//Fold = F[i];
+					//double tmp = x.transpose()*Fold*x;
+					//double tmp = x.transpose()*F[i]*x;
+					//F[i] = (1/m_forgettingFactor)*(Fold - (1/(m_forgettingFactor+tmp)) * Fold*(x*x.transpose())*Fold);
+		
+					//F[i] = (1/m_forgettingFactor)*(F[i] - (1/(m_forgettingFactor+tmp)) * F[i]*(x*x.transpose())*F[i]);
+	
 					// 3. Update coefficients
 					//Eigen::VectorXd v = err*F[i]*x;
 					//m_tmpMat.col(i) += v;
 				
-					m_tmpMat.col(i) += err*F[i]*x;
+					m_tmpMat.col(i) += err*F[0]*x;
 				}
 
 			}
+			end = clock();
+			::std::cout << "update takes:" << 1000*static_cast<double> (end - start) / CLOCKS_PER_SEC << ::std::endl;
 
 			predTipPosDir[0] = cos(a1)*pred[0] - sin(a1)*pred[1];
 			predTipPosDir[1] = sin(a1)*pred[0] + cos(a1)*pred[1];
@@ -695,7 +707,6 @@ void CTRKin::UpdateFAC(const double jAng[5], const double measTipPosDir[6], doub
 			predTipPosDir[5] = pred[5];
 
 			// CKim - Copy the results to the shared coefficients
-			clock_t start = clock();
 			if(doUpdate)
 			{
 				WaitForSingleObject(m_hFACMutex,INFINITE);
@@ -709,8 +720,7 @@ void CTRKin::UpdateFAC(const double jAng[5], const double measTipPosDir[6], doub
 				ReleaseMutex(m_hFACMutex);
 			}
 
-			clock_t end = clock();
-			//::std::cout << 1000.0 * static_cast<double>(end - start) / CLOCKS_PER_SEC << ::std::endl;;
+	
 
 }
 

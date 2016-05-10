@@ -75,6 +75,9 @@ void CTRKin::ReInitializeEstimator()
 	for(int i=0; i<6; i++)	{
 		F[i].resize(this->coeffSize, this->coeffSize);	F[i].setIdentity();		F[i] = 0.1*F[i];		}
 
+	Fold.resize(this->coeffSize, this->coeffSize);
+	Fold.setZero();
+
 	Fzero.resize(this->coeffSize, this->coeffSize);
 }
 
@@ -669,14 +672,17 @@ void CTRKin::UpdateFAC(const double jAng[5], const double measTipPosDir[6], doub
 				if(doUpdate && (i < 6))		// i < 6 to update both position and orientation
 				{
 					// 2. Update Matrix F
-					Eigen::MatrixXd Fold = F[i];
+					//Eigen::MatrixXd Fold = F[i];
+					Fold = F[i];
 					double tmp = x.transpose()*Fold*x;
 
 					F[i] = (1/m_forgettingFactor)*(Fold - (1/(m_forgettingFactor+tmp)) * Fold*(x*x.transpose())*Fold);
 
 					// 3. Update coefficients
-					Eigen::VectorXd v = err*F[i]*x;
-					m_tmpMat.col(i) += v;
+					//Eigen::VectorXd v = err*F[i]*x;
+					//m_tmpMat.col(i) += v;
+				
+					m_tmpMat.col(i) += err*F[i]*x;
 				}
 
 			}

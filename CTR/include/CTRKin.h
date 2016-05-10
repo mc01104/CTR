@@ -94,7 +94,7 @@ protected:
 
 	// CKim - Array used in recursive least square
 	Eigen::MatrixXd F[6];		Eigen::MatrixXd m_tmpMat;		Eigen::MatrixXd Fzero;
-
+	Eigen::MatrixXd Fold;
 	// CKim - Mutex for protecting shared variable
 	HANDLE m_hFACMutex;		
 

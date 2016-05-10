@@ -689,6 +689,7 @@ void CTRKin::UpdateFAC(const double jAng[5], const double measTipPosDir[6], doub
 			predTipPosDir[5] = pred[5];
 
 			// CKim - Copy the results to the shared coefficients
+			clock_t start = clock();
 			if(doUpdate)
 			{
 				WaitForSingleObject(m_hFACMutex,INFINITE);
@@ -701,6 +702,9 @@ void CTRKin::UpdateFAC(const double jAng[5], const double measTipPosDir[6], doub
 
 				ReleaseMutex(m_hFACMutex);
 			}
+
+			clock_t end = clock();
+			//::std::cout << 1000.0 * static_cast<double>(end - start) / CLOCKS_PER_SEC << ::std::endl;;
 
 }
 

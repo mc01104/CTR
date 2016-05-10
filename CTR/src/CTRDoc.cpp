@@ -1040,12 +1040,11 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 			// CKim - Invert jacobian, handle singularity and solve
 			//mySelf->m_kinLib->ApplyKinematicControl(J,err,dq);
 			mySelf->m_kinLWPR->ApplyKinematicControl(J,err,dq);
-	/*		std::cout << "q = ";
-			PrintCArray(localStat.currJang, 5);
-			std::cout << "dq = ";
-			PrintCArray(dq,5);*/
 
 			// CKim - Convert dotq into motor velocity
+			// Check joint limits
+			if(localStat.currJang[2] + dq[2] > L31_MAX || localStat.currJang[2] + dq[2] < L31_MIN)
+				dq[2] = 0;
 			mySelf->dJangTodCnt(dq, dCnt);
 	
 			if(safeToTeleOp)	{	for(int i=0; i<7; i++)	{	vel[i] = dCnt[i];	}		}
@@ -2073,7 +2072,7 @@ void CCTRDoc::OnBnClickedBtnPlay()
 				m_TrjGen->Initialize("slowCircle.txt",6);
 				break;
 		case 1:
-				m_TrjGen->Initialize("slow_square_large_3rv.txt",6);
+				m_TrjGen->Initialize("slower_square_large_3rv.txt",6);
 				break;
 		default:
 				m_TrjGen->Initialize("random_trajectory_4.txt",6);

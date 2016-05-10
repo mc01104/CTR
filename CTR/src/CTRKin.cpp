@@ -799,6 +799,7 @@ void CTRKin::ApplyKinematicControl(const Eigen::MatrixXd& J, const Eigen::Matrix
 	dotq = Jsvd.solve(b);
 
 	for(int i=0; i<5; i++)	{	dq[i] = dotq(i,0);	}
+
 }
 
 

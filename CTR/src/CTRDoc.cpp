@@ -937,9 +937,9 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 	double dCnt[7];		
 	
 	//double K[6] = {5.0, 5.0, 5.0, 0.5, 0.5, 0.5 };	// working
-	double K[6] = {10.0, 10.0, 10.0, 1.0, 1.0, 1.0 };		// working
+	//double K[6] = {10.0, 10.0, 10.0, 1.0, 1.0, 1.0 };		// working
 	
-	//double K[6] = {10.0, 10.0, 10.0, 10.0, 10.0, 10.0 };		// working
+	double K[6] = {10.0, 10.0, 10.0, 10.0, 10.0, 10.0 };		// working
 	//double K[6] = { 5.0, 5.0, 5.0, 5.0, 5.0, 5.0 };				// For sensor feedback + estimator
 	//double K[6] = { 1.5, 1.5, 1.5, 0.1, 0.1, 0.1 };				// For sensor feedback + estimator
 	//double K[6] = {1.0, 1.0, 1.0, 0.5, 0.5, 0.5 };	// working	
@@ -1013,8 +1013,8 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 			LeaveCriticalSection(&m_cSection);
 
 			// CKim - Evaluate model
-			//mySelf->m_kinLWPR->TipFwdKinJac(localStat.currJang, localStat.currTipPosDir, J,true);
-			mySelf->m_kinLib->EvalCurrentKinematicsModelNumeric(localStat.currJang, localStat.currTipPosDir, J, mySelf->m_bCLIK);
+			mySelf->m_kinLWPR->TipFwdKinJac(localStat.currJang, localStat.currTipPosDir, J,true);
+			//mySelf->m_kinLib->EvalCurrentKinematicsModelNumeric(localStat.currJang, localStat.currTipPosDir, J, mySelf->m_bCLIK);
 
 			// CKim - Apply Closed Loop Inverse kienmatics control law. dq = inv(J) x (dxd + K(xd - xm))
 
@@ -1038,8 +1038,8 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 			}
 
 			// CKim - Invert jacobian, handle singularity and solve
-			mySelf->m_kinLib->ApplyKinematicControl(J,err,dq);
-			//mySelf->m_kinLWPR->ApplyKinematicControl(J,err,dq);
+			//mySelf->m_kinLib->ApplyKinematicControl(J,err,dq);
+			mySelf->m_kinLWPR->ApplyKinematicControl(J,err,dq);
 	/*		std::cout << "q = ";
 			PrintCArray(localStat.currJang, 5);
 			std::cout << "dq = ";
@@ -1076,8 +1076,8 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 
 		else	// CKim - When control is not running
 		{
-			//mySelf->m_kinLWPR->TipFwdKin(localStat.currJang, localStat.currTipPosDir);
-			mySelf->m_kinLib->EvalCurrentKinematicsModelNumeric(localStat.currJang, localStat.currTipPosDir, J, mySelf->m_bCLIK);
+			mySelf->m_kinLWPR->TipFwdKin(localStat.currJang, localStat.currTipPosDir);
+			//mySelf->m_kinLib->EvalCurrentKinematicsModelNumeric(localStat.currJang, localStat.currTipPosDir, J, mySelf->m_bCLIK);
 
 			for(int i=0; i<7; i++)	
 				vel[i] = 0.0;		
@@ -1951,8 +1951,10 @@ void CCTRDoc::SlaveToMaster(CTR_status& stat, double scl)
 	Eigen::Vector3d to, t, p, tipPos;	Eigen::Matrix3d MtoS;
 	for(int i=0; i<3; i++)	
 	{
-		to(i) = stat.M_T0[12+i];	p(i) = stat.refTipPosDir[i];	tipPos(i) = stat.currTipPosDir[i];
+		to(i) = stat.M_T0[12+i];	p(i) = stat.refTipPosDir[i];	//tipPos(i) = stat.currTipPosDir[i];
+		tipPos(i) = stat.sensedTipPosDir[i];
 	}
+
 	//MtoS(0,0) =	0;		MtoS(0,1) =	1;		MtoS(0,2) = 0;
 	//MtoS(1,0) =	1;		MtoS(1,1) =	0;		MtoS(1,2) =	0;
 	//MtoS(2,0) =	0;		MtoS(2,1) = 0;		MtoS(2,2) = -1;

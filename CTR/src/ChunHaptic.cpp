@@ -89,22 +89,33 @@ HDCallbackCode HDCALLBACK ChunHaptic::updateCallback(void *pData)
     hdGetDoublev(HD_CURRENT_TRANSFORM, mySelf->m_currentState.tfMat);
 	hdGetDoublev(HD_CURRENT_FORCE,mySelf->m_currentState.Force);
 	
-	// CKim - Render force feedback
-	if(m_currentState.forceFlag)
-	{
-		// CKim - Current state is the haptic device coordinate of tgt position
-		//double k = m_currentState.forceMag;			HDfloat forces[3];		float sum = 0;
-		//for(int i=0; i<3; i++)	{	forces[i] = (m_currentState.tfMat[12+i] - m_currentState.slavePos[i]);	}
-		//for(int i=0; i<3; i++)	{		sum += (forces[i]*forces[i]);		}
-		//sum = sqrt(sum);
-		//for(int i=0; i<3; i++)	{	forces[i] = -k*forces[i]/sum;			}
+	//// CKim - Render force feedback
+	//if(m_currentState.forceFlag)
+	//{
+	//	// CKim - Current state is the haptic device coordinate of tgt position
+	//	//double k = m_currentState.forceMag;			HDfloat forces[3];		float sum = 0;
+	//	//for(int i=0; i<3; i++)	{	forces[i] = (m_currentState.tfMat[12+i] - m_currentState.slavePos[i]);	}
+	//	//for(int i=0; i<3; i++)	{		sum += (forces[i]*forces[i]);		}
+	//	//sum = sqrt(sum);
+	//	//for(int i=0; i<3; i++)	{	forces[i] = -k*forces[i]/sum;			}
 
+	//	double k = m_currentState.forceMag;			HDfloat forces[3];
+	//	for(int i=0;i<3; i++)	{	forces[i] = -k*(m_currentState.tfMat[12+i] - m_currentState.slavePos[i]);	}
+	//	hdSetFloatv(HD_CURRENT_FORCE,forces);
+	//}
 		double k = m_currentState.forceMag;			HDfloat forces[3];
-		for(int i=0;i<3; i++)	{	forces[i] = -k*(m_currentState.tfMat[12+i] - m_currentState.slavePos[i]);	}
+		k = 0 * 0.004;
+		for(int i=0;i<3; i++)	
+		{	
+			forces[i] = (m_currentState.tfMat[12+i] - m_currentState.slavePos[i]);	
+			if (fabs(forces[i]) < 5.0)
+				forces[i] = 0.0;
+			else if (forces[i] < 0)
+				forces[i] = k * pow((forces[i] + 5.0), 2);
+			else
+				forces[i] = -k * pow((forces[i] - 5.0), 2);
+		}
 		hdSetFloatv(HD_CURRENT_FORCE,forces);
-	}
-
-
 	// --------------------------------------------------------------------------- //
     // CKim - Event handling. 
 	// --------------------------------------------------------------------------- //

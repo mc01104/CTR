@@ -661,43 +661,22 @@ void CTRKin::UpdateFAC(const double jAng[5], const double measTipPosDir[6], doub
 			meas[4] = -sin(a1)*measTipPosDir[3] + cos(a1)*measTipPosDir[4];
 			meas[5] = measTipPosDir[5];
 
-			start = clock();
-			// Actual Update
 			Fold = F[0];
 			::Eigen::VectorXd tmpVec = Fold * x;
-			//double tmp = x.transpose()*Fold*x;
+
 			double tmp = tmpVec.transpose() * x;
-			//F[0] = (1/m_forgettingFactor)*(Fold - (1/(m_forgettingFactor+tmp)) * Fold*(x*x.transpose())*Fold);
 			F[0] = (1/m_forgettingFactor)*(Fold - (1/(m_forgettingFactor+tmp)) * tmpVec*tmpVec.transpose());
-			
-			for(int i=0; i<6; i++)		
-			{
-				// 1. Calculate prediction error
-	
-				pred[i] = x.dot(m_tmpMat.col(i));
-				err = meas[i] - pred[i];
 
-				if(doUpdate && (i < 6))		// i < 6 to update both position and orientation
+			if(doUpdate)		
+				for(int i=0; i<6; i++)		
 				{
-					// 2. Update Matrix F
-					//Eigen::MatrixXd Fold = F[i];
-					//Fold = F[i];
-					//double tmp = x.transpose()*Fold*x;
-					//double tmp = x.transpose()*F[i]*x;
-					//F[i] = (1/m_forgettingFactor)*(Fold - (1/(m_forgettingFactor+tmp)) * Fold*(x*x.transpose())*Fold);
-		
-					//F[i] = (1/m_forgettingFactor)*(F[i] - (1/(m_forgettingFactor+tmp)) * F[i]*(x*x.transpose())*F[i]);
-	
-					// 3. Update coefficients
-					//Eigen::VectorXd v = err*F[i]*x;
-					//m_tmpMat.col(i) += v;
-				
-					m_tmpMat.col(i) += err*F[0]*x;
-				}
+					// 1. Calculate prediction error
+					pred[i] = x.dot(m_tmpMat.col(i));
+					err = meas[i] - pred[i];
 
-			}
-			end = clock();
-			::std::cout << "update takes:" << 1000*static_cast<double> (end - start) / CLOCKS_PER_SEC << ::std::endl;
+					m_tmpMat.col(i) += err*F[0]*x;
+
+				}
 
 			predTipPosDir[0] = cos(a1)*pred[0] - sin(a1)*pred[1];
 			predTipPosDir[1] = sin(a1)*pred[0] + cos(a1)*pred[1];

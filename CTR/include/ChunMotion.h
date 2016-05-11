@@ -48,9 +48,10 @@ public:
 	void WaitMotionDone();
 	void StopMotion();
 
+	void DumpConfiguration();
 private:
 
-	void DumpConfiguration();
+	
 
 	// CKim - local data
 	int32 canBPS;		// CAN network bit rate

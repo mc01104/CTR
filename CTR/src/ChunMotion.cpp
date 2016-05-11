@@ -154,6 +154,8 @@ void ChunMotion::PrintMotionError(const char* msg, const CML::Error* err)
 	CString errStr;
 	errStr.Format("Motion Error. %s : %s",msg,err->toString());
 	AfxMessageBox(errStr);
+	this->DumpConfiguration();
+
 }
 
 

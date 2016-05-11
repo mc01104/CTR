@@ -1146,6 +1146,7 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 		{
 			// CKim - Stop velocity command
 			AfxMessageBox("Motion Error!!");
+			mySelf->m_motionCtrl->DumpConfiguration();
 			break;
 		}
 
@@ -1737,6 +1738,7 @@ void CCTRDoc::SwitchTeleOpMode(bool onoff)
 		if( WaitForSingleObject(m_hTeleOpThread,1000) )	// CKim - Did not return 0
 		{
 			AfxMessageBox("Sparta!! TeleOp thread");
+			this->m_motionCtrl->DumpConfiguration();
 		}
 		this->m_bCLIK = false;
 	}
@@ -1793,6 +1795,7 @@ bool CCTRDoc::ProcessCommand(CTR_status& stat)
 			if(!m_motionCtrl->DoCoordMotion(stat.tgtMotorCnt))	
 			{
 				AfxMessageBox("Error during commanded motion!!");
+				this->m_motionCtrl->DumpConfiguration();
 				return false;
 			}
 			

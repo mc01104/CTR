@@ -588,7 +588,7 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 	CTR_status localStat;		
 	
 	// CKim - Flags
-	bool teleOpCtrl = false;		bool safeToTeleOp = false;			double scl = 0.33;	double kp = 3.0;
+	bool teleOpCtrl = false;		bool safeToTeleOp = false;			double scl = 1.00;	double kp = 3.0;
 
 	bool adaptModelFlag = false;
 
@@ -637,7 +637,8 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 					// CKim - Save the current configuration of the haptic device, and tip
 					// which are used for master to slave transformation
 					for(int i=0; i<16; i++)	{	localStat.M_T0[i] = ev.refMat[i];						}
-					for(int i=0; i<6; i++)	{	localStat.refTipPosDir[i] = localStat.currTipPosDir[i];	}
+					//for(int i=0; i<6; i++)	{	localStat.refTipPosDir[i] = localStat.currTipPosDir[i];	}
+					for(int i=0; i<6; i++)	{	localStat.refTipPosDir[i] = localStat.tgtTipPosDir[i];	}
 
 					// CKim - Initial point for the inverse kinematics 
 					for(int i=0; i<5; i++)	{	localStat.initJang[i] = localStat.currJang[i];			}

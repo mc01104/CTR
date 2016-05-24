@@ -10,7 +10,7 @@ CTRKin::CTRKin(void)
 
 	// CKim - Coefficient file for Tip
 	//fName = "CTR_TIP_FAC.txt";
-	fName = "FK_new_parameters.txt";
+	fName = "fourier_order_3.txt";
 	os.open("conditionNumber.txt");
 	if (readCTR_FAC_file(fName, m_Tip_px, m_Tip_py, m_Tip_pz, m_Tip_ox, m_Tip_oy, m_Tip_oz) == false) //file read error
 	{
@@ -473,7 +473,12 @@ void CTRKin::InverseKinematicsLSQ(const double* tgtPosOrt, const double* init, d
 	Eigen::MatrixXd Coeff(125,6);		GetFAC(Coeff);
 	for(int i=0; i<5; i++)	{	jAng[i] = init[i];		}
 	lambda = 0.001;		exitCond = 0;
-	
+	::Eigen::Matrix<double, 3, 5> Jp;
+	::Eigen::Matrix<double, 1, 5> Jo;
+	::Eigen::Matrix<double, 3, 3> tmpMat;
+	::Eigen::Matrix<double, 5, 5> IdMat;
+	IdMat.setIdentity();
+
 	// CKim - Iterate
 	for(iter = 0; iter < maxiter; iter++)
 	{
@@ -483,32 +488,38 @@ void CTRKin::InverseKinematicsLSQ(const double* tgtPosOrt, const double* init, d
 		Err[1] = sqrt( fx(0,0)*fx(0,0) + fx(1,0)*fx(1,0) + fx(2,0)*fx(2,0) );
 		Err[2] = acos(1.0 - fx(3,0)*(1-cos(m_MaxOrtErr*3.141592/180.0))/m_MaxPosErr)*180.0/3.141592;
 		
-		// CKim - Exit if distance is less than threshold
-		//if ((iter % 20) == 0)
-		//	::std::cout << "iter:" << iter  << "->" << Err[0] << ::std::endl;
-		if(Err[0] < 10 *eps)	{	exitCond = 1;	break;		}
+		if(Err[0] < eps)	{	exitCond = 1;	break;		}
 	
-		// CKim - Numerically evalaluate the jacobian dy/dx
 		EvalJ_LSQ(jAng,tgtPosOrt,Coeff,J);
-		//::std::cout << "error jacobian = " << J << ::std::endl;
 		
-		// CKim - Find the update direction. update = - inv ( (JtJ + lambda*diag(JtJ) ) Jt*fx
+		Jp = J.block(0,0, 3, 5);
+		Jp.col(0) *= M_PI / 180.0;
+		Jp.col(1) *= M_PI / 180.0;
+		Jp.col(3) *= M_PI / 180.0;
+		Jo = J.row(3);
+
+		tmpMat = (Jp * Jp.transpose());
+		for (int i = 0; i < 3; ++i)
+			tmpMat(i, i) += 0.0001;
 
 		b = -1.0 * J.transpose()*fx;
-		//JtJ = J.transpose()*J;		A = JtJ;
-		//for(int i=0; i<5; i++)	{	A(i,i) += lambda*JtJ(i,i);	}
+		//b = -Jp.transpose() * fx.segment(0, 3) - (IdMat - Jp.transpose() * tmpMat.inverse() * Jp) * Jo.transpose() * fx[3];
+
 
 		// CKim - Calculate Update step. Use JacobiSVD.solve to get least square solution
 		//Eigen::JacobiSVD<Eigen::Matrix<double,5,5>> Jsvd(A,Eigen::ComputeFullU | Eigen::ComputeFullV);
 		//update = Jsvd.solve(b);
-		update = 0.001*b;
-
+		update = 0.01*b;
+	
 		// CKim - If the magnitude of the update direction is small, exit
 		if(update.norm() < 0.001)	{	exitCond = 2;	break;		}
 
 		// CKim - Decide how much in the update direction we should move. Full (1) to minimum (0.1)
 		// this depends on if |error|^2 is decreasing
-		stepSz = 1.0;			
+		//stepSz = 0.2;
+		stepSz = 1.0;
+		//for(int i=0; i<5; i++)	{	jAng[i] = jAng[i] + stepSz*update(i,0);	}
+		//EvalF_LSQ(jAng,tgtPosOrt,Coeff,fxnew);
 		while(1)
 		{
 			for(int i=0; i<5; i++)	{	temp[i] = jAng[i] + stepSz*update(i,0);	}
@@ -519,24 +530,19 @@ void CTRKin::InverseKinematicsLSQ(const double* tgtPosOrt, const double* init, d
 			// CKim - If the norm^2 of the function decreases, accept the step
 			if(fxnew.squaredNorm() < fx.squaredNorm())
 			{
-				if(lambda > 0.001)	{	lambda /= 10.0;		}
-				//lambda /= 10.0;
 				for(int i=0; i<5; i++)	{	jAng[i] = temp[i];	}
 				break;
 			}
 			else
-			{
 				stepSz *= 0.5;	
-			}
 			
 			// CKim - If function is not decreasing, 
 			if(stepSz < 0.005)	
-			{
-				lambda *= 10;	
 				break;
-			}
 		}
 	}
+	//::std::cout << fxnew[0] << " " <<  fxnew[1] << " " << fxnew[2] << " " << fxnew[3] << ::std::endl;
+
 	if(iter == maxiter)	{		exitCond = 3;		}
 
 	//::std::cout << "iter = " << iter << ::std::endl;
@@ -558,8 +564,8 @@ void CTRKin::EvalF_LSQ(const double* jAng, const double* tgtPosOrt, const Eigen:
 		F(i,0) = posOrt[i] - tgtPosOrt[i];				
 		sum += (posOrt[i+3]*tgtPosOrt[i+3]);
 	}
-	//F(3,0) = pmax/(1-cos(thmax))*(1-sum);
-	F(3,0) = 0;
+	F(3,0) = 0.3 * pmax/(1-cos(thmax))*(1-sum);
+	//F(3,0) = 0;
 }
 
 

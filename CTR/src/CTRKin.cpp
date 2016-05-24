@@ -484,21 +484,24 @@ void CTRKin::InverseKinematicsLSQ(const double* tgtPosOrt, const double* init, d
 		Err[2] = acos(1.0 - fx(3,0)*(1-cos(m_MaxOrtErr*3.141592/180.0))/m_MaxPosErr)*180.0/3.141592;
 		
 		// CKim - Exit if distance is less than threshold
-		if(Err[0] < eps)	{	exitCond = 1;	break;		}
+		//if ((iter % 20) == 0)
+		//	::std::cout << "iter:" << iter  << "->" << Err[0] << ::std::endl;
+		if(Err[0] < 10 *eps)	{	exitCond = 1;	break;		}
 	
 		// CKim - Numerically evalaluate the jacobian dy/dx
 		EvalJ_LSQ(jAng,tgtPosOrt,Coeff,J);
+		//::std::cout << "error jacobian = " << J << ::std::endl;
 		
 		// CKim - Find the update direction. update = - inv ( (JtJ + lambda*diag(JtJ) ) Jt*fx
 
 		b = -1.0 * J.transpose()*fx;
-		JtJ = J.transpose()*J;		A = JtJ;
-		for(int i=0; i<5; i++)	{	A(i,i) += lambda*JtJ(i,i);	}
+		//JtJ = J.transpose()*J;		A = JtJ;
+		//for(int i=0; i<5; i++)	{	A(i,i) += lambda*JtJ(i,i);	}
 
 		// CKim - Calculate Update step. Use JacobiSVD.solve to get least square solution
-		Eigen::JacobiSVD<Eigen::Matrix<double,5,5>> Jsvd(A,Eigen::ComputeFullU | Eigen::ComputeFullV);
+		//Eigen::JacobiSVD<Eigen::Matrix<double,5,5>> Jsvd(A,Eigen::ComputeFullU | Eigen::ComputeFullV);
 		//update = Jsvd.solve(b);
-		update = 0.01*b;
+		update = 0.001*b;
 
 		// CKim - If the magnitude of the update direction is small, exit
 		if(update.norm() < 0.001)	{	exitCond = 2;	break;		}
@@ -555,7 +558,8 @@ void CTRKin::EvalF_LSQ(const double* jAng, const double* tgtPosOrt, const Eigen:
 		F(i,0) = posOrt[i] - tgtPosOrt[i];				
 		sum += (posOrt[i+3]*tgtPosOrt[i+3]);
 	}
-	F(3,0) = pmax/(1-cos(thmax))*(1-sum);
+	//F(3,0) = pmax/(1-cos(thmax))*(1-sum);
+	F(3,0) = 0;
 }
 
 

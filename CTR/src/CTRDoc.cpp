@@ -1047,7 +1047,13 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 			// CKim - Apply simple control law : vel = kp(target pos - current pos)
 			if(safeToTeleOp)	
 				for(int i=0; i<7; i++)	
+				{
 					vel[i] = -kp*(localStat.currMotorCnt[i]-MtrCntSetPt[i]);
+					if (vel[i] > 5.0)
+						vel[i] = 5.0;
+					else if (vel[i] < -5.0)
+						vel[i] = -5.0;
+				}
 			else				
 				for(int i=0; i<7; i++)	
 					vel[i] = 0.0;									
@@ -1139,7 +1145,7 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 			// CKim - Process user commands... should be in separate threads..
 			mySelf->ProcessCommand(localStat);	
 		}
-
+		PrintCArray(localStat.currTipPosDir, 6);
 		// ----------------------------------------------------- //
 		// CKim - Command joint velocity, update shared variable
 		// ----------------------------------------------------- //
@@ -1863,11 +1869,11 @@ void CCTRDoc::SolveInverseKin(CTR_status& stat)
 
 	// CKim - Update initial point - 1: as current joint angle
 	for(int i=0; i<5; i++)	{	stat.initJang[i] = stat.currJang[i];		}
-	
+
 	m_kinLWPR->InverseKinematicsLSQ(stat.tgtTipPosDir, stat.initJang, jAng, Err, exitCond);
 
 	stat.condNum = Err[0];		stat.invKinErr[0] = Err[1];		stat.invKinErr[1] = Err[2];
-
+	//::std::cout << Err[0] << ::std::endl;
 	// CKim - Check convergence from the position and orientation error magnitude
 	if( (stat.invKinErr[0] > maxPosErr) || (stat.invKinErr[1] > maxOrtErr)  )	{	isConverged = false;	}
 	else																		{	isConverged = true;		}
@@ -1878,7 +1884,10 @@ void CCTRDoc::SolveInverseKin(CTR_status& stat)
 	
 	// CKim - Normalize, Apply Joint limits and covert to motor counts. 
 	InvKinJangToMtr(jAng,stat.currMotorCnt,stat.tgtJang,stat.tgtMotorCnt, isInLimit);
-
+	//for (int i = 0; i < 5; ++i)
+	//	::std::cout << (stat.currMotorCnt[i] - stat.tgtMotorCnt[i]) * c_CntToRad << " ";
+	//
+	//::std::cout << ::std::endl;
 	stat.exitCond = exitCond;		stat.invKinOK = isConverged;		stat.limitOK = isInLimit;
 }
 
@@ -1919,7 +1928,7 @@ void CCTRDoc::MasterToSlave(CTR_status& stat, double scl, bool absolute)
 	}
 
 	::Eigen::Matrix<double, 3, 3> MtipToBase;
-	this->GetTipTransformation(MtipToBase);
+	//this->GetTipTransformation(MtipToBase);
 	MtipToBase.setIdentity();
 
 	MtoS(0,0) =	0;		MtoS(0,1) =	1;		MtoS(0,2) = 0;
@@ -2015,7 +2024,7 @@ void CCTRDoc::SlaveToMaster(CTR_status& stat, double scl)
 	MtoS(2,0) =	0;		MtoS(2,1) = 0;		MtoS(2,2) = -1;
 
 	::Eigen::Matrix<double, 3, 3> MtipToBase;
-	this->GetTipTransformation(MtipToBase);
+	//this->GetTipTransformation(MtipToBase);
 	MtipToBase.setIdentity();
 	//MtoS(0,0) =	0;		MtoS(0,1) =	1;		MtoS(0,2) = 0;
 	//MtoS(1,0) =	0;		MtoS(1,1) =	0;		MtoS(1,2) =	-1;

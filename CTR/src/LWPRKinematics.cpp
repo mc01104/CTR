@@ -193,6 +193,7 @@ void LWPRKinematics::EvalF_LSQ(const double* jAng, const double* tgtPosOrt, cons
 	}
 
 	F(3,0) = pmax/(1 - cos(thmax)) * (1 - sum);
+	//F(3, 0) = 0;
 }
 
 // this will be removed once I fix the mutex

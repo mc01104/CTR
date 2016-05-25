@@ -1032,7 +1032,7 @@ void CTRKin::ApplyKinematicControlNullspace(const Eigen::MatrixXd& J, const Eige
 
 	//orientation in the nullspace
 	//if (tmpMat.determinant() < 1.7)
-	double orientationGain = 10.0;
+	double orientationGain = 1.0;
 	dotq += orientationGain*( IdMat - Jp.transpose() * tmpMat.inverse() * Jp) * Jo.transpose() * err.block(3, 0, 3, 1);
 	//::std::cout << "dotq:" << dotq.transpose() << ::std::endl;
 

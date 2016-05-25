@@ -103,7 +103,7 @@ CCTRDoc::CCTRDoc()
 	m_motorConnected = m_motionCtrl->Initialize();
 
 	m_kinLib = new CTRKin;
-
+	m_ref_set = false;
 	// paths for LWPR models (TIP AND BALANCED PAIR)
 	//::std::string pathToForwardModel("../models/model_ct_2016_4_6_17_25_29TIP.bin");
 	::std::string pathToForwardModel("../models/lwpr_surgery_2016_4_26_10_17_23_D40.bin");
@@ -598,7 +598,7 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 
 	// CKim - Parameters for loop speed measurement
 	ChunTimer timer;	int perfcnt = 0;	int navg = 5;		long loopTime = 0;
-	static int clatchOn = 0;
+	
 	// CKim - The Loop
 	while(mySelf->m_teleOpMode)
 	{
@@ -638,12 +638,15 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 					// which are used for master to slave transformation
 					for(int i=0; i<16; i++)	{	localStat.M_T0[i] = ev.refMat[i];						}
 					//for(int i=0; i<6; i++)	{	localStat.refTipPosDir[i] = localStat.currTipPosDir[i];	}
-					if (clatchOn > 0)
+					if (mySelf->m_ref_set)
 						for(int i=0; i<6; i++)	{	localStat.refTipPosDir[i] = localStat.tgtTipPosDir[i];	}
 					else
+					{
 						for(int i=0; i<6; i++)	{	localStat.refTipPosDir[i] = localStat.currTipPosDir[i];	}
+						mySelf->m_ref_set = true;
+					}
 
-					clatchOn++;
+					
 					// CKim - Initial point for the inverse kinematics 
 					for(int i=0; i<5; i++)	{	localStat.initJang[i] = localStat.currJang[i];			}
 					for(int i=0; i<5; i++)	{	localStat.initJAngLWPR[i] = localStat.currJang[i];			}
@@ -725,10 +728,10 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 		mySelf->m_Status.gain = kp;
 		mySelf->m_Status.invKinErr[0] = localStat.invKinErr[0];
 		mySelf->m_Status.invKinErr[1] = localStat.invKinErr[1];
-	
+		
 		LeaveCriticalSection(&m_cSection);
 	}
-
+	mySelf->m_ref_set = false;
 	return 0;
 
 }

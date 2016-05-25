@@ -637,12 +637,14 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 					// CKim - Save the current configuration of the haptic device, and tip
 					// which are used for master to slave transformation
 					for(int i=0; i<16; i++)	{	localStat.M_T0[i] = ev.refMat[i];						}
-					//for(int i=0; i<6; i++)	{	localStat.refTipPosDir[i] = localStat.currTipPosDir[i];	}
+
 					if (mySelf->m_ref_set)
-						for(int i=0; i<6; i++)	{	localStat.refTipPosDir[i] = localStat.tgtTipPosDir[i];	}
+						for(int i=0; i<6; i++)	
+							localStat.refTipPosDir[i] = localStat.tgtTipPosDir[i];	
 					else
 					{
-						for(int i=0; i<6; i++)	{	localStat.refTipPosDir[i] = localStat.currTipPosDir[i];	}
+						for(int i=0; i<6; i++)	
+							localStat.refTipPosDir[i] = localStat.currTipPosDir[i];	
 						mySelf->m_ref_set = true;
 					}
 
@@ -669,7 +671,6 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 					mySelf->m_motionCtrl->StopMotion();
 				}
 
-				//mySelf->m_bLogEMData = teleOpCtrl;
 			}
 
 			if(ev.eventId == 1)		{			}
@@ -695,12 +696,7 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 			// CKim - Update proxy location from current tip position.....
 			mySelf->SlaveToMaster(localStat, scl);		// Updates robotStat.hapticState.slavePos
 
-			// CKim - Perform inverse kinematics to find joint angles that brings tip to the
-			// target position and orientation. This calculates least square solution of the inverse kinematics
-			// and applies joint limit to the solution. Two flags, invKinOK and limitOK will be raised
-			// if least square error is larger than 1 and if joints has been limited. 
-
-			//mySelf->SolveInverseKin(localStat);			// Updates localStat.tgtMotorCnt, tgtJang
+			// enable Jacobian Transpose controller
 			mySelf->m_bCLIK = true;
 		}
 

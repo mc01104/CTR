@@ -598,7 +598,7 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 
 	// CKim - Parameters for loop speed measurement
 	ChunTimer timer;	int perfcnt = 0;	int navg = 5;		long loopTime = 0;
-
+	static int clatchOn = 0;
 	// CKim - The Loop
 	while(mySelf->m_teleOpMode)
 	{
@@ -638,8 +638,12 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 					// which are used for master to slave transformation
 					for(int i=0; i<16; i++)	{	localStat.M_T0[i] = ev.refMat[i];						}
 					//for(int i=0; i<6; i++)	{	localStat.refTipPosDir[i] = localStat.currTipPosDir[i];	}
-					for(int i=0; i<6; i++)	{	localStat.refTipPosDir[i] = localStat.tgtTipPosDir[i];	}
+					if (clatchOn > 0)
+						for(int i=0; i<6; i++)	{	localStat.refTipPosDir[i] = localStat.tgtTipPosDir[i];	}
+					else
+						for(int i=0; i<6; i++)	{	localStat.refTipPosDir[i] = localStat.currTipPosDir[i];	}
 
+					clatchOn++;
 					// CKim - Initial point for the inverse kinematics 
 					for(int i=0; i<5; i++)	{	localStat.initJang[i] = localStat.currJang[i];			}
 					for(int i=0; i<5; i++)	{	localStat.initJAngLWPR[i] = localStat.currJang[i];			}
@@ -693,7 +697,8 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 			// and applies joint limit to the solution. Two flags, invKinOK and limitOK will be raised
 			// if least square error is larger than 1 and if joints has been limited. 
 
-			mySelf->SolveInverseKin(localStat);			// Updates localStat.tgtMotorCnt, tgtJang
+			//mySelf->SolveInverseKin(localStat);			// Updates localStat.tgtMotorCnt, tgtJang
+			mySelf->m_bCLIK = true;
 		}
 
 					
@@ -1026,7 +1031,8 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 		// CKim - Apply Control Law to calculate joint velocity
 		// CKim - Position FeedForward Control.
 		
-		if(mySelf->m_InvKinOn || mySelf->m_teleOpMode)
+		//if(mySelf->m_InvKinOn || mySelf->m_teleOpMode)
+		if(mySelf->m_InvKinOn)
 		{
 			// CKim - Read shared variable (Motor Count Setpoint and gain)
 			// Motor count setpoint is updated from another loop that reads desired configuration from 
@@ -1041,18 +1047,18 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 			LeaveCriticalSection(&m_cSection);
 
 			// CKim - Evaluate model
-			mySelf->m_kinLWPR->TipFwdKin(localStat.currJang, localStat.currTipPosDir);
-			//mySelf->m_kinLib->EvalCurrentKinematicsModelNumeric(localStat.currJang, localStat.currTipPosDir, J, mySelf->m_bCLIK);
+			//mySelf->m_kinLWPR->TipFwdKin(localStat.currJang, localStat.currTipPosDir);
+			mySelf->m_kinLib->EvalCurrentKinematicsModelNumeric(localStat.currJang, localStat.currTipPosDir, J, mySelf->m_bCLIK);
 
 			// CKim - Apply simple control law : vel = kp(target pos - current pos)
 			if(safeToTeleOp)	
 				for(int i=0; i<7; i++)	
 				{
 					vel[i] = -kp*(localStat.currMotorCnt[i]-MtrCntSetPt[i]);
-					if (vel[i] > 5.0)
+	/*				if (vel[i] > 5.0)
 						vel[i] = 5.0;
 					else if (vel[i] < -5.0)
-						vel[i] = -5.0;
+						vel[i] = -5.0;*/
 				}
 			else				
 				for(int i=0; i<7; i++)	
@@ -1077,8 +1083,8 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 			LeaveCriticalSection(&m_cSection);
 
 			// CKim - Evaluate model
-			mySelf->m_kinLWPR->TipFwdKinJac(localStat.currJang, localStat.currTipPosDir, J,true);
-			//mySelf->m_kinLib->EvalCurrentKinematicsModelNumeric(localStat.currJang, localStat.currTipPosDir, J, mySelf->m_bCLIK);
+			//mySelf->m_kinLWPR->TipFwdKinJac(localStat.currJang, localStat.currTipPosDir, J,true);
+			mySelf->m_kinLib->EvalCurrentKinematicsModelNumeric(localStat.currJang, localStat.currTipPosDir, J, mySelf->m_bCLIK);
 
 			// CKim - Apply Closed Loop Inverse kienmatics control law. dq = inv(J) x (dxd + K(xd - xm))
 
@@ -1102,8 +1108,8 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 			}
 
 			// CKim - Invert jacobian, handle singularity and solve
-			//mySelf->m_kinLib->ApplyKinematicControl(J,err,dq);
-			mySelf->m_kinLWPR->ApplyKinematicControl(J,err,dq);
+			mySelf->m_kinLib->ApplyKinematicControlNullspace(J,err,dq, localStat.currJang);
+			//mySelf->m_kinLWPR->ApplyKinematicControl(J,err,dq);
 
 			// CKim - Convert dotq into motor velocity
 			mySelf->dJangTodCnt(dq, dCnt);
@@ -1136,8 +1142,8 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 
 		else	// CKim - When control is not running
 		{
-			mySelf->m_kinLWPR->TipFwdKin(localStat.currJang, localStat.currTipPosDir);
-			//mySelf->m_kinLib->EvalCurrentKinematicsModel(localStat.currJang, localStat.currTipPosDir, J, mySelf->m_bCLIK);
+			//mySelf->m_kinLWPR->TipFwdKin(localStat.currJang, localStat.currTipPosDir);
+			mySelf->m_kinLib->EvalCurrentKinematicsModel(localStat.currJang, localStat.currTipPosDir, J, mySelf->m_bCLIK);
 
 			for(int i=0; i<7; i++)	
 				vel[i] = 0.0;		
@@ -1145,7 +1151,7 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 			// CKim - Process user commands... should be in separate threads..
 			mySelf->ProcessCommand(localStat);	
 		}
-		PrintCArray(localStat.currTipPosDir, 6);
+		//PrintCArray(localStat.currTipPosDir, 6);
 		// ----------------------------------------------------- //
 		// CKim - Command joint velocity, update shared variable
 		// ----------------------------------------------------- //
@@ -1793,7 +1799,8 @@ bool CCTRDoc::ProcessCommand(CTR_status& stat)
 		double jAng[5];
 		for(int i=0; i<5; i++)	{	jAng[i] = cmd.para[i];	}
 		bool isInLimit = (jAng[2] >= L31_MIN && jAng[2]<=L31_MAX && jAng[4] <= 100 && (-24-jAng[2]) <= jAng[4] );
-		
+		isInLimit = true;
+
 		if(isInLimit)
 		{
 			for(int i=0; i<5; i++)	{	stat.tgtJang[i] = jAng[i];	}
@@ -1870,7 +1877,8 @@ void CCTRDoc::SolveInverseKin(CTR_status& stat)
 	// CKim - Update initial point - 1: as current joint angle
 	for(int i=0; i<5; i++)	{	stat.initJang[i] = stat.currJang[i];		}
 
-	m_kinLWPR->InverseKinematicsLSQ(stat.tgtTipPosDir, stat.initJang, jAng, Err, exitCond);
+	//m_kinLWPR->InverseKinematicsLSQ(stat.tgtTipPosDir, stat.initJang, jAng, Err, exitCond);
+	m_kinLib->InverseKinematicsLSQ(stat.tgtTipPosDir, stat.initJang, jAng, Err, exitCond);
 
 	stat.condNum = Err[0];		stat.invKinErr[0] = Err[1];		stat.invKinErr[1] = Err[2];
 	//::std::cout << Err[0] << ::std::endl;

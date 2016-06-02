@@ -756,10 +756,10 @@ void CTRKin::ApplyKinematicControl(const Eigen::MatrixXd& J, const Eigen::Matrix
 	// George - ignoring small errors
 	Eigen::VectorXd localErr = err.col(0);
 	for(int i = 0; i < 3 ; ++i)
-		if(fabs(localErr(i)) < 0.0001)
+		if(fabs(localErr(i)) < 0.1)
 			localErr(i) = 0;
 
-	if(localErr.segment(3,3).norm() < 0.001 * M_PI / 180)
+	if(localErr.segment(3,3).norm() < 0.1 * M_PI / 180)
 		localErr.segment(3,3).setZero();
 
 	// CKim - This function is called when I use 6 x 5 Jacobian
@@ -782,18 +782,18 @@ void CTRKin::ApplyKinematicControl(const Eigen::MatrixXd& J, const Eigen::Matrix
 
 
 	double conditionNumber = sv(0, 0)/sv(4, 0);
-	double conditionThreshold = 2e4;
+	double conditionThreshold = 0.1; //2e4;
 
-	//if (conditionNumber >= conditionThreshold)
-	//{
-	//	dotq = 0.0005*b;
-	//	dotq(2) *= 1000;
-	//	dotq(4) *= 1000;
+	if (conditionNumber >= conditionThreshold)
+	{
+		dotq = 0.0005*b;
+		dotq(2) *= 100;
+		dotq(4) *= 100;
 
-	//	for(int i=0; i<5; i++)	{	dq[i] = dotq(i,0);	}
+		for(int i=0; i<5; i++)	{	dq[i] = dotq(i,0);	}
 
-	//	return;
-	//}
+		return;
+	}
 
 	dotq = Jsvd.solve(b);
 

@@ -91,7 +91,7 @@ CCTRDoc::CCTRDoc()
 	m_motionCtrl = new ChunMotion();		m_motorConnected = false;
 	m_motorConnected = m_motionCtrl->Initialize();
 
-	m_kinLib = new CTRKin("fourier_order_4.txt");
+	m_kinLib = new CTRKin("fourier_order_3.txt");
 
 	// paths for LWPR models
 	//::std::string pathToForwardModel("../models/model_ct_2015_11_9_14_0_40.bin");
@@ -936,11 +936,11 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 	double dq[5];		
 	double dCnt[7];		
 	
-	double K[6] = {5.0, 5.0, 5.0, 0.5, 0.5, 0.5 };	// working
+	//double K[6] = {10.0, 10.0, 10.0, 10.0, 10.0, 10.0 };	// working
 	//double K[6] = {10.0, 10.0, 10.0, 1.0, 1.0, 1.0 };		// working
 	
 	//double K[6] = {10.0, 10.0, 10.0, 5.0, 5.0, 5.0 };		// working
-	//double K[6] = { 5.0, 5.0, 5.0, 5.0, 5.0, 5.0 };				// For sensor feedback + estimator
+	double K[6] = { 5.0, 5.0, 5.0, 5.0, 5.0, 5.0 };				// For sensor feedback + estimator
 	//double K[6] = { 2.5, 2.5, 2.5, 0.1, 0.1, 0.1 };				// For sensor feedback + estimator
 	//double K[6] = {1.0, 1.0, 1.0, 0.5, 0.5, 0.5 };	// working	
 
@@ -1043,19 +1043,19 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 
 			// CKim - Convert dotq into motor velocity
 			// Check joint limits
-			double dt = 1.0/500;
-			if(localStat.currJang[2] + dt * dq[2] > L31_MAX || localStat.currJang[2] + dt * dq[2] < L31_MIN)
-			{
-				::std::cout << localStat.currJang[2] << " " <<  dt * dq[2] << ::std::endl;
-				::std::cout << "joint clipping activated" << ::std::endl;
-				dq[2] = 0;
-			}
-			//PrintCArray(dq, 5);
-			if (localStat.currJang[2] > L31_MAX - 0.1)
-			{
-				dq[2] = 0;
-				::std::cout << "secondary clipping" << ::std::endl;
-			}
+			//double dt = 1.0/500;
+			//if(localStat.currJang[2] + dt * dq[2] > L31_MAX || localStat.currJang[2] + dt * dq[2] < L31_MIN)
+			//{
+			//	::std::cout << localStat.currJang[2] << " " <<  dt * dq[2] << ::std::endl;
+			//	::std::cout << "joint clipping activated" << ::std::endl;
+			//	dq[2] = 0;
+			//}
+			////PrintCArray(dq, 5);
+			//if (localStat.currJang[2] > L31_MAX - 0.1)
+			//{
+			//	dq[2] = 0;
+			//	::std::cout << "secondary clipping" << ::std::endl;
+			//}
 
 			mySelf->dJangTodCnt(dq, dCnt);
 	
@@ -1300,7 +1300,7 @@ unsigned int WINAPI	CCTRDoc::ClosedLoopControlLoop(void* para)
 		//// CKim - Synchronize on the update of the EM tracker data. Since the adaptive update will be 
 		//// meaningful only when new EM tracker data and predicted tip posDir is available
 		//// Use WaitForMultipleObjects to wait for this....
-		int flag = WaitForSingleObject(mySelf->m_hEMevent,1000);
+		//int flag = WaitForSingleObject(mySelf->m_hEMevent,1000);
 		//if(flag == WAIT_TIMEOUT)	
 		//{
 		//	AfxMessageBox("No event from EM Loop!");	
@@ -1621,7 +1621,7 @@ void CCTRDoc::dJangTodCnt(const double* dJ, double* dCnt)
 {
 	// CKim - dJ = { da21, da31, dL31, da1, dL1 }, dCnt = { L1, L3, 0, a1, a2, a3, 0 }
 	double da1, da2, da3, dL1, dL3;			
-	double scl, tmp;		double maxLinVel = 50.0;		double maxRotVel = 1.0*3.141592;
+	double scl, tmp;		double maxLinVel = 50.0;		double maxRotVel = 5.0*3.141592;
 
 	da1 = dJ[3];			da2 = dJ[0] + da1;			da3 = dJ[1] + da1;
 	dL1 = dJ[4];			dL3 = dJ[2] + dL1;
@@ -2091,7 +2091,7 @@ void CCTRDoc::OnBnClickedBtnPlay()
 				m_TrjGen->Initialize("slower_square_large_3rv.txt",6);
 				break;
 		default:
-				m_TrjGen->Initialize("random_trajectory_4.txt",6);
+				m_TrjGen->Initialize("straightTraj.txt",6);
 				break;
 		}
 		

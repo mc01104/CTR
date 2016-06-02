@@ -377,7 +377,7 @@ void CCTRView::OnClickedBtnMove()
 			}
 		case 1:
 			{
-			double initialConfiguration[5] = {-67, 147, 8, 348, 61};
+			double initialConfiguration[5] = {-43, -15, 39, 177, 45};
 			initialConfiguration[0] *= (3.141592/180.0);	initialConfiguration[1] *= (3.141592/180.0);	initialConfiguration[3] *= (3.141592/180.0);
 			this->GetDocument()->SendCommand(0,initialConfiguration);
 			break;

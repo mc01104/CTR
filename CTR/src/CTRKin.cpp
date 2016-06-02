@@ -801,4 +801,60 @@ void CTRKin::ApplyKinematicControl(const Eigen::MatrixXd& J, const Eigen::Matrix
 
 }
 
+void CTRKin::ApplyKinematicControlNullspace(const Eigen::MatrixXd& J, const Eigen::MatrixXd& err, double* dq, double* q)
+{
+	::Eigen::VectorXd dotq(5);
+	::Eigen::Matrix<double, 6, 5> Jtemp = J;
+	Jtemp.col(0) *= M_PI / 180.0;
+	Jtemp.col(1) *= M_PI / 180.0;
+	Jtemp.col(3) *= M_PI / 180.0;
 
+	::Eigen::Matrix<double, 3, 5> Jp;
+	::Eigen::Matrix<double, 3, 5> Jo;
+
+	::Eigen::Matrix<double, 3, 3> tmpMat;
+	::Eigen::Matrix<double, 5, 5> IdMat;
+	IdMat.setIdentity();
+
+	Jp = Jtemp.block(0,0, 3, 5);
+	Jo = Jtemp.block(3,0, 3, 5);
+
+	tmpMat = (Jp * Jp.transpose());
+	for (int i = 0; i < 3; ++i)
+		tmpMat(i, i) += 0.01;
+	//Eigen::Matrix<double,3,1> sv;
+	//Eigen::JacobiSVD<Eigen::Matrix<double,3,3>> Jsvd(tmpMat,Eigen::ComputeThinU | Eigen::ComputeThinV);
+	//sv = Jsvd.singularValues();
+	//::std::cout << "condition number:" << sv[0]/sv[2] << ::std::endl;
+	//position control
+	dotq = Jp.transpose() * err.block(0, 0, 3, 1);
+
+	//orientation in the nullspace
+	//if (tmpMat.determinant() < 1.7)
+	double orientationGain = 10.0;
+	dotq += orientationGain*( IdMat - Jp.transpose() * tmpMat.inverse() * Jp) * Jo.transpose() * err.block(3, 0, 3, 1);
+	//::std::cout << "dotq:" << dotq.transpose() << ::std::endl;
+
+	dotq *= 0.05;
+
+	double upperSoft = L31_MAX - 10;
+	double lowerSoft = L31_MIN + 5;
+	double jointLimitGain = 0.002;
+
+	if (q[2] >= upperSoft)
+		dotq[2] += max(-1.0, -jointLimitGain/::std::pow(q[2] - L31_MAX, 2) + jointLimitGain/::std::pow(upperSoft - L31_MAX, 2));
+
+	if (q[2] <= lowerSoft )
+		dotq[2] += min(1.0, jointLimitGain/::std::pow(q[2] - L31_MIN, 2) - jointLimitGain/::std::pow(lowerSoft - L31_MIN, 2));
+
+
+	if (q[2] >= L31_MAX && dotq[2] > 0) 
+		dotq[2] = 0.0;
+	else if (q[2] <= L31_MIN && dotq[2] < 0)
+		dotq[2] = 0.0;
+
+	//::std::cout << dotq.transpose() << ::std::endl;
+
+	for(int i=0; i<5; i++)	{	dq[i] = dotq(i,0);	}
+
+}

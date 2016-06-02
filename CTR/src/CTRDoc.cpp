@@ -1038,7 +1038,8 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 			}
 
 			// CKim - Invert jacobian, handle singularity and solve
-			mySelf->m_kinLib->ApplyKinematicControl(J,err,dq);
+			//mySelf->m_kinLib->ApplyKinematicControl(J,err,dq);
+			mySelf->m_kinLib->ApplyKinematicControlNullspace(J, err, dq, localStat.currJang);
 			//mySelf->m_kinLWPR->ApplyKinematicControl(J,err,dq);
 
 			// CKim - Convert dotq into motor velocity
@@ -2088,7 +2089,7 @@ void CCTRDoc::OnBnClickedBtnPlay()
 				m_TrjGen->Initialize("slowerCircle_scaled.txt",6);
 				break;
 		case 1:
-				m_TrjGen->Initialize("slower_square_large_3rv.txt",6);
+				m_TrjGen->Initialize("slowerCircle_scaled_yz.txt",6);
 				break;
 		default:
 				m_TrjGen->Initialize("straightTraj.txt",6);

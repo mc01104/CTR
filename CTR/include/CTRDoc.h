@@ -58,7 +58,7 @@ private:
 	LWPRKinematics*		m_kinLWPR;
 	LWPRKinematics*		m_kinLWPR_BP;
 
-
+	double				m_force;
 	ChunTracker*		m_Tracker;
 	TrjGenerator*		m_TrjGen;
 

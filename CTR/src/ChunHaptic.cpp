@@ -76,6 +76,14 @@ void ChunHaptic::StartLoop()
 
 }
 
+void ChunHaptic::SetForce(double force)
+{
+	this->m_currentState.Force[0] = force;
+	//::std::cout << "in setter" << ::std::endl;
+	//::std::cout << force  << ::std::endl;
+	//::std::cout << m_currentState.Force[0] <<::std::endl;
+}
+
 HDCallbackCode HDCALLBACK ChunHaptic::updateCallback(void *pData)
 {
 	// CKim - I should update states from here and do some haptic rendering as well if necessary...
@@ -88,7 +96,7 @@ HDCallbackCode HDCALLBACK ChunHaptic::updateCallback(void *pData)
 	
     // CKim - Update the position, transformation, force, and time stamp
     hdGetDoublev(HD_CURRENT_TRANSFORM, mySelf->m_currentState.tfMat);
-	hdGetDoublev(HD_CURRENT_FORCE,mySelf->m_currentState.Force);
+	//hdGetDoublev(HD_CURRENT_FORCE,mySelf->m_currentState.Force);
 	
 	// CKim - Render force feedback
 	if(m_currentState.forceFlag)
@@ -100,21 +108,26 @@ HDCallbackCode HDCALLBACK ChunHaptic::updateCallback(void *pData)
 		//sum = sqrt(sum);
 		//for(int i=0; i<3; i++)	{	forces[i] = -k*forces[i]/sum;			}
 
-		double k = m_currentState.forceMag;			HDfloat forces[3];
-		k = 0*0.004;
-		for(int i=0;i<3; i++)	
-		{	
-			forces[i] = (m_currentState.tfMat[12+i] - m_currentState.slavePos[i]);	
-			if (fabs(forces[i]) < 15.0)
-				forces[i] = 0.0;
-			else if (forces[i] < 0)
-				forces[i] = k * pow((forces[i] + 15.0), 2);
-			else
-				forces[i] = -k * pow((forces[i] - 15.0), 2);
-		}
+		//double k = m_currentState.forceMag;			HDfloat forces[3];
+		//k = 0*0.004;
+		//for(int i=0;i<3; i++)	
+		//{	
+		//	forces[i] = (m_currentState.tfMat[12+i] - m_currentState.slavePos[i]);	
+		//	if (fabs(forces[i]) < 15.0)
+		//		forces[i] = 0.0;
+		//	else if (forces[i] < 0)
+		//		forces[i] = k * pow((forces[i] + 15.0), 2);
+		//	else
+		//		forces[i] = -k * pow((forces[i] - 15.0), 2);
+		//}
 		//for(int i = 0; i < 3; ++i)
 		//	::std::cout << forces[i] << " ";
 		//::std::cout << ::std::endl;
+		HDfloat forces[3];
+		forces[0] = mySelf->m_currentState.Force[0];
+		forces[1] = forces[2] = 0;
+	/*	::std::cout << "Omni" << ::std::endl;
+		::std::cout << forces[0] << ::std::endl;*/
 		hdSetFloatv(HD_CURRENT_FORCE,forces);
 	}
 

@@ -140,6 +140,8 @@ CCTRDoc::CCTRDoc()
 	m_jointPlayback = false;
 	m_adapt_LWPR = false;
 	m_plotData = false;
+
+	m_force = 0.0;
 }
 
 CCTRDoc::~CCTRDoc()
@@ -394,7 +396,7 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
     closesocket(ListenSocket);
 
 	bool teleopOn = false;
-
+	double force = 0;
 	// Receive until the peer shuts down the connection
     do {
 		::std::ostringstream ss;
@@ -428,6 +430,19 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
             return 1;
         }*/
 		iResult = recv(ClientSocket, recvbuf, DEFAULT_BUFLEN, 0);
+		
+		//::std::cout << "buffer" << ::std::endl;
+		//::std::cout << recvbuf << ::std::endl;
+	
+		if (iResult > 0)
+			force = atof(recvbuf);
+		//::std::cout << "forces" << ::std::endl;
+		//::std::cout << force << ::std::endl;
+
+		EnterCriticalSection(&m_cSection);
+		mySelf->m_Omni->SetForce(force);
+		LeaveCriticalSection(&m_cSection);
+		
 		//::std::cout << recvbuf << ::std::endl;
     } while (iResult > 0);
 
@@ -715,7 +730,7 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 			mySelf->m_Status.tgtJang[i] = localStat.tgtJang[i];		}
 		for(int i=0; i<7; i++)	{
 			mySelf->m_Status.tgtMotorCnt[i] = localStat.tgtMotorCnt[i];		}
-
+		//mySelf->m_Omni->SetForce(0.03);
 
 		mySelf->m_Status.invKinOK = localStat.invKinOK;
 		mySelf->m_Status.limitOK = localStat.limitOK;

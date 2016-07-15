@@ -501,15 +501,18 @@ void CTRKin::InverseKinematicsLSQ(const double* tgtPosOrt, const double* init, d
 		tmpMat = (Jp * Jp.transpose());
 		for (int i = 0; i < 3; ++i)
 			tmpMat(i, i) += 0.0001;
-
+		J.col(0) *= M_PI / 180.0;
+		J.col(1) *= M_PI / 180.0;
+		J.col(3) *= M_PI / 180.0;
 		b = -1.0 * J.transpose()*fx;
 		//b = -Jp.transpose() * fx.segment(0, 3) - (IdMat - Jp.transpose() * tmpMat.inverse() * Jp) * Jo.transpose() * fx[3];
-
+	/*	b[2] *= 100;
+		b[4] *= 100;*/
 
 		// CKim - Calculate Update step. Use JacobiSVD.solve to get least square solution
 		//Eigen::JacobiSVD<Eigen::Matrix<double,5,5>> Jsvd(A,Eigen::ComputeFullU | Eigen::ComputeFullV);
 		//update = Jsvd.solve(b);
-		update = 0.01*b;
+		update = 0.001*b;
 	
 		// CKim - If the magnitude of the update direction is small, exit
 		if(update.norm() < 0.001)	{	exitCond = 2;	break;		}

@@ -60,6 +60,8 @@ public:
 	void ApplyKinematicControl(const Eigen::MatrixXd& J, const Eigen::MatrixXd& err, double* dotq);
 	void ApplyKinematicControl_NEW(const Eigen::MatrixXd& J, const Eigen::MatrixXd& err, double* dotq);
 	void ApplyKinematicControlNullspace(const Eigen::MatrixXd& J, const Eigen::MatrixXd& err, double* dotq, double* q);
+	void ApplyHybridPositionForceControl(const ::Eigen::MatrixXd& J, const ::Eigen::MatrixXd& err, const ::Eigen::MatrixXd& desiredForce, double* dq, double* q);
+
 	double m_forgettingFactor;
 
 protected:

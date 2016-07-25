@@ -394,7 +394,7 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
     closesocket(ListenSocket);
 
 	bool teleopOn = false;
-
+	double force = 0.0;
 	// Receive until the peer shuts down the connection
     do {
 		::std::ostringstream ss;
@@ -421,26 +421,17 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
         }
         else if (iSendResult == 0)
             printf("Connection closing...\n");
- /*       else  {
-            printf("recv failed with error: %d\n", WSAGetLastError());
-            closesocket(ClientSocket);
-            WSACleanup();
-            return 1;
-        }*/
+ 
 		iResult = recv(ClientSocket, recvbuf, DEFAULT_BUFLEN, 0);
-		//::std::cout << recvbuf << ::std::endl;
+
+		if (iResult > 0)
+			force = atof(recvbuf);
+
+		EnterCriticalSection(&m_cSection);
+		mySelf->m_Omni->SetForce(force);
+		LeaveCriticalSection(&m_cSection);
+
     } while (iResult > 0);
-
-    //// shutdown the connection since we're done
-    //iResult = shutdown(ClientSocket, SD_SEND);
-    //if (iResult == SOCKET_ERROR) {
-    //    printf("shutdown failed with error: %d\n", WSAGetLastError());
-    //    closesocket(ClientSocket);
-    //    WSACleanup();
-    //    return 1;
-    //}
-
-    // cleanup
 
     closesocket(ClientSocket);
     WSACleanup();

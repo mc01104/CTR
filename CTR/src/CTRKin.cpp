@@ -1053,9 +1053,64 @@ void CTRKin::ApplyKinematicControlNullspace(const Eigen::MatrixXd& J, const Eige
 
 }
 
+void ApplyHybridPositionForceControl(const ::Eigen::MatrixXd& J, const ::Eigen::MatrixXd& err, const ::Eigen::MatrixXd& desiredForce, double* dq, double* q)
+{
+	::Eigen::VectorXd dotq(5);
+	::Eigen::Matrix<double, 6, 5> Jtemp = J;			// this can be avoided - it's just to overcome the const
+	Jtemp.col(0) *= M_PI / 180.0;
+	Jtemp.col(1) *= M_PI / 180.0;
+	Jtemp.col(3) *= M_PI / 180.0;
+
+	::Eigen::Matrix<double, 3, 5> Jp = Jtemp.block(0, 0, 3, 5);
+
+	::Eigen::Matrix<double, 3, 3> selectionMatrixPosition, selectionMatrixForce;
+	selectionMatrixPosition.setIdentity();
+	selectionMatrixPosition(2,2) = 0.0;
+	selectionMatrixForce = ::Eigen::MatrixXd::Identity(3,3) - selectionMatrixPosition;
+
+	::Eigen::MatrixXd generalizedForce = selectionMatrixPosition * err.block(0, 0, 3, 1) + selectionMatrixForce * desiredForce;
+
+	::Eigen::Matrix<double, 3, 3> tmpMat (Jp * Jp.transpose());
+	::Eigen::Matrix<double, 3, 5> Jo = Jtemp.block(3,0, 3, 5);	
+	::Eigen::Matrix<double, 5, 5> IdMat;
+	IdMat.setIdentity();
+
+	// add small epsilon in the diagonal to avoid singular matrix inversion - damped pseudoinverse
+	for (int i = 0; i < 3; ++i)
+		tmpMat(i, i) += 0.01;
+
+	//orientation in the nullspace
+	double orientationGain = 1.0;
+	dotq += orientationGain*( IdMat - Jp.transpose() * tmpMat.inverse() * Jp) * Jo.transpose() * err.block(3, 0, 3, 1);
+
+	dotq = Jp.transpose() * generalizedForce;
+
+	// overall gain
+	dotq *= 0.05;
+
+	// Joint limit avoidance using potential-field method
+	double upperSoft = L31_MAX - 10;
+	double lowerSoft = L31_MIN + 5;
+	double jointLimitGain = 0.002;
+
+	if (q[2] >= upperSoft)
+		dotq[2] += max(-1.0, -jointLimitGain/::std::pow(q[2] - L31_MAX, 2) + jointLimitGain/::std::pow(upperSoft - L31_MAX, 2));
+
+	if (q[2] <= lowerSoft )
+		dotq[2] += min(1.0, jointLimitGain/::std::pow(q[2] - L31_MIN, 2) - jointLimitGain/::std::pow(lowerSoft - L31_MIN, 2));
+
+
+	if (q[2] >= L31_MAX && dotq[2] > 0) 
+		dotq[2] = 0.0;
+	else if (q[2] <= L31_MIN && dotq[2] < 0)
+		dotq[2] = 0.0;
+
+	for(int i=0; i<5; i++)	{	dq[i] = dotq(i,0);	}
+
+}
+
 void CTRKin::ApplyKinematicControl(const Eigen::MatrixXd& J, const Eigen::MatrixXd& err, double* dq)
 {
-	//::std::cout << "err = " << err.transpose() << ::std::endl;
 
 	// George - ignoring small errors
 	Eigen::VectorXd localErr = err.col(0);

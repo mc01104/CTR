@@ -95,6 +95,7 @@ private:
 	// CKim - Transmission ratio
 	static double c_CntToRad;		static double c_CntToMM;	static double c_PI;
 
+	double				m_force;
 // Operations
 public:
 	bool				m_adapt_LWPR;

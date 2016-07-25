@@ -96,6 +96,7 @@ private:
 	static double c_CntToRad;		static double c_CntToMM;	static double c_PI;
 
 	double				m_force;
+	bool				m_forceControlActivated;
 // Operations
 public:
 	bool				m_adapt_LWPR;
@@ -131,6 +132,7 @@ public:
 	void	SwitchJointPlayBackMode(bool onoff);
 	void	SetTrajectoryType(int traj_type) {m_traj_type = traj_type;};
 	void	SetForgettingFactor(double val);
+	void	ToggleForceControl();
 
 	void	SaveModel();
 	void	ClearCommandQueue();

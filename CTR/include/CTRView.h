@@ -107,6 +107,8 @@ public:
 	//afx_msg void OnBnClickedCheckLWPR();
 	//afx_msg void OnBnClickedButtonSave();
 	//afx_msg void OnCheckTraj();
+	void ToggleForceChkbox(bool flag);
+	void ToggleForceControl();
 
 	CComboBox m_traj_type;
 	CString IDC_CIRCLE;

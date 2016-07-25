@@ -110,7 +110,7 @@ CCTRDoc::CCTRDoc()
 	::std::string pathToForwardModelBP("../models/model_ct_2016_4_7_14_48_43BP.bin");
 	robot = CTRFactory::buildCTR("");
 	kinematics = new MechanicsBasedKinematics(robot, 100);
-
+	m_forceControlActivated = false;
 	try
 	{
 		m_kinLWPR = new LWPRKinematics(pathToForwardModel);
@@ -629,17 +629,18 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 					// which are used for master to slave transformation
 					for(int i=0; i<16; i++)	{	localStat.M_T0[i] = ev.refMat[i];						}
 
-					if (mySelf->m_ref_set)
-						for(int i=0; i<6; i++)	
-							localStat.refTipPosDir[i] = localStat.tgtTipPosDir[i];	
-					else
-					{
-						for(int i=0; i<6; i++)	
-							localStat.refTipPosDir[i] = localStat.currTipPosDir[i];	
-						mySelf->m_ref_set = true;
-					}
-
-					
+					//if (mySelf->m_ref_set)
+					//	for(int i=0; i<6; i++)	
+					//		localStat.refTipPosDir[i] = localStat.tgtTipPosDir[i];	
+					//else
+					//{
+					//	for(int i=0; i<6; i++)	
+					//		localStat.refTipPosDir[i] = localStat.currTipPosDir[i];	
+					//	mySelf->m_ref_set = true;
+					//}
+					for(int i=0; i<6; i++)	
+						localStat.refTipPosDir[i] = localStat.tgtTipPosDir[i];	
+									
 					// CKim - Initial point for the inverse kinematics 
 					for(int i=0; i<5; i++)	{	localStat.initJang[i] = localStat.currJang[i];			}
 					for(int i=0; i<5; i++)	{	localStat.initJAngLWPR[i] = localStat.currJang[i];			}
@@ -1096,9 +1097,15 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 				for(int i=3; i<6; i++)	
 					err(i,0) = K[i]*(localStat.tgtTipPosDir[i] - localStat.currTipPosDir[i]);		
 			}
+			::Eigen::Matrix<double, 3, 1> desiredForce;
+			desiredForce.setZero();
+			desiredForce[2] = 0.6;
 
 			// CKim - Invert jacobian, handle singularity and solve
-			mySelf->m_kinLib->ApplyKinematicControlNullspace(J,err,dq, localStat.currJang);
+			if (mySelf->m_forceControlActivated)
+				mySelf->m_kinLib->ApplyHybridPositionForceControl(J,err,desiredForce, dq, localStat.currJang);
+			else
+				mySelf->m_kinLib->ApplyKinematicControlNullspace(J,err,dq, localStat.currJang);
 			//mySelf->m_kinLWPR->ApplyKinematicControl(J,err,dq);
 
 			// CKim - Convert dotq into motor velocity
@@ -1735,9 +1742,13 @@ void CCTRDoc::SwitchTeleOpMode(bool onoff)
 	if(onoff)
 	{
 		m_hTeleOpThread = (HANDLE) _beginthreadex(NULL, 0, CCTRDoc::TeleOpLoop, this, 0, NULL);
+		
 	}
 	else
 	{
+		// switch by default force control
+		this->m_forceControlActivated = false;
+
 		if( WaitForSingleObject(m_hTeleOpThread,1000) )	// CKim - Did not return 0
 		{
 			AfxMessageBox("Sparta!! TeleOp thread");
@@ -2079,4 +2090,7 @@ bool CCTRDoc::TeleOpSafetyCheck()
 	return true;
 }	
 
-
+void CCTRDoc::ToggleForceControl()
+{
+	this->m_forceControlActivated = !this->m_forceControlActivated;
+}

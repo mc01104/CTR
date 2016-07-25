@@ -1053,7 +1053,7 @@ void CTRKin::ApplyKinematicControlNullspace(const Eigen::MatrixXd& J, const Eige
 
 }
 
-void ApplyHybridPositionForceControl(const ::Eigen::MatrixXd& J, const ::Eigen::MatrixXd& err, const ::Eigen::MatrixXd& desiredForce, double* dq, double* q)
+void CTRKin::ApplyHybridPositionForceControl(const ::Eigen::MatrixXd& J, const ::Eigen::MatrixXd& err, const ::Eigen::MatrixXd& desiredForce, double* dq, double* q)
 {
 	::Eigen::VectorXd dotq(5);
 	::Eigen::Matrix<double, 6, 5> Jtemp = J;			// this can be avoided - it's just to overcome the const

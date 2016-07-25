@@ -52,6 +52,7 @@ BEGIN_MESSAGE_MAP(CCTRView, CFormView)
 
 	ON_BN_CLICKED(IDC_BTN_MOVE3, &CCTRView::OnClickedBtnStartLog)
 	ON_BN_CLICKED(IDC_BTN_MOVE4, &CCTRView::OnClickedBtnStopLog)
+	ON_BN_CLICKED(IDC_CHECK1, &CCTRView::ToggleForceControl)
 
 	ON_WM_CTLCOLOR()
 	ON_BN_CLICKED(IDC_BUTTON6, &CCTRView::OnClickedBtnHome)
@@ -102,7 +103,8 @@ void CCTRView::DoDataExchange(CDataExchange* pDX)
 
 	DDV_MinMaxInt(pDX, m_ctrlMode, 0, 1);
 
-
+	if (m_ctrlMode != 1)
+		GetDlgItem(IDC_CHECK1)->EnableWindow(false);
 }
 
 BOOL CCTRView::PreCreateWindow(CREATESTRUCT& cs)
@@ -498,3 +500,13 @@ void CCTRView::OnClickedBtnStopLog()
 	GetDlgItem(IDC_BTN_MOVE3)->EnableWindow(TRUE);
 }
 
+void CCTRView::ToggleForceChkbox(bool flag)
+{
+	GetDlgItem(IDC_CHECK1)->EnableWindow(flag);
+}
+
+void CCTRView::ToggleForceControl()
+{
+	if (m_ctrlMode == 1)
+		this->GetDocument()->ToggleForceControl();
+}

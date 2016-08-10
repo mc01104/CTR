@@ -639,7 +639,7 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 					//	mySelf->m_ref_set = true;
 					//}
 					for(int i=0; i<6; i++)	
-						localStat.refTipPosDir[i] = localStat.tgtTipPosDir[i];	
+						localStat.refTipPosDir[i] = localStat.currTipPosDir[i];	
 									
 					// CKim - Initial point for the inverse kinematics 
 					for(int i=0; i<5; i++)	{	localStat.initJang[i] = localStat.currJang[i];			}

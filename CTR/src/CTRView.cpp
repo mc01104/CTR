@@ -103,8 +103,8 @@ void CCTRView::DoDataExchange(CDataExchange* pDX)
 
 	DDV_MinMaxInt(pDX, m_ctrlMode, 0, 1);
 
-	if (m_ctrlMode != 1)
-		GetDlgItem(IDC_CHECK1)->EnableWindow(false);
+	m_ctrlMode != 1 ? GetDlgItem(IDC_CHECK1)->EnableWindow(false) : GetDlgItem(IDC_CHECK1)->EnableWindow(true);
+
 }
 
 BOOL CCTRView::PreCreateWindow(CREATESTRUCT& cs)

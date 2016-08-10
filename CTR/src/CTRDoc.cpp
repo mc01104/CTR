@@ -97,7 +97,7 @@ CCTRDoc::CCTRDoc()
 
 	// CKim - Initialize Haptic device
 	ChunHaptic::InitDevice();		m_Omni = new ChunHaptic();		m_Omni->StartLoop();
-
+	
 	// CKim - Initialize motor controller	
 	m_motionCtrl = new ChunMotion();		m_motorConnected = false;
 	m_motorConnected = m_motionCtrl->Initialize();
@@ -157,6 +157,11 @@ CCTRDoc::~CCTRDoc()
 	delete kinematics;
 	delete m_kinLWPR;
 	
+}
+
+void CCTRDoc::SetForceGain(double forceGain)
+{
+	this->m_kinLWPR->SetForceGain(forceGain);
 }
 
 void CCTRDoc::SaveModel()

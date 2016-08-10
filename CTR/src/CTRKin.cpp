@@ -36,7 +36,7 @@ CTRKin::CTRKin(void)
 	// CKim - Initialize matrices for recursive least square
 	for(int i=0; i<6; i++)	{
 		F[i].resize(125,125);	F[i].setIdentity();		F[i] = 0.1*F[i];		}
-
+	m_forceGain = 0.0;
 	Fzero.resize(125,125);
 
 	SetInvKinThreshold(0.1,3.0);
@@ -1069,7 +1069,7 @@ void CTRKin::ApplyHybridPositionForceControl(const ::Eigen::MatrixXd& J, const :
 	selectionMatrixForce = ::Eigen::MatrixXd::Identity(3,3) - selectionMatrixPosition;
 
 	double positionGain = 1.0;
-	double forceGain = 10.0;
+	double forceGain = this->m_forceGain;
 	::Eigen::MatrixXd generalizedForce = positionGain * selectionMatrixPosition * err.block(0, 0, 3, 1) + forceGain * selectionMatrixForce * desiredForce;
 
 	::Eigen::Matrix<double, 3, 3> tmpMat (Jp * Jp.transpose());

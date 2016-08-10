@@ -97,6 +97,7 @@ private:
 
 	double				m_force;
 	bool				m_forceControlActivated;
+	
 // Operations
 public:
 	bool				m_adapt_LWPR;
@@ -132,8 +133,10 @@ public:
 	void	SwitchJointPlayBackMode(bool onoff);
 	void	SetTrajectoryType(int traj_type) {m_traj_type = traj_type;};
 	void	SetForgettingFactor(double val);
+	LWPRKinematics* GetKinematics() { return this->m_kinLWPR;};
 	void	ToggleForceControl();
 
+	void	SetForceGain(double forceGain);
 	void	SaveModel();
 	void	ClearCommandQueue();
 	ChunMotion*	GetMotionController() {return this->m_motionCtrl;};

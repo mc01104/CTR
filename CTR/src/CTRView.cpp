@@ -90,6 +90,7 @@ void CCTRView::OnKillFocusGain()
 	CString str;
 	this->GetDlgItemTextA(IDC_EDIT2, str);		
 	double forceGain = atof(str);
+	::std::cout << "requested gain" << forceGain << ::std::endl;
 	this->GetDocument()->SetForceGain(forceGain);
 
 }

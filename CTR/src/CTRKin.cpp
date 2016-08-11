@@ -1071,7 +1071,7 @@ void CTRKin::ApplyHybridPositionForceControl(const ::Eigen::MatrixXd& J, const :
 	double positionGain = 1.0;
 	double forceGain = this->m_forceGain;
 	::Eigen::MatrixXd generalizedForce = positionGain * selectionMatrixPosition * err.block(0, 0, 3, 1) + forceGain * selectionMatrixForce * desiredForce;
-
+	::std::cout << "force controller gain: " << forceGain << ::std::endl;
 	::Eigen::Matrix<double, 3, 3> tmpMat (Jp * Jp.transpose());
 	::Eigen::Matrix<double, 3, 5> Jo = Jtemp.block(3,0, 3, 5);	
 	::Eigen::Matrix<double, 5, 5> IdMat;

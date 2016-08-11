@@ -161,7 +161,7 @@ CCTRDoc::~CCTRDoc()
 
 void CCTRDoc::SetForceGain(double forceGain)
 {
-	this->m_kinLWPR->SetForceGain(forceGain);
+	this->m_kinLib->SetForceGain(forceGain);
 }
 
 void CCTRDoc::SaveModel()

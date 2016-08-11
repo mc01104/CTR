@@ -88,6 +88,7 @@ public:
 	static int		m_idSensConfig[6];		CString		m_sensConfig[6];
 
 	static int		m_idNumPoints;
+	static int		m_filename_id;
 
 	// CKim - 3D graphic dialog using vtk
 	ChunVtkDlg*		m_vtkDlg;

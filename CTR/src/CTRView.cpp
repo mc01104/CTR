@@ -23,6 +23,7 @@
 int CCTRView::m_idActJang[5] = { IDC_A12_ACT, IDC_A13_ACT, IDC_L3_ACT, IDC_A1_ACT, IDC_L1_ACT };
 int CCTRView::m_idCmdJang[5] = { IDC_A12_CMD, IDC_A13_CMD, IDC_L3_CMD, IDC_A1_CMD, IDC_L1_CMD };
 int CCTRView::m_idNumPoints = IDC_L1_ACT3;
+int CCTRView::m_filename_id = IDC_L1_ACT4;
 
 IMPLEMENT_DYNCREATE(CCTRView, CFormView)
 
@@ -101,11 +102,21 @@ void CCTRView::DoDataExchange(CDataExchange* pDX)
 		DDX_Radio(pDX, IDC_RADIO_JA, m_ctrlMode);
 
 	DDV_MinMaxInt(pDX, m_ctrlMode, 0, 1);
+
 	CString str;
 	str.Format("%d", (int) this->GetDocument()->GetCommandQueueSize());	
 	DDX_Text(pDX, m_idNumPoints, str);
 
+	CString strFilename;
+	for (int i = 0; i < 5; ++i)
+	{
+		strFilename += "-";
+		strFilename += m_cmdJang[i];
+	}
 
+	DDX_Text(pDX, m_filename_id, strFilename);
+
+	
 }
 
 BOOL CCTRView::PreCreateWindow(CREATESTRUCT& cs)
@@ -286,14 +297,22 @@ void CCTRView::OnKillFocusInc()
 void CCTRView::OnClickedBtnMove()
 {
 	CString str;	double p[10];
-
+	double angles[5];
 	if(m_ctrlMode == 0)	//0: joint angle, 1: tip configuration, 2: tele op
 	{
 		CTR_cmd tmp =  this->GetDocument()->GetNextCommand();
-
+		memcpy(angles, tmp.para, 5 * sizeof(double));
 		this->GetDocument()->SendCommand(0,tmp.para);
 
 	}
+
+	angles[0] *= 180.0/M_PI;
+	angles[1] *= 180.0/M_PI;
+	angles[3] *= 180.0/M_PI;
+
+	CString tmpSTR;
+	for (int i = 0; i < 5; ++i)
+		m_cmdJang[i].Format("%d",(int) angles[i]);
 
 	if(m_vtkDlg)
 		m_vtkDlg->ResetCam();

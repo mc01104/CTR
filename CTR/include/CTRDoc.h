@@ -117,6 +117,9 @@ public:
 
 	// CKim - Get thread safe copy of the robot status
 	void	GetCurrentStatus(CTR_status& stat);
+	void	ReadJointSpaceTrajectory(const ::std::string& filename);
+	CTR_cmd	GetNextCommand();
+	int CCTRDoc::GetCommandQueueSize();
 
 	VtkOnLinePlot*	GetVtkPlot(){return this->m_vtkPlot;};
 

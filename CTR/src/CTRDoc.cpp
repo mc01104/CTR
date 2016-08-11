@@ -142,6 +142,8 @@ CCTRDoc::CCTRDoc()
 	m_plotData = false;
 
 	m_force = 0.0;
+
+	this->ReadJointSpaceTrajectory("joints.txt");
 }
 
 CCTRDoc::~CCTRDoc()
@@ -159,6 +161,33 @@ CCTRDoc::~CCTRDoc()
 	delete kinematics;
 	delete m_kinLWPR;
 	
+}
+
+void CCTRDoc::ReadJointSpaceTrajectory(const ::std::string& filename)
+{
+	::std::vector<::std::string> commandsStr = ReadLinesFromFile(filename);
+	for (::std::vector<::std::string>::const_iterator it = commandsStr.begin(); it != commandsStr.end(); ++it)
+	{
+		CTR_cmd tmp;
+		memcpy(DoubleVectorFromString(*it).data(), &tmp.para[0], 5  * sizeof(double));
+		tmp.para[0] *= M_PI/180;
+		tmp.para[1] *= M_PI/180;
+		tmp.para[3] *= M_PI/180;
+		m_cmdQueue.push(tmp);
+	}
+
+}
+
+CTR_cmd	CCTRDoc::GetNextCommand()
+{
+	CTR_cmd tmp = this->m_cmdQueue.front();
+	this->m_cmdQueue.pop();
+	return tmp;
+}
+
+int CCTRDoc::GetCommandQueueSize()
+{
+	return m_cmdQueue.size();
 }
 
 void CCTRDoc::SaveModel()

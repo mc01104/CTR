@@ -22,7 +22,7 @@
 
 int CCTRView::m_idActJang[5] = { IDC_A12_ACT, IDC_A13_ACT, IDC_L3_ACT, IDC_A1_ACT, IDC_L1_ACT };
 int CCTRView::m_idCmdJang[5] = { IDC_A12_CMD, IDC_A13_CMD, IDC_L3_CMD, IDC_A1_CMD, IDC_L1_CMD };
-
+int CCTRView::m_idNumPoints = IDC_L1_ACT3;
 
 IMPLEMENT_DYNCREATE(CCTRView, CFormView)
 
@@ -286,18 +286,9 @@ void CCTRView::OnClickedBtnMove()
 
 	if(m_ctrlMode == 0)	//0: joint angle, 1: tip configuration, 2: tele op
 	{
-		for(int i=0; i<5; i++)	
-		{
-			this->GetDlgItemTextA(m_idCmdJang[i], str);		
+		CTR_cmd tmp =  this->GetDocument()->GetNextCommand();
 
-			p[i] = 	atof(str);		
-
-			p[i+5] = 0;		
-		}
-
-		p[0] *= (3.141592/180.0);	p[1] *= (3.141592/180.0);	p[3] *= (3.141592/180.0);
-
-		this->GetDocument()->SendCommand(0,p);
+		this->GetDocument()->SendCommand(0,tmp.para);
 
 	}
 

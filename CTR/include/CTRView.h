@@ -87,6 +87,8 @@ public:
 	static int		m_idEMMat[12];			CString		m_emMat[12];
 	static int		m_idSensConfig[6];		CString		m_sensConfig[6];
 
+	static int		m_idNumPoints;
+
 	// CKim - 3D graphic dialog using vtk
 	ChunVtkDlg*		m_vtkDlg;
 

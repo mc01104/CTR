@@ -43,6 +43,8 @@ private:
 	::std::ofstream adaptiveExperimentLog;
 	// CKim - Command Queue
 	std::queue<CTR_cmd>	m_cmdQueue; 
+	std::queue<CTR_cmd>	m_cmdQueueTraj; 
+
 	CTR* robot;
 	MechanicsBasedKinematics* kinematics;
 

@@ -169,25 +169,26 @@ void CCTRDoc::ReadJointSpaceTrajectory(const ::std::string& filename)
 	for (::std::vector<::std::string>::const_iterator it = commandsStr.begin(); it != commandsStr.end(); ++it)
 	{
 		CTR_cmd tmp;
-		memcpy(DoubleVectorFromString(*it).data(), &tmp.para[0], 5  * sizeof(double));
+		tmp.cmdType = 0;
+		memcpy( &tmp.para[0], DoubleVectorFromString(*it).data(), 5  * sizeof(double));
 		tmp.para[0] *= M_PI/180;
 		tmp.para[1] *= M_PI/180;
 		tmp.para[3] *= M_PI/180;
-		m_cmdQueue.push(tmp);
+		m_cmdQueueTraj.push(tmp);
 	}
-
+	//::std::cout << m_cmdQueue.size() << ::std::endl;
 }
 
 CTR_cmd	CCTRDoc::GetNextCommand()
 {
-	CTR_cmd tmp = this->m_cmdQueue.front();
-	this->m_cmdQueue.pop();
+	CTR_cmd tmp = this->m_cmdQueueTraj.front();
+	this->m_cmdQueueTraj.pop();
 	return tmp;
 }
 
 int CCTRDoc::GetCommandQueueSize()
 {
-	return m_cmdQueue.size();
+	return m_cmdQueueTraj.size();
 }
 
 void CCTRDoc::SaveModel()
@@ -1191,6 +1192,7 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 				vel[i] = 0.0;		
 	
 			// CKim - Process user commands... should be in separate threads..
+			//mySelf->m_motionCtrl->WaitMotionDone();
 			mySelf->ProcessCommand(localStat);	
 		}
 		//PrintCArray(localStat.currTipPosDir, 6);

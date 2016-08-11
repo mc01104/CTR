@@ -101,6 +101,9 @@ void CCTRView::DoDataExchange(CDataExchange* pDX)
 		DDX_Radio(pDX, IDC_RADIO_JA, m_ctrlMode);
 
 	DDV_MinMaxInt(pDX, m_ctrlMode, 0, 1);
+	CString str;
+	str.Format("%d", (int) this->GetDocument()->GetCommandQueueSize());	
+	DDX_Text(pDX, m_idNumPoints, str);
 
 
 }

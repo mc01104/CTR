@@ -63,7 +63,7 @@ public:
 	afx_msg void OnClickedBtnGoToRecConf();
 	afx_msg void OnClickedBtnStartLog();
 	afx_msg void OnClickedBtnStopLog();
-
+	afx_msg void OnKillFocusForce();
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	afx_msg void OnViewGraphicwin();
 

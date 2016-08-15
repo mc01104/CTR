@@ -50,6 +50,7 @@ BEGIN_MESSAGE_MAP(CCTRView, CFormView)
 	
 	ON_EN_KILLFOCUS(IDC_EDIT1, &CCTRView::OnKillFocusInc)
 	ON_EN_KILLFOCUS(IDC_EDIT2, &CCTRView::OnKillFocusGain)
+	ON_BN_KILLFOCUS(IDC_EDIT3, &CCTRView::OnKillFocusForce)
 
 	ON_BN_CLICKED(IDC_BTN_MOVE3, &CCTRView::OnClickedBtnStartLog)
 	ON_BN_CLICKED(IDC_BTN_MOVE4, &CCTRView::OnClickedBtnStopLog)
@@ -93,6 +94,14 @@ void CCTRView::OnKillFocusGain()
 	::std::cout << "requested gain" << forceGain << ::std::endl;
 	this->GetDocument()->SetForceGain(forceGain);
 
+}
+
+void CCTRView::OnKillFocusForce()
+{
+	CString str;
+	this->GetDlgItemTextA(IDC_EDIT3, str);
+	double force = atof(str);
+	this->GetDocument()->ChangeForceForTuning(force);
 }
 
 void CCTRView::DoDataExchange(CDataExchange* pDX)

@@ -1053,7 +1053,7 @@ void CTRKin::ApplyKinematicControlNullspace(const Eigen::MatrixXd& J, const Eige
 
 }
 
-void CTRKin::ApplyHybridPositionForceControl(const ::Eigen::MatrixXd& J, const ::Eigen::MatrixXd& err, const ::Eigen::MatrixXd& desiredForce, double* dq, double* q)
+void CTRKin::ApplyHybridPositionForceControl(const ::Eigen::MatrixXd& J, const ::Eigen::MatrixXd& err, const ::Eigen::MatrixXd& desiredForce, const ::Eigen::MatrixXd& actualForce, double* dq, double* q)
 {
 	::Eigen::VectorXd dotq(5);
 	::Eigen::Matrix<double, 6, 5> Jtemp = J;			// this can be avoided - it's just to overcome the const
@@ -1070,7 +1070,7 @@ void CTRKin::ApplyHybridPositionForceControl(const ::Eigen::MatrixXd& J, const :
 
 	double positionGain = 1.0;
 	double forceGain = this->m_forceGain;
-	::Eigen::MatrixXd generalizedForce = positionGain * selectionMatrixPosition * err.block(0, 0, 3, 1) + forceGain * selectionMatrixForce * desiredForce;
+	::Eigen::MatrixXd generalizedForce = positionGain * selectionMatrixPosition * err.block(0, 0, 3, 1) + forceGain * selectionMatrixForce * (desiredForce - actualForce);
 	::std::cout << "force controller gain: " << forceGain << ::std::endl;
 	::Eigen::Matrix<double, 3, 3> tmpMat (Jp * Jp.transpose());
 	::Eigen::Matrix<double, 3, 5> Jo = Jtemp.block(3,0, 3, 5);	

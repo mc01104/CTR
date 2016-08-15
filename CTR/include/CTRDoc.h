@@ -136,6 +136,7 @@ public:
 	LWPRKinematics* GetKinematics() { return this->m_kinLWPR;};
 	void	ToggleForceControl();
 
+	void	ChangeForceForTuning(double force);
 	void	SetForceGain(double forceGain);
 	void	SaveModel();
 	void	ClearCommandQueue();

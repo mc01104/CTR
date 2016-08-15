@@ -68,7 +68,6 @@ BEGIN_MESSAGE_MAP(CCTRDoc, CDocument)
 
 	ON_BN_CLICKED(IDC_INIT_EM, &CCTRDoc::OnBnClickedInitEm)
 	ON_BN_CLICKED(IDC_REGST, &CCTRDoc::OnBnClickedRegst)
-	
 END_MESSAGE_MAP()
 
 
@@ -157,6 +156,12 @@ CCTRDoc::~CCTRDoc()
 	delete kinematics;
 	delete m_kinLWPR;
 	
+}
+
+void CCTRDoc::ChangeForceForTuning(double force)
+{
+	this->m_Omni->SetForce(force);
+	m_force = force;
 }
 
 void CCTRDoc::SetForceGain(double forceGain)
@@ -1104,11 +1109,17 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 			}
 			::Eigen::Matrix<double, 3, 1> desiredForce;
 			desiredForce.setZero();
-			desiredForce[2] = 0.6;
+			desiredForce[2] = 0.1;
+
+			::Eigen::Matrix<double, 3, 1> actualForce;
+			actualForce.setZero();
+			actualForce[2] = mySelf->m_force;
+			::std::cout << " This is the fake sensed force" << ::std::endl;
+			::std::cout <<  mySelf->m_force << ::std::endl;
 
 			// CKim - Invert jacobian, handle singularity and solve
 			if (mySelf->m_forceControlActivated)
-				mySelf->m_kinLib->ApplyHybridPositionForceControl(J,err,desiredForce, dq, localStat.currJang);
+				mySelf->m_kinLib->ApplyHybridPositionForceControl(J,err,desiredForce, actualForce, dq, localStat.currJang);
 			else
 				mySelf->m_kinLib->ApplyKinematicControlNullspace(J,err,dq, localStat.currJang);
 			//mySelf->m_kinLWPR->ApplyKinematicControl(J,err,dq);

@@ -160,8 +160,9 @@ CCTRDoc::~CCTRDoc()
 
 void CCTRDoc::ChangeForceForTuning(double force)
 {
-	this->m_Omni->SetForce(force);
-	m_force = force;
+	//this->m_Omni->SetForce(force);
+	//std::cout << "set force in Doc" << force << ::std::endl;
+	//m_force = force;
 }
 
 void CCTRDoc::SetForceGain(double forceGain)
@@ -436,9 +437,10 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 
 		if (iResult > 0)
 			force = atof(recvbuf);
-
+		force *= 0.1;
 		EnterCriticalSection(&m_cSection);
 		mySelf->m_Omni->SetForce(force);
+		mySelf->m_force = force;
 		LeaveCriticalSection(&m_cSection);
 
     } while (iResult > 0);
@@ -1068,6 +1070,10 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 		// CKim - Differential Inverse Kinematics Control.
 		else if(mySelf->m_bCLIK )	
 		{
+			::Eigen::Matrix<double, 3, 1> actualForce;
+			actualForce.setZero();
+			
+
 
 			// CKim - Read shared variables (sensed / target posdir and kinematics model)
 			// Sensed posdir and kinematics model is updated from EM tracker loop,
@@ -1079,10 +1085,12 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 				localStat.sensedTipPosDir[i] = mySelf->m_Status.sensedTipPosDir[i];		
 			for(int i=0; i<6; i++)	
 				localStat.tgtMotorVel[i] = mySelf->m_Status.tgtMotorVel[i];	
-
+			actualForce[2] = mySelf->m_force;
 			safeToTeleOp = mySelf->m_Status.isTeleOpMoving;
 			LeaveCriticalSection(&m_cSection);
 
+			::std::cout << " This is the fake sensed force" << ::std::endl;
+			::std::cout <<  actualForce[2] << ::std::endl;
 			// CKim - Evaluate model
 			//mySelf->m_kinLWPR->TipFwdKinJac(localStat.currJang, localStat.currTipPosDir, J,true);
 			mySelf->m_kinLib->EvalCurrentKinematicsModelNumeric(localStat.currJang, localStat.currTipPosDir, J, mySelf->m_bCLIK);
@@ -1109,13 +1117,9 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 			}
 			::Eigen::Matrix<double, 3, 1> desiredForce;
 			desiredForce.setZero();
-			desiredForce[2] = 0.1;
+			desiredForce[2] = 0.8;
 
-			::Eigen::Matrix<double, 3, 1> actualForce;
-			actualForce.setZero();
-			actualForce[2] = mySelf->m_force;
-			::std::cout << " This is the fake sensed force" << ::std::endl;
-			::std::cout <<  mySelf->m_force << ::std::endl;
+	
 
 			// CKim - Invert jacobian, handle singularity and solve
 			if (mySelf->m_forceControlActivated)

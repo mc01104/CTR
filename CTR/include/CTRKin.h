@@ -31,11 +31,7 @@ public:
 	// CKim - Inverse kinematics parameter setting
 	void SetInvKinThreshold(const double MaxPosErr, const double MaxOrtErr); 
 	void GetInvKinThreshold(double& MaxPosErr, double& MaxOrtErr); 
-	void SetForceGain(double forceGain)
-	{
-		::std::cout << "setting gain" << forceGain << ::std::endl; m_forceGain = forceGain;
-		::std::cout << m_forceGain << ::std::endl;
-	};
+	void SetForceGain(double forceGain) {m_forceGain = forceGain;};
 	// CKim - Takes current joint angle and returns tool tip position and orientation (= desired tool tip dir) 
 	virtual bool TipFwdKin(const double* jAng, double* posOrt);	// CKim - My implementation
 

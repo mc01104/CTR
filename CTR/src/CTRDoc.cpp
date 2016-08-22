@@ -139,6 +139,7 @@ CCTRDoc::CCTRDoc()
 	m_jointPlayback = false;
 	m_adapt_LWPR = false;
 	m_plotData = false;
+	m_ContactUpdateReceived = false;
 }
 
 CCTRDoc::~CCTRDoc()
@@ -168,6 +169,32 @@ void CCTRDoc::ChangeForceForTuning(double force)
 void CCTRDoc::SetForceGain(double forceGain)
 {
 	this->m_kinLib->SetForceGain(forceGain);
+}
+
+void CCTRDoc::UpdateDesiredPosition()
+{
+	double targetTmp[6];
+	EnterCriticalSection(&m_cSection);
+	memcpy(targetTmp, this->m_Status.tgtTipPosDir, 6 * sizeof(double));
+	LeaveCriticalSection(&m_cSection);
+
+	if (m_forceControlActivated)
+		this->ComputeDesiredPosition(targetTmp);
+
+	memcpy(m_desiredPosition, targetTmp, 6 * sizeof(double));
+}
+
+void CCTRDoc::ComputeDesiredPosition(double tmpPosition[6])
+{
+	if(!m_ContactUpdateReceived)
+		return;
+
+	double gain = 1.0;
+	m_deltaT = 1.0/40.0; // CHANGE to be computed by the network thread
+	// Implement in a more general way
+	tmpPosition[2] = gain * m_contactError * m_deltaT + m_desiredPosition[2];
+
+	m_ContactUpdateReceived = !m_ContactUpdateReceived;
 }
 
 void CCTRDoc::SaveModel()
@@ -434,14 +461,29 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
             printf("Connection closing...\n");
  
 		iResult = recv(ClientSocket, recvbuf, DEFAULT_BUFLEN, 0);
-
 		if (iResult > 0)
-			force = atof(recvbuf);
-		force *= 0.1;
-		EnterCriticalSection(&m_cSection);
-		mySelf->m_Omni->SetForce(force);
-		mySelf->m_force = force;
-		LeaveCriticalSection(&m_cSection);
+		{
+			::std::string receivedStr = string(recvbuf);
+			if (receivedStr == "NOF")
+			{
+				EnterCriticalSection(&m_cSection);
+				mySelf->m_ContactUpdateReceived = false;
+				LeaveCriticalSection(&m_cSection);
+			}
+			else
+			{
+				EnterCriticalSection(&m_cSection);
+				mySelf->m_ContactUpdateReceived = true;
+				mySelf->m_contactError = atof(recvbuf);
+				LeaveCriticalSection(&m_cSection);
+			}
+			//force = atof(recvbuf);
+		}
+		//force *= 0.1;
+		//EnterCriticalSection(&m_cSection);
+		//mySelf->m_Omni->SetForce(force);
+		//mySelf->m_force = force;
+		//LeaveCriticalSection(&m_cSection);
 
     } while (iResult > 0);
 
@@ -697,6 +739,8 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 			// target position and direction of the robot
 			mySelf->MasterToSlave(localStat, scl);		// Updates robotStat.tgtTipPosDir
 			
+			mySelf->UpdateDesiredPosition();
+
 			// CKim - Update proxy location from current tip position.....
 			mySelf->SlaveToMaster(localStat, scl);		// Updates robotStat.hapticState.slavePos
 
@@ -1017,6 +1061,8 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 	timer.ResetTime();		
 	long endTime = 0;		
 
+	double	desiredPosition[6];
+
 	while(mySelf->m_motorConnected)
 	{
 		// CKim - Read from the motors - blocking function
@@ -1079,6 +1125,8 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 			// Sensed posdir and kinematics model is updated from EM tracker loop,
 			// target posdir is updated from 'Playback' loop  or 'TeleOp' loop
 			EnterCriticalSection(&m_cSection);
+			for (int i = 0; i < 6; ++i)
+				desiredPosition[i] = mySelf->m_desiredPosition[i];
 			for(int i=0; i<6; i++)
 				localStat.tgtTipPosDir[i] = mySelf->m_Status.tgtTipPosDir[i];			
 			for(int i=0; i<6; i++)	
@@ -1119,12 +1167,15 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 			desiredForce.setZero();
 			desiredForce[2] = 0.4;
 
-			
+
 			// CKim - Invert jacobian, handle singularity and solve
 			if (mySelf->m_forceControlActivated)
-				mySelf->m_kinLib->ApplyHybridPositionForceControl(J,err,desiredForce, actualForce, dq, localStat.currJang);
-			else
-				mySelf->m_kinLib->ApplyKinematicControlNullspace(J,err,dq, localStat.currJang);
+				for(int i=0; i<6; i++)	
+					err(i,0) = K[i]*(desiredPosition[i] - localStat.currTipPosDir[i]);	
+				//mySelf->m_kinLib->ApplyHybridPositionForceControl(J,err,desiredForce, actualForce, dq, localStat.currJang);
+			//else
+			
+			mySelf->m_kinLib->ApplyKinematicControlNullspace(J,err,dq, localStat.currJang);
 			//mySelf->m_kinLWPR->ApplyKinematicControl(J,err,dq);
 
 			// CKim - Convert dotq into motor velocity

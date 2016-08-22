@@ -97,6 +97,10 @@ private:
 
 	double				m_force;
 	bool				m_forceControlActivated;
+	double				m_desiredPosition[3];
+	bool				m_ContactUpdateReceived;
+	double				m_deltaT;
+	double				m_contactError;
 	
 // Operations
 public:
@@ -141,6 +145,10 @@ public:
 	void	SaveModel();
 	void	ClearCommandQueue();
 	ChunMotion*	GetMotionController() {return this->m_motionCtrl;};
+
+	/////////////// CONTACT ////////////
+	void	UpdateDesiredPosition();
+	void	ComputeDesiredPosition(double tmpPosition[6]);
 
 #ifdef _DEBUG
 	virtual void AssertValid() const;

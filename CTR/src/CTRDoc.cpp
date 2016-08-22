@@ -140,6 +140,7 @@ CCTRDoc::CCTRDoc()
 	m_adapt_LWPR = false;
 	m_plotData = false;
 	m_ContactUpdateReceived = false;
+	m_contactGain = 0.0;
 }
 
 CCTRDoc::~CCTRDoc()
@@ -168,7 +169,8 @@ void CCTRDoc::ChangeForceForTuning(double force)
 
 void CCTRDoc::SetForceGain(double forceGain)
 {
-	this->m_kinLib->SetForceGain(forceGain);
+	//this->m_kinLib->SetForceGain(forceGain);
+	m_contactGain = forceGain;
 }
 
 void CCTRDoc::UpdateDesiredPosition()
@@ -178,8 +180,12 @@ void CCTRDoc::UpdateDesiredPosition()
 	memcpy(targetTmp, this->m_Status.tgtTipPosDir, 6 * sizeof(double));
 	LeaveCriticalSection(&m_cSection);
 
+	//::std::cout << "initial target:" << targetTmp[2] << ::std::endl;
+
 	if (m_forceControlActivated)
 		this->ComputeDesiredPosition(targetTmp);
+
+	//::std::cout << "updated target:" << targetTmp[2] << ::std::endl;
 
 	memcpy(m_desiredPosition, targetTmp, 6 * sizeof(double));
 }
@@ -187,12 +193,15 @@ void CCTRDoc::UpdateDesiredPosition()
 void CCTRDoc::ComputeDesiredPosition(double tmpPosition[6])
 {
 	if(!m_ContactUpdateReceived)
+	{
+		tmpPosition[2] = m_desiredPosition[2];
 		return;
+	}
 
-	double gain = 1.0;
+	
 	m_deltaT = 1.0/40.0; // CHANGE to be computed by the network thread
 	// Implement in a more general way
-	tmpPosition[2] = gain * m_contactError * m_deltaT + m_desiredPosition[2];
+	tmpPosition[2] = m_contactGain * m_contactError * m_deltaT + m_desiredPosition[2];
 
 	m_ContactUpdateReceived = !m_ContactUpdateReceived;
 }
@@ -464,18 +473,23 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 		if (iResult > 0)
 		{
 			::std::string receivedStr = string(recvbuf);
+			//::std::cout << "received:" << receivedStr <<::std::endl;
 			if (receivedStr == "NOF")
 			{
 				EnterCriticalSection(&m_cSection);
 				mySelf->m_ContactUpdateReceived = false;
 				LeaveCriticalSection(&m_cSection);
+				//::std::cout << "NOFORCE:" <<::std::endl;
+
 			}
 			else
 			{
 				EnterCriticalSection(&m_cSection);
 				mySelf->m_ContactUpdateReceived = true;
-				mySelf->m_contactError = atof(recvbuf);
+				mySelf->m_contactError = 0.5 - atof(recvbuf);
 				LeaveCriticalSection(&m_cSection);
+				::std::cout << "Ratio:" << atof(recvbuf) << ::std::endl;
+				::std::cout << "Contact Ratio Error:" << 0.5 - atof(recvbuf) << ::std::endl;
 			}
 			//force = atof(recvbuf);
 		}

@@ -101,6 +101,7 @@ private:
 	bool				m_ContactUpdateReceived;
 	double				m_deltaT;
 	double				m_contactError;
+	double				m_contactGain;
 	
 // Operations
 public:

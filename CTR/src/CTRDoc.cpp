@@ -1089,8 +1089,8 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 			safeToTeleOp = mySelf->m_Status.isTeleOpMoving;
 			LeaveCriticalSection(&m_cSection);
 
-			::std::cout << " This is the fake sensed force" << ::std::endl;
-			::std::cout <<  actualForce[2] << ::std::endl;
+			//::std::cout << " This is the fake sensed force" << ::std::endl;
+			//::std::cout <<  actualForce[2] << ::std::endl;
 			// CKim - Evaluate model
 			//mySelf->m_kinLWPR->TipFwdKinJac(localStat.currJang, localStat.currTipPosDir, J,true);
 			mySelf->m_kinLib->EvalCurrentKinematicsModelNumeric(localStat.currJang, localStat.currTipPosDir, J, mySelf->m_bCLIK);
@@ -1117,10 +1117,9 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 			}
 			::Eigen::Matrix<double, 3, 1> desiredForce;
 			desiredForce.setZero();
-			desiredForce[2] = 0.8;
+			desiredForce[2] = 0.4;
 
-	
-
+			
 			// CKim - Invert jacobian, handle singularity and solve
 			if (mySelf->m_forceControlActivated)
 				mySelf->m_kinLib->ApplyHybridPositionForceControl(J,err,desiredForce, actualForce, dq, localStat.currJang);

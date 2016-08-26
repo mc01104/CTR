@@ -486,7 +486,7 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 			{
 				EnterCriticalSection(&m_cSection);
 				mySelf->m_ContactUpdateReceived = true;
-				mySelf->m_contactError = 0.5 - atof(recvbuf);
+				mySelf->m_contactError = 0.2 - atof(recvbuf);
 				LeaveCriticalSection(&m_cSection);
 				::std::cout << "Ratio:" << atof(recvbuf) << ::std::endl;
 				::std::cout << "Contact Ratio Error:" << 0.5 - atof(recvbuf) << ::std::endl;

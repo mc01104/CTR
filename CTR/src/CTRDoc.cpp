@@ -141,6 +141,7 @@ CCTRDoc::CCTRDoc()
 	m_plotData = false;
 	m_ContactUpdateReceived = false;
 	m_contactGain = 0.0;
+	m_contactRatio = 0.0;
 }
 
 CCTRDoc::~CCTRDoc()
@@ -171,6 +172,11 @@ void CCTRDoc::SetForceGain(double forceGain)
 {
 	//this->m_kinLib->SetForceGain(forceGain);
 	m_contactGain = forceGain;
+}
+
+void CCTRDoc::SetContactRatio(double ratio)
+{
+	m_contactRatio = ratio;
 }
 
 void CCTRDoc::UpdateDesiredPosition()
@@ -442,6 +448,7 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 
 	bool teleopOn = false;
 	double force = 0.0;
+	double desiredContactRatio = 0.0;
 	// Receive until the peer shuts down the connection
     do {
 		::std::ostringstream ss;
@@ -450,6 +457,7 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 		for(int i=0; i<5; i++)
 			localStat.currJang[i] = mySelf->m_Status.currJang[i];			
 		teleopOn = mySelf->m_Status.isTeleOpMoving;
+		desiredContactRatio = mySelf->m_contactRatio;
 		LeaveCriticalSection(&m_cSection);
 
 		//update the buffer
@@ -486,10 +494,10 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 			{
 				EnterCriticalSection(&m_cSection);
 				mySelf->m_ContactUpdateReceived = true;
-				mySelf->m_contactError = 0.2 - atof(recvbuf);
+				mySelf->m_contactError = desiredContactRatio - atof(recvbuf);
 				LeaveCriticalSection(&m_cSection);
 				::std::cout << "Ratio:" << atof(recvbuf) << ::std::endl;
-				::std::cout << "Contact Ratio Error:" << 0.5 - atof(recvbuf) << ::std::endl;
+				::std::cout << "Contact Ratio Error:" << desiredContactRatio - atof(recvbuf) << ::std::endl;
 			}
 			//force = atof(recvbuf);
 		}

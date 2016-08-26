@@ -102,6 +102,7 @@ private:
 	double				m_deltaT;
 	double				m_contactError;
 	double				m_contactGain;
+	double				m_contactRatio;
 	
 // Operations
 public:
@@ -143,6 +144,8 @@ public:
 
 	void	ChangeForceForTuning(double force);
 	void	SetForceGain(double forceGain);
+	void	SetContactRatio(double ratio);
+
 	void	SaveModel();
 	void	ClearCommandQueue();
 	ChunMotion*	GetMotionController() {return this->m_motionCtrl;};

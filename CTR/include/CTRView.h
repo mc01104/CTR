@@ -66,6 +66,7 @@ public:
 	afx_msg void OnKillFocusForce();
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	afx_msg void OnViewGraphicwin();
+	afx_msg void OnKillFocusContactRatio();
 
 	afx_msg void OnUpdateViewGraphicwin(CCmdUI *pCmdUI);
 	afx_msg void OnBnClickedRadioModes();

@@ -449,6 +449,8 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 	bool teleopOn = false;
 	double force = 0.0;
 	double desiredContactRatio = 0.0;
+	double contactRatio = 0.0;
+	double contactRatioError = 0.0;
 	// Receive until the peer shuts down the connection
     do {
 		::std::ostringstream ss;
@@ -492,9 +494,12 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 			}
 			else
 			{
+				contactRatio = atof(recvbuf);
+				contactRatioError = desiredContactRatio - contactRatio;
 				EnterCriticalSection(&m_cSection);
 				mySelf->m_ContactUpdateReceived = true;
-				mySelf->m_contactError = desiredContactRatio - atof(recvbuf);
+				mySelf->m_contactError = contactRatioError;
+				mySelf->m_contactRatio = contactRatio;
 				LeaveCriticalSection(&m_cSection);
 				::std::cout << "Ratio:" << atof(recvbuf) << ::std::endl;
 				::std::cout << "Contact Ratio Error:" << desiredContactRatio - atof(recvbuf) << ::std::endl;
@@ -666,6 +671,9 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 	// CKim - Parameters for loop speed measurement
 	ChunTimer timer;	int perfcnt = 0;	int navg = 5;		long loopTime = 0;
 	
+	::std::string filename = "ExperimentData/" + GetDateString() + "-ContactControl.txt";
+	::std::ofstream os(filename);
+
 	// CKim - The Loop
 	while(mySelf->m_teleOpMode)
 	{
@@ -768,6 +776,7 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 
 			// enable Jacobian Transpose controller
 			mySelf->m_bCLIK = true;
+
 		}
 
 					
@@ -795,6 +804,7 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 		mySelf->m_Status.invKinErr[0] = localStat.invKinErr[0];
 		mySelf->m_Status.invKinErr[1] = localStat.invKinErr[1];
 		
+		os << mySelf->m_contactRatio << "\t" << mySelf->m_forceControlActivated << ::std::endl;
 		LeaveCriticalSection(&m_cSection);
 	}
 	mySelf->m_ref_set = false;

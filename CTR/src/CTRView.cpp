@@ -91,7 +91,7 @@ void CCTRView::OnKillFocusGain()
 	CString str;
 	this->GetDlgItemTextA(IDC_EDIT2, str);		
 	double forceGain = atof(str);
-	::std::cout << "requested gain" << forceGain << ::std::endl;
+	::std::cout << "requested gain: " << forceGain << ::std::endl;
 	this->GetDocument()->SetForceGain(forceGain);
 
 }
@@ -99,9 +99,9 @@ void CCTRView::OnKillFocusGain()
 void CCTRView::OnKillFocusContactRatio()
 {
 	CString str;
-	this->GetDlgItemTextA(IDC_EDIT2, str);		
+	this->GetDlgItemTextA(IDC_EDIT3, str);		
 	double contactRatio = atof(str);
-	//::std::cout << "requested gain" << forceGain << ::std::endl;
+	::std::cout << "requested ratio: " << contactRatio << ::std::endl;
 	this->GetDocument()->SetContactRatio(contactRatio);
 }
 

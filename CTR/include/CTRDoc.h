@@ -103,6 +103,7 @@ private:
 	double				m_contactError;
 	double				m_contactGain;
 	double				m_contactRatio;
+	double				m_contactRatioDesired;
 	
 // Operations
 public:

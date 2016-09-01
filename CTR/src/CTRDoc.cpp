@@ -142,6 +142,7 @@ CCTRDoc::CCTRDoc()
 	m_ContactUpdateReceived = false;
 	m_contactGain = 0.0;
 	m_contactRatio = 0.0;
+	m_contactRatioDesired = 0.0;
 }
 
 CCTRDoc::~CCTRDoc()
@@ -176,7 +177,8 @@ void CCTRDoc::SetForceGain(double forceGain)
 
 void CCTRDoc::SetContactRatio(double ratio)
 {
-	m_contactRatio = ratio;
+	m_contactRatioDesired = ratio;
+	::std::cout << "Contact Ratio was set to:" << m_contactRatioDesired << ::std::endl;
 }
 
 void CCTRDoc::UpdateDesiredPosition()
@@ -459,9 +461,9 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 		for(int i=0; i<5; i++)
 			localStat.currJang[i] = mySelf->m_Status.currJang[i];			
 		teleopOn = mySelf->m_Status.isTeleOpMoving;
-		desiredContactRatio = mySelf->m_contactRatio;
+		desiredContactRatio = mySelf->m_contactRatioDesired;
 		LeaveCriticalSection(&m_cSection);
-
+		//::std::cout << desiredContactRatio << ::std::endl;
 		//update the buffer
 		for(int i = 0; i < 5; ++i)
 			ss << localStat.currJang[i] << " ";
@@ -501,16 +503,20 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 				mySelf->m_contactError = contactRatioError;
 				mySelf->m_contactRatio = contactRatio;
 				LeaveCriticalSection(&m_cSection);
-				::std::cout << "Ratio:" << atof(recvbuf) << ::std::endl;
-				::std::cout << "Contact Ratio Error:" << desiredContactRatio - atof(recvbuf) << ::std::endl;
+				::std::cout << "Ratio:" << contactRatio << ::std::endl;
+				//::std::cout << "Desired Ratio:" << desiredContactRatio << ::std::endl;
+				//::std::cout << ::std::endl;
+				//::std::cout << "Contact Ratio Error:" << desiredContactRatio - atof(recvbuf) << ::std::endl;
+				//force = atof(recvbuf);
 			}
-			//force = atof(recvbuf);
+			
 		}
 		//force *= 0.1;
-		//EnterCriticalSection(&m_cSection);
-		//mySelf->m_Omni->SetForce(force);
-		//mySelf->m_force = force;
-		//LeaveCriticalSection(&m_cSection);
+		//force = 0.3;
+		EnterCriticalSection(&m_cSection);
+		mySelf->m_Omni->SetForce(force);
+		mySelf->m_force = force;
+		LeaveCriticalSection(&m_cSection);
 
     } while (iResult > 0);
 
@@ -808,7 +814,8 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 		mySelf->m_Status.invKinErr[0] = localStat.invKinErr[0];
 		mySelf->m_Status.invKinErr[1] = localStat.invKinErr[1];
 		
-		os << mySelf->m_contactRatio << "\t" << mySelf->m_forceControlActivated << ::std::endl;
+		if (mySelf->m_forceControlActivated)
+			os << mySelf->m_contactRatio << "\t" << mySelf->m_forceControlActivated << ::std::endl;
 		LeaveCriticalSection(&m_cSection);
 	}
 	mySelf->m_ref_set = false;

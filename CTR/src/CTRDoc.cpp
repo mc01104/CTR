@@ -670,8 +670,12 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 
 	// CKim - Parameters for loop speed measurement
 	ChunTimer timer;	int perfcnt = 0;	int navg = 5;		long loopTime = 0;
-	
-	::std::string filename = "ExperimentData/" + GetDateString() + "-ContactControl.txt";
+	::std::string gainStr;
+	std::ostringstream strs;
+	strs << mySelf->m_contactGain;
+	gainStr = strs.str();
+
+	::std::string filename = "ExperimentData/" + GetDateString() + "-Gain" + gainStr + ".txt";
 	::std::ofstream os(filename);
 
 	// CKim - The Loop

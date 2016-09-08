@@ -461,6 +461,9 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 	double contactRatio = 0.0;
 	double contactRatioError = 0.0;
 	// Receive until the peer shuts down the connection
+	clock_t start_loop, end_loop;
+	start_loop = clock();
+
     do {
 		::std::ostringstream ss;
 		// update the local joint variables
@@ -511,7 +514,9 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 				mySelf->m_contactRatio = contactRatio;
 				LeaveCriticalSection(&m_cSection);
 				::std::cout << "Ratio:" << contactRatio << ::std::endl;
-				os << contactRatio << ::std::endl;
+				end_loop = clock();
+				os << contactRatio << "\t";
+				os << ((float) (end_loop - start_loop))/CLOCKS_PER_SEC << ::std::endl;
 				//::std::cout << "Desired Ratio:" << desiredContactRatio << ::std::endl;
 				//::std::cout << ::std::endl;
 				//::std::cout << "Contact Ratio Error:" << desiredContactRatio - atof(recvbuf) << ::std::endl;

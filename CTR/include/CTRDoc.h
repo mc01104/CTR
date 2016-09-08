@@ -9,6 +9,7 @@
 #include "CTR_Common.h"
 #include <fstream>
 #include <Eigen/Dense>
+#include "time.h"
 
 
 #include "VtkOnLinePlot.h"

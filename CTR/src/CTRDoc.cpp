@@ -520,11 +520,11 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 				//::std::cout << "Desired Ratio:" << desiredContactRatio << ::std::endl;
 				//::std::cout << ::std::endl;
 				//::std::cout << "Contact Ratio Error:" << desiredContactRatio - atof(recvbuf) << ::std::endl;
-				//force = atof(recvbuf);
+				force = atof(recvbuf);
 			}
 			
 		}
-		//force *= 0.1;
+		force *= 0.5;
 		//force = 0.3;
 		EnterCriticalSection(&m_cSection);
 		mySelf->m_Omni->SetForce(force);

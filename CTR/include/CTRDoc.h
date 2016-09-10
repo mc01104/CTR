@@ -105,7 +105,7 @@ private:
 	double				m_contactGain;
 	double				m_contactRatio;
 	double				m_contactRatioDesired;
-	
+	::std::ofstream*	m_fileStream;
 // Operations
 public:
 	bool				m_adapt_LWPR;

@@ -143,6 +143,8 @@ CCTRDoc::CCTRDoc()
 	m_contactGain = 0.0;
 	m_contactRatio = 0.0;
 	m_contactRatioDesired = 0.0;
+
+	m_fileStream = NULL;
 }
 
 CCTRDoc::~CCTRDoc()
@@ -386,12 +388,6 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
     char recvbuf[DEFAULT_BUFLEN];
     int recvbuflen = DEFAULT_BUFLEN;
 
-	::std::string gainStr;
-	std::ostringstream strs;
-	strs << mySelf->m_contactGain;
-	gainStr = strs.str();
-	::std::string filename = "ExperimentData/" + GetDateString() + "-Gain" + gainStr + ".txt";
-	::std::ofstream os(filename);   
 
     // Initialize Winsock
     iResult = WSAStartup(MAKEWORD(2,2), &wsaData);
@@ -464,6 +460,10 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 	clock_t start_loop, end_loop;
 	start_loop = clock();
 
+	EnterCriticalSection(&m_cSection);
+	::std::ofstream* os = mySelf->m_fileStream;
+	LeaveCriticalSection(&m_cSection);
+
     do {
 		::std::ostringstream ss;
 		// update the local joint variables
@@ -515,21 +515,24 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 				LeaveCriticalSection(&m_cSection);
 				::std::cout << "Ratio:" << contactRatio << ::std::endl;
 				end_loop = clock();
-				os << contactRatio << "\t";
-				os << ((float) (end_loop - start_loop))/CLOCKS_PER_SEC << ::std::endl;
+				if(os)
+				{
+					*os << contactRatio << "\t";
+					*os << ((float) (end_loop - start_loop))/CLOCKS_PER_SEC << ::std::endl;
+				}
 				//::std::cout << "Desired Ratio:" << desiredContactRatio << ::std::endl;
 				//::std::cout << ::std::endl;
 				//::std::cout << "Contact Ratio Error:" << desiredContactRatio - atof(recvbuf) << ::std::endl;
-				force = atof(recvbuf);
+				//force = atof(recvbuf);
 			}
 			
 		}
-		force *= 0.5;
+		//force *= 0.5;
 		//force = 0.3;
-		EnterCriticalSection(&m_cSection);
-		mySelf->m_Omni->SetForce(force);
-		mySelf->m_force = force;
-		LeaveCriticalSection(&m_cSection);
+		//EnterCriticalSection(&m_cSection);
+		//mySelf->m_Omni->SetForce(force);
+		//mySelf->m_force = force;
+		//LeaveCriticalSection(&m_cSection);
 
     } while (iResult > 0);
 
@@ -690,7 +693,18 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 	// CKim - Parameters for loop speed measurement
 	ChunTimer timer;	int perfcnt = 0;	int navg = 5;		long loopTime = 0;
 
+	::std::string gainStr;
+	std::ostringstream strs;
+	strs << mySelf->m_contactGain;
+	gainStr = strs.str();
+	::std::string filename = "ExperimentData/" + GetDateString() + "-Gain" + gainStr + ".txt";
+	
+	EnterCriticalSection(&m_cSection);
+	if (mySelf->m_fileStream)
+		delete mySelf->m_fileStream;
 
+	mySelf->m_fileStream = new ::std::ofstream(filename);   
+	LeaveCriticalSection(&m_cSection);
 
 
 	// CKim - The Loop

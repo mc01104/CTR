@@ -936,8 +936,8 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 	double dq[5];		
 	double dCnt[7];		
 	
-	double K[6] = {10.0, 10.0, 10.0, 10.0, 10.0, 10.0 };	// working
-	//double K[6] = {10.0, 10.0, 10.0, 1.0, 1.0, 1.0 };		// working
+	//double K[6] = {10.0, 10.0, 10.0, 10.0, 10.0, 10.0 };	// working
+	double K[6] = {10.0, 10.0, 10.0, 1.0, 1.0, 1.0 };		// working
 	
 	//double K[6] = {10.0, 10.0, 10.0, 5.0, 5.0, 5.0 };		// working
 	//double K[6] = { 5.0, 5.0, 5.0, 5.0, 5.0, 5.0 };				// For sensor feedback + estimator
@@ -983,8 +983,8 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 			LeaveCriticalSection(&m_cSection);
 
 			// CKim - Evaluate model
-			mySelf->m_kinLWPR->TipFwdKin(localStat.currJang, localStat.currTipPosDir);
-			//mySelf->m_kinLib->EvalCurrentKinematicsModelNumeric(localStat.currJang, localStat.currTipPosDir, J, mySelf->m_bCLIK);
+			//mySelf->m_kinLWPR->TipFwdKin(localStat.currJang, localStat.currTipPosDir);
+			mySelf->m_kinLib->EvalCurrentKinematicsModelNumeric(localStat.currJang, localStat.currTipPosDir, J, mySelf->m_bCLIK);
 
 			// CKim - Apply simple control law : vel = kp(target pos - current pos)
 			if(safeToTeleOp)	
@@ -1013,8 +1013,8 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 			LeaveCriticalSection(&m_cSection);
 
 			// CKim - Evaluate model
-			//mySelf->m_kinLWPR->TipFwdKinJac(localStat.currJang, localStat.currTipPosDir, J,true);
-			mySelf->m_kinLib->EvalCurrentKinematicsModelNumeric(localStat.currJang, localStat.currTipPosDir, J, mySelf->m_bCLIK);
+			mySelf->m_kinLWPR->TipFwdKinJac(localStat.currJang, localStat.currTipPosDir, J,true);
+			//mySelf->m_kinLib->EvalCurrentKinematicsModelNumeric(localStat.currJang, localStat.currTipPosDir, J, mySelf->m_bCLIK);
 
 			// CKim - Apply Closed Loop Inverse kienmatics control law. dq = inv(J) x (dxd + K(xd - xm))
 
@@ -1088,8 +1088,8 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 
 		else	// CKim - When control is not running
 		{
-			//mySelf->m_kinLWPR->TipFwdKin(localStat.currJang, localStat.currTipPosDir);
-			mySelf->m_kinLib->EvalCurrentKinematicsModelNumeric(localStat.currJang, localStat.currTipPosDir, J, mySelf->m_bCLIK);
+			mySelf->m_kinLWPR->TipFwdKin(localStat.currJang, localStat.currTipPosDir);
+			//mySelf->m_kinLib->EvalCurrentKinematicsModelNumeric(localStat.currJang, localStat.currTipPosDir, J, mySelf->m_bCLIK);
 
 			for(int i=0; i<7; i++)	
 				vel[i] = 0.0;		

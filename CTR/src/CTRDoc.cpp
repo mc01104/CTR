@@ -2063,7 +2063,7 @@ void CCTRDoc::OnBnClickedBtnPlay()
 	else if (m_jointPlayback)
 	{
 		::std::cout << "joint space trajectory playback" << ::std::endl;
-		m_TrjGen->Initialize("trajectory_slow.txt", 5);
+		m_TrjGen->Initialize("test.txt", 5);
 
 		m_hEMevent = CreateEvent(NULL,false,false,NULL);	// Auto reset event (2nd argument false means...)
 		

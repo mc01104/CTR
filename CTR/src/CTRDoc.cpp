@@ -469,7 +469,9 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 		// update the local joint variables
 		EnterCriticalSection(&m_cSection);
 		for(int i=0; i<5; i++)
-			localStat.currJang[i] = mySelf->m_Status.currJang[i];			
+			localStat.currJang[i] = mySelf->m_Status.currJang[i];		
+		for(int i = 0; i < 6; i++)
+			localStat.currTipPosDir[i] = mySelf->m_Status.currTipPosDir[i];
 		teleopOn = mySelf->m_Status.isTeleOpMoving;
 		desiredContactRatio = mySelf->m_contactRatioDesired;
 		LeaveCriticalSection(&m_cSection);
@@ -517,6 +519,10 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 				end_loop = clock();
 				if(os)
 				{
+					::std::cout << "inside" << ::std::endl;
+					for (int i = 0; i < 6; i++)
+						*os << localStat.currTipPosDir[i] << "\t";
+
 					*os << contactRatio << "\t";
 					*os << ((float) (end_loop - start_loop))/CLOCKS_PER_SEC << ::std::endl;
 				}

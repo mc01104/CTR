@@ -517,15 +517,15 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 				LeaveCriticalSection(&m_cSection);
 				::std::cout << "Ratio:" << contactRatio << ::std::endl;
 				end_loop = clock();
-				if(os)
-				{
-					::std::cout << "inside" << ::std::endl;
-					for (int i = 0; i < 6; i++)
-						*os << localStat.currTipPosDir[i] << "\t";
+				//if(os)
+				//{
+				//	//::std::cout << "inside" << ::std::endl;
+				//	for (int i = 0; i < 6; i++)
+				//		*os << localStat.currTipPosDir[i] << "\t";
 
-					*os << contactRatio << "\t";
-					*os << ((float) (end_loop - start_loop))/CLOCKS_PER_SEC << ::std::endl;
-				}
+				//	*os << contactRatio << "\t";
+				//	*os << ((float) (end_loop - start_loop))/CLOCKS_PER_SEC << ::std::endl;
+				//}
 				//::std::cout << "Desired Ratio:" << desiredContactRatio << ::std::endl;
 				//::std::cout << ::std::endl;
 				//::std::cout << "Contact Ratio Error:" << desiredContactRatio - atof(recvbuf) << ::std::endl;
@@ -1225,14 +1225,19 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 			// Use fwd kin output
 			else
 			{
+				localStat.tgtTipPosDir[3] = 0;
+				localStat.tgtTipPosDir[4] = 0;
+				localStat.tgtTipPosDir[5] = 1;
 				double sum = 0;
 				for(int i=0; i<3; i++)	
 				{	
 					err(i,0) = K[i]*(localStat.tgtTipPosDir[i] - localStat.currTipPosDir[i]);
 					sum += (localStat.tgtTipPosDir[i+3]*localStat.currTipPosDir[i+3]);				
 				}
-				for(int i=3; i<6; i++)	
+				for(int i=3; i<6; i++)
+				{
 					err(i,0) = K[i]*(localStat.tgtTipPosDir[i] - localStat.currTipPosDir[i]);		
+				}
 			}
 			::Eigen::Matrix<double, 3, 1> desiredForce;
 			desiredForce.setZero();

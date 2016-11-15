@@ -15,18 +15,10 @@ LWPRKinematics::LWPRKinematics(const ::std::string& pathToForwardModel):
 {
 	this->forwardModel = new LWPR_Object(pathToForwardModel.c_str());
 
-	//TODO: this is a hack -> fix thread safety and remove extra model
-	this->forwardModelforInverse = new LWPR_Object(pathToForwardModel.c_str());
-
 	this->m_hLWPRMutex = CreateMutex(NULL,false,"LWPR_Mutex");
 
-	//forwardModel->updateD(true);
-	//forwardModel->useMeta(false);
-	//forwardModel->metaRate(0.01);
-	//forwardModel->setInitAlpha(0.01);
-
 	double ffactor[3] = {1.0, 1.0, 0.1};
-	//this->SetForgettingFactor(ffactor);
+
 }
 
 
@@ -52,7 +44,6 @@ LWPRKinematics::TipFwdKin(const double* jAng, double* posOrt)
 	::std::vector<double> outputData = this->forwardModel->predict(inputData, 0.001);
 	ReleaseMutex(this->m_hLWPRMutex);
 
-	//::std::cout << outputData << ::std::endl;
 	::std::vector<double> orientation = ::std::vector<double> (outputData.begin() + 3, outputData.end());
 	
 	this->CompensateForRigidBodyMotion(jAng, outputData.data(), posOrt);
@@ -62,33 +53,26 @@ LWPRKinematics::TipFwdKin(const double* jAng, double* posOrt)
 }
 
 
+//check the scaling
 void 
 LWPRKinematics::AdaptForwardModel(const double* posOrt, const double* jAng)
 {
 	::std::vector<double> inputData(jAng, jAng + this->forwardModel->nIn());
 
 #ifdef _SCALED_
+	inputData[0] /= M_PI;
+	inputData[1] /= M_PI;
 	inputData[2] = inputData[2]/L31_MAX;
 #endif
 
 	double posOrtFinal[6] = {0};
 
-	double tmpOutput[6] = {0};
-	double jAngScaled[5] = {0};
-	memcpy(jAngScaled, jAng, 5 * sizeof(double));
-	jAngScaled[2] /= L31_MAX;
-	this->TipFwdKin(jAngScaled, tmpOutput);
-
 	this->CompensateForRigidBodyMotionInverse(jAng, posOrt, posOrtFinal);
 
-
 	::std::vector<double> outputData(posOrtFinal, posOrtFinal + this->forwardModel->nOut());
-	/*outputData[0] = tmpOutput[0];
-	outputData[1] = tmpOutput[1];*/
-	//outputData[2] = tmpOutput[2];
 
+	//this is wrong - it doesn't cover all cases
 	WaitForSingleObject(this->m_hLWPRMutex,INFINITE);
-	//TODO: this is a HACK - find a way to update the metric so that it takes care of periodic functions
 	for (int i = 0; i < 1; i++)
 	{
 		this->forwardModel->update(inputData, outputData);
@@ -100,7 +84,6 @@ LWPRKinematics::AdaptForwardModel(const double* posOrt, const double* jAng)
 	ReleaseMutex(this->m_hLWPRMutex);
 
 }
-
 
 void
 LWPRKinematics::SetForgettingFactor(double* ffactor)
@@ -175,55 +158,13 @@ LWPRKinematics::SaveModel()
 }
 
 
-//TODO: fix thread-safety
-void LWPRKinematics::EvalF_LSQ(const double* jAng, const double* tgtPosOrt, const Eigen::MatrixXd& Coeff, Eigen::Matrix<double,4,1>& F)
-{
-	double posOrt[6];
-	double pmax = m_MaxPosErr;		
-	double thmax = m_MaxOrtErr*3.141592/180.0;		
-	double sum = 0.0;
-	
-	TipFwdKinInv(jAng, posOrt);
-	//TipFwdKin(jAng, posOrt);
-
-	for(int i = 0; i < 3; i++)	
-	{	
-		F(i,0) = posOrt[i] - tgtPosOrt[i];				
-		sum += (posOrt[i+3] * tgtPosOrt[i+3]);
-	}
-
-	F(3,0) = pmax/(1 - cos(thmax)) * (1 - sum);
-	//F(3, 0) = 0;
-}
-
-// this will be removed once I fix the mutex
-void
-LWPRKinematics::TipFwdKinInv(const double* jAng, double* posOrt)
-{
-	::std::vector< double> inputData(jAng, jAng + this->forwardModel->nIn());
-
-	this->CheckJointLimits(inputData);
-
-#ifdef _SCALED_
-	inputData[0] /= M_PI;
-	inputData[1] /= M_PI;
-	inputData[2] = inputData[2]/L31_MAX ;
-#endif
-
-	::std::vector<double> outputData = this->forwardModelforInverse->predict(inputData, 0.001);
-
-	::std::vector<double> orientation = ::std::vector<double> (outputData.begin() + 3, outputData.end());
-	
-	this->CompensateForRigidBodyMotion(jAng, outputData.data(), posOrt);
-		
-}
 
 bool 
 LWPRKinematics::TipFwdKinEx(const double* jAng, double* posOrt)
 {
 	::std::vector< double> inputData(jAng, jAng + this->forwardModel->nIn());
 
-	//this->CheckJointLimits(inputData);
+	this->CheckJointLimits(inputData);
 
 #ifdef _SCALED_
 	inputData[0] /= M_PI;
@@ -249,9 +190,8 @@ LWPRKinematics::TipFwdKinJac(const double* jAng, double* posOrt, Eigen::MatrixXd
 
 	WaitForSingleObject(m_hLWPRMutex, INFINITE);
 	TipFwdKinEx(jAng, posOrt);
-	//::std::cout << " configuration" << ::std::endl;
-	//PrintCArray(jAng, 5);
 
+	// TODO: revise the implementation of the Jacobian -> it is very ugly and possible includes reduntant computation
 	if(evalJ)	
 	{
 		for(int col=0; col<5; col++)
@@ -260,7 +200,6 @@ LWPRKinematics::TipFwdKinJac(const double* jAng, double* posOrt, Eigen::MatrixXd
 			{
 				if(i==col)
 				{
-					//dq = FLT_EPSILON*fabs(jAng[i]);
 					dq = 0.01;
 
 					//if(dq==0.0) {	dq = FLT_EPSILON;	}
@@ -272,13 +211,253 @@ LWPRKinematics::TipFwdKinJac(const double* jAng, double* posOrt, Eigen::MatrixXd
 			}
 		
 			TipFwdKinEx(q, Fq);
-			//PrintCArray(Fq, 6);
 			for(int i=0; i<6; i++)	{	J(i,col) = (Fq[i] - posOrt[i])/dq;}
 		}
-		//std::cout << "J = " << J << std::endl;
+
 	}
 	//::std::cout << "---------------" << ::std::endl;
 	ReleaseMutex(this->m_hLWPRMutex);
 
 	return;
 }
+
+void LWPRKinematics::computeObjectiveFunctionJacobian(const ::Eigen::VectorXd& targetX, ::Eigen::VectorXd& x, double t, ::Eigen::MatrixXd& J)
+{
+	double epsilon = 0.0001;
+	double invEpsilon = 1.0/epsilon;
+	
+	double f0, fNew, JJ;
+	computeObjectiveFunction(targetX, x, t, f0, JJ);
+
+	::Eigen::VectorXd perturbedX = x;
+
+	J.resize(1, x.size());
+	for(int i = 0; i < x.size(); ++i)
+	{
+		perturbedX(i) += epsilon;
+
+		computeObjectiveFunction(targetX, perturbedX, t, fNew, JJ);
+
+		J(0, i) = (fNew - f0) * invEpsilon;
+
+		perturbedX(i) = x(i);
+	}
+}
+
+void LWPRKinematics::computeObjectiveFunction(const ::Eigen::VectorXd& targetX, ::Eigen::VectorXd& x, double t, double& funVal, double& realError)
+{
+	::Eigen::VectorXd outX;
+	ComputeKinematics(x, outX);
+
+	double phi = -::std::log(1 - (outX.segment(0, 3) - targetX.segment(0, 3)).norm());
+
+	realError = (outX.segment(3, 3) - targetX.segment(3, 3)).norm();
+
+	funVal = t * realError + phi;
+}
+
+void LWPRKinematics::solveFirstObjective(const ::Eigen::VectorXd& targetX, ::Eigen::VectorXd& x, double t, double eps, double mu)
+{
+	double Jcost = 0.0;
+	double JcostPrev = 1000.0;
+	int iterations = 0;
+	int maxIterations = 1000;
+	double step = 0.90;
+
+	::Eigen::VectorXd xPrev(x);
+	::Eigen::MatrixXd J;
+	double realCost = 0;
+
+	computeObjectiveFunction(targetX, x, t, Jcost, realCost);
+
+	while (::std::abs(Jcost - JcostPrev) < 1.e-03  && iterations < maxIterations)
+	{
+		computeObjectiveFunctionJacobian(targetX, x, t, J);
+
+		xPrev = x;
+		x -= step/t * J.transpose() * (J * J.transpose()).inverse() * Jcost;
+
+		this->CheckJointLimits(x);
+
+		JcostPrev = Jcost;
+		computeObjectiveFunction(targetX, x, t, Jcost, realCost);
+
+		if (JcostPrev < Jcost)
+		{
+			step *= 0.8;
+			Jcost = JcostPrev;
+			x = xPrev;
+			continue;
+		}
+
+		iterations++;
+	}
+}
+
+
+void LWPRKinematics::runOptimizationController(double initialConfiguration[], double goalInTaskSapce[6], double outputConfiguration[])
+{
+	::Eigen::VectorXd targetX = ::Eigen::Map<::Eigen::VectorXd> (goalInTaskSapce, 6);
+	::Eigen::VectorXd configuration = ::Eigen::Map<::Eigen::VectorXd> (initialConfiguration, 5);
+	::Eigen::VectorXd currentX;
+	::Eigen::MatrixXd J, Jp;
+
+	int iterations = 0;
+	int maxIterations = 1000;
+	double step = 1.0;
+
+	::Eigen::VectorXd error(6), errorPrev(6);
+	double scalingFactors[5] = {M_PI, M_PI, 87, M_PI, 100};
+	scaleVector(configuration, scalingFactors);
+	ComputeKinematics(configuration, currentX);
+	
+	error = targetX - currentX;
+	::Eigen::VectorXd confPrev = configuration;
+
+	while (error.segment(0, 3).norm() > 1.1 && iterations < maxIterations)
+	{
+		ComputeJacobian(configuration, J);
+		Jp = J.block(0,0,3,5);
+
+		confPrev = configuration;
+		configuration += step * Jp.transpose() * (Jp * Jp.transpose()).inverse() * error.segment(0, 3);
+
+		unscaleVector(configuration, scalingFactors);
+		CheckJointLimits(configuration);
+		scaleVector(configuration, scalingFactors);
+
+		ComputeKinematics(configuration, currentX);
+
+		errorPrev = error;
+		error = targetX - currentX;
+
+		if (error.norm() > errorPrev.norm())
+		{
+			configuration = confPrev;
+			step *= 0.8;
+			error = errorPrev;
+			continue;
+		}
+		iterations++;
+	}
+
+	// check if solution is in the feasible set: if not return --- TODO
+	
+	double t = 1;
+	double mu = 10.0;
+	double eps = 0.0001;
+	double Jcost = 0.0;
+
+
+	for (int k = 0; k < maxIterations; ++k)
+	{
+
+		solveFirstObjective(targetX, configuration, t, eps, mu);
+		
+		if (1.0/t < eps) break;
+
+		t *= mu;
+	}
+	memcpy(outputConfiguration, configuration.data(), configuration.size() * sizeof(double));
+}
+
+void LWPRKinematics::unscaleVector(::Eigen::VectorXd& x, double scalingFactors[])
+{
+	for (int i = 0; i < x.size(); ++i)
+		x(i) *= scalingFactors[i];
+}
+
+void LWPRKinematics::scaleVector(::Eigen::VectorXd& x, double scalingFactors[])
+{
+	for (int i = 0; i < x.size(); ++i)
+		x(i) /= scalingFactors[i];
+
+}
+
+void LWPRKinematics::scaleVector(double x[], int x_size, double scalingFactors[])
+{
+	for (int i = 0; i < x_size; ++i)
+		x[i] /= scalingFactors[i];
+}
+
+bool
+LWPRKinematics::ComputeKinematics(const double* jAng, double* posOrt)
+{
+	double scalingFactors[5] = {M_PI, M_PI, 87, M_PI, 100};
+
+	::std::vector< double> inputData(jAng, jAng + this->forwardModel->nIn());
+
+	for (int i = 0; i < inputData.size(); ++i)
+		inputData[i] *= scalingFactors[i];
+
+	this->CheckJointLimits(inputData);
+
+#ifdef _SCALED_
+	inputData[0] /= M_PI;
+	inputData[1] /= M_PI;
+	inputData[2] = inputData[2]/L31_MAX ;
+#endif
+	
+	::std::vector<double> outputData = this->forwardModel->predict(inputData, 0.001);
+
+	::std::vector<double> orientation = ::std::vector<double> (outputData.begin() + 3, outputData.end());
+	
+	this->CompensateForRigidBodyMotion(jAng, outputData.data(), posOrt);
+		
+	return true;
+}
+
+bool
+LWPRKinematics::ComputeKinematics(const ::Eigen::VectorXd& jAng, ::Eigen::VectorXd& posOrt)
+{
+	double scalingFactors[5] = {M_PI, M_PI, 87, M_PI, 100};
+
+	::std::vector< double> inputData(jAng.data(), jAng.data() + this->forwardModel->nIn());
+
+	for (int i = 0; i < inputData.size(); ++i)
+		inputData[i] *= scalingFactors[i];
+
+	this->CheckJointLimits(inputData);
+
+#ifdef _SCALED_
+	inputData[0] /= M_PI;
+	inputData[1] /= M_PI;
+	inputData[2] = inputData[2]/L31_MAX ;
+#endif
+	
+	::std::vector<double> outputData = this->forwardModel->predict(inputData, 0.001);
+
+	::std::vector<double> orientation = ::std::vector<double> (outputData.begin() + 3, outputData.end());
+	
+	double posOrtTemp[6] = {0};
+	this->CompensateForRigidBodyMotion(jAng.data(), outputData.data(), posOrtTemp);
+	
+	posOrt.resize(6);
+	memcpy(posOrt.data(), posOrtTemp, 6 * sizeof(double));
+	return true;
+}
+
+bool 
+LWPRKinematics::ComputeJacobian(const ::Eigen::VectorXd& configuration, ::Eigen::MatrixXd& J)
+{
+	J.resize(6, configuration.size());
+
+	double epsilon = 0.00001;
+	double invEpsilon = 1.0/epsilon;
+
+	::Eigen::VectorXd currentX, perturbedX;
+	this->ComputeKinematics(configuration, currentX);
+
+	::Eigen::VectorXd perturbedConfiguration = configuration;
+	for (int i = 0; i < configuration.size(); ++i)
+	{
+		perturbedConfiguration(i) += epsilon;
+		this->ComputeKinematics(perturbedConfiguration, perturbedX);
+		J.col(i) = (perturbedX - currentX) * invEpsilon;
+		perturbedConfiguration(i) = configuration(i);
+	}
+
+	return true;
+}
+
+

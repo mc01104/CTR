@@ -115,3 +115,36 @@ void SO3ToEigen(const SO3& rot, ::Eigen::Matrix<double, 3, 3>& rotEigen)
 	rotEigen.col(1) = Vec3ToEigen(rot.GetY());
 	rotEigen.col(2) = Vec3ToEigen(rot.GetZ());
 }
+
+template <typename T> 
+void circshift(T* data, size_t dataSize, int direction)
+{
+	T tmp;
+	if (direction == 1)
+	{
+		tmp = data[dataSize - 1];
+		memcpy(&data[1], data, sizeof(T) * dataSize - 1);
+		data[0] = tmp;
+	}
+	else
+	{		
+		tmp = data[0];
+		memcpy(data, &data[1], sizeof(T) * dataSize - 1);
+		data[dataSize - 1] = tmp;
+	}
+}
+
+//void 
+//circshiftBack(double* data, size_t dataSize)
+//{
+//	circshift<double>(data, dataSize, -1);
+//}
+
+void 
+circshiftBack(::std::deque<double>& data)
+{
+	double tmp = data.front();
+	data.pop_front();
+	data.push_back(tmp);	
+}
+

@@ -22,10 +22,8 @@ class LWPRKinematics : public CTRKin
 {
 	LWPR_Object* forwardModel;
 	
-	//this is ugly --> FIX IT
-	LWPR_Object* forwardModelforInverse;
-	
 	HANDLE m_hLWPRMutex;	
+
 	HANDLE m_hLWPRInvMutex;	
 public:
 	
@@ -81,10 +79,6 @@ public:
 	  */
 	int GetJoinspaceDim() {return this->forwardModel->nIn() + 2;};
 
-	//HACK - currently only used because of thread safety -> CHANGE
-	void TipFwdKinInv(const double* jAng, double* posOrt);
-
-	//void InverseKinematicsLSQ(const double* tgtPosOrt, const double* init, double* jAng, double* Err, int& exitCond);
 private:
 
 	// Copy operation is not allowed at this point
@@ -111,14 +105,14 @@ private:
 	  */
 	void CompensateForRigidBodyMotionInverse(const double* jAng, const double* posOrt, double* posOrtFinal);
 
-	/**
-	  *@brief evaluate objective function for least squares optimization, used in inverse kinematics (root finding of forward model for specific workspace position and orientation)
-	  *@param[in] current joint angles
-	  *@param[in] target position and orientation in the workspace
-	  *@param[in] Parameters of Fourier model - not used for LWPR
-	  *@param[out] value of objective function
-	  */
-	virtual void EvalF_LSQ(const double* jAng, const double* tgtPosOrt, const Eigen::MatrixXd& Coeff, Eigen::Matrix<double,4,1>& F);
+	///**
+	//  *@brief evaluate objective function for least squares optimization, used in inverse kinematics (root finding of forward model for specific workspace position and orientation)
+	//  *@param[in] current joint angles
+	//  *@param[in] target position and orientation in the workspace
+	//  *@param[in] Parameters of Fourier model - not used for LWPR
+	//  *@param[out] value of objective function
+	//  */
+	//virtual void EvalF_LSQ(const double* jAng, const double* tgtPosOrt, const Eigen::MatrixXd& Coeff, Eigen::Matrix<double,4,1>& F);
 
 	/**
 	  *@brief Check if the joint values (input to the forward kinematics) are in limit and if not cap their values accordingly
@@ -134,4 +128,21 @@ private:
 		if (abs(inputData[2]) > L31_MAX) {inputData[2] = L31_MAX;}
 	}
 
+	void computeObjectiveFunctionJacobian(const ::Eigen::VectorXd& targetX, ::Eigen::VectorXd& x, double t, ::Eigen::MatrixXd& J);
+	void computeObjectiveFunction(const ::Eigen::VectorXd& targetX, ::Eigen::VectorXd& x, double t, double& funVal, double& realError);
+	void solveFirstObjective(const ::Eigen::VectorXd& targetX, ::Eigen::VectorXd& x, double t, double eps, double mu);
+	void runOptimizationController(double initialConfiguration[], double goalInTaskSapce[6], double outputConfiguration[]);
+
+	bool ComputeKinematics(const double* jAng, double* posOrt);	
+	bool ComputeKinematics(const ::Eigen::VectorXd& jAng, ::Eigen::VectorXd& posOrt);	
+
+	/**
+	  *@brief - compute model Kacobian using LWPR
+	  *@param - joint angles
+	  *@param - Jacobian
+	  */
+	bool ComputeJacobian(const ::Eigen::VectorXd& configuration, ::Eigen::MatrixXd& J);
+	void unscaleVector(::Eigen::VectorXd& x, double scalingFactors[]);
+	void scaleVector(::Eigen::VectorXd& x, double scalingFactors[]);
+	void scaleVector(double x[], int x_size, double scalingFactors[]);
 };

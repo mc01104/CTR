@@ -705,13 +705,13 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 	gainStr = strs.str();
 	::std::string filename = "ExperimentData/" + GetDateString() + "-Gain" + gainStr + ".txt";
 	
-	EnterCriticalSection(&m_cSection);
-	if (mySelf->m_fileStream)
-		delete mySelf->m_fileStream;
+	//EnterCriticalSection(&m_cSection);
+	//if (mySelf->m_fileStream)
+	//	delete mySelf->m_fileStream;
 
-	mySelf->m_fileStream = new ::std::ofstream(filename);   
-	LeaveCriticalSection(&m_cSection);
-
+	//mySelf->m_fileStream = new ::std::ofstream(filename);   
+	//LeaveCriticalSection(&m_cSection);
+	ofstream os("debug_control.txt");
 
 	// CKim - The Loop
 	while(mySelf->m_teleOpMode)
@@ -815,9 +815,16 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 
 			// enable Jacobian Transpose controller
 			mySelf->m_bCLIK = true;
+			for (int i = 0; i < 6; ++i)
+				os << localStat.currTipPosDir[i] << "  ";
 
-			mySelf->m_kinLWPR->runOptimizationController(localStat.currJang, localStat.tgtTipPosDir, tempSolution);
-			PrintCArray(tempSolution, 5);
+			for(int i = 0; i < 5; ++i)
+				os << localStat.currJang[i] << " ";
+			os << ::std::endl;
+			//mySelf->m_InvKinOn = false;
+			//mySelf->SolveInverseKin(localStat);
+
+			//PrintCArray(tempSolution, 5);
 		}
 
 					
@@ -849,6 +856,7 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 		LeaveCriticalSection(&m_cSection);
 	}
 	mySelf->m_ref_set = false;
+	os.close();
 	return 0;
 
 }
@@ -2027,8 +2035,10 @@ void CCTRDoc::SolveInverseKin(CTR_status& stat)
 	for(int i=0; i<5; i++)	{	stat.initJang[i] = stat.currJang[i];		}
 
 	//m_kinLWPR->InverseKinematicsLSQ(stat.tgtTipPosDir, stat.initJang, jAng, Err, exitCond);
-	m_kinLib->InverseKinematicsLSQ(stat.tgtTipPosDir, stat.initJang, jAng, Err, exitCond);
-
+	//m_kinLib->InverseKinematicsLSQ(stat.tgtTipPosDir, stat.initJang, jAng, Err, exitCond);
+	m_kinLWPR->runOptimizationController(stat.currJang, stat.tgtTipPosDir, jAng);
+	PrintCArray(jAng,5);
+	//memcpy(tempSolution, localStat.tgtJang, 5 * sizeof(double));
 	stat.condNum = Err[0];		stat.invKinErr[0] = Err[1];		stat.invKinErr[1] = Err[2];
 	//::std::cout << Err[0] << ::std::endl;
 	// CKim - Check convergence from the position and orientation error magnitude

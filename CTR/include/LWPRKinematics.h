@@ -126,6 +126,7 @@ private:
 
 		if (inputData[2] < 0) {inputData[2] = 1;}
 		if (abs(inputData[2]) > L31_MAX) {inputData[2] = L31_MAX;}
+		inputData[4] = min(max(-100, inputData[4]), 100);
 	}
 
 	void computeObjectiveFunctionJacobian(const ::Eigen::VectorXd& targetX, ::Eigen::VectorXd& x, double t, ::Eigen::MatrixXd& J);

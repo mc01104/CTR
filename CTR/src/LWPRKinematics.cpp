@@ -261,8 +261,8 @@ void LWPRKinematics::solveFirstObjective(const ::Eigen::VectorXd& targetX, ::Eig
 	double Jcost = 0.0;
 	double JcostPrev = 1000.0;
 	int iterations = 0;
-	int maxIterations = 1000;
-	double step = 0.90;
+	int maxIterations = 200;
+	double step = 0.40;
 
 	::Eigen::VectorXd xPrev(x);
 	::Eigen::MatrixXd J;
@@ -303,11 +303,11 @@ void LWPRKinematics::runOptimizationController(double initialConfiguration[], do
 	::Eigen::MatrixXd J, Jp;
 
 	int iterations = 0;
-	int maxIterations = 1000;
+	int maxIterations = 200;
 	double step = 1.0;
 
 	::Eigen::VectorXd error(6), errorPrev(6);
-	double scalingFactors[5] = {M_PI, M_PI, 87, M_PI, 100};
+	double scalingFactors[5] = {M_PI, M_PI, L31_MAX, M_PI, 100};
 	scaleVector(configuration, scalingFactors);
 	ComputeKinematics(configuration, currentX);
 	
@@ -358,6 +358,7 @@ void LWPRKinematics::runOptimizationController(double initialConfiguration[], do
 
 		t *= mu;
 	}
+	unscaleVector(configuration,scalingFactors);
 	memcpy(outputConfiguration, configuration.data(), configuration.size() * sizeof(double));
 }
 
@@ -383,7 +384,7 @@ void LWPRKinematics::scaleVector(double x[], int x_size, double scalingFactors[]
 bool
 LWPRKinematics::ComputeKinematics(const double* jAng, double* posOrt)
 {
-	double scalingFactors[5] = {M_PI, M_PI, 87, M_PI, 100};
+	double scalingFactors[5] = {M_PI, M_PI, L31_MAX, M_PI, 100};
 
 	::std::vector< double> inputData(jAng, jAng + this->forwardModel->nIn());
 
@@ -410,7 +411,7 @@ LWPRKinematics::ComputeKinematics(const double* jAng, double* posOrt)
 bool
 LWPRKinematics::ComputeKinematics(const ::Eigen::VectorXd& jAng, ::Eigen::VectorXd& posOrt)
 {
-	double scalingFactors[5] = {M_PI, M_PI, 87, M_PI, 100};
+	double scalingFactors[5] = {M_PI, M_PI, L31_MAX, M_PI, 100};
 
 	::std::vector< double> inputData(jAng.data(), jAng.data() + this->forwardModel->nIn());
 

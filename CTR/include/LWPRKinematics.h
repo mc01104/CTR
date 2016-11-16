@@ -78,7 +78,7 @@ public:
 	  *@brief returns the dimension of the full jointspace (including rigid body transformation)
 	  */
 	int GetJoinspaceDim() {return this->forwardModel->nIn() + 2;};
-
+	void runOptimizationController(double initialConfiguration[], double goalInTaskSapce[6], double outputConfiguration[]);
 private:
 
 	// Copy operation is not allowed at this point
@@ -131,7 +131,7 @@ private:
 	void computeObjectiveFunctionJacobian(const ::Eigen::VectorXd& targetX, ::Eigen::VectorXd& x, double t, ::Eigen::MatrixXd& J);
 	void computeObjectiveFunction(const ::Eigen::VectorXd& targetX, ::Eigen::VectorXd& x, double t, double& funVal, double& realError);
 	void solveFirstObjective(const ::Eigen::VectorXd& targetX, ::Eigen::VectorXd& x, double t, double eps, double mu);
-	void runOptimizationController(double initialConfiguration[], double goalInTaskSapce[6], double outputConfiguration[]);
+	
 
 	bool ComputeKinematics(const double* jAng, double* posOrt);	
 	bool ComputeKinematics(const ::Eigen::VectorXd& jAng, ::Eigen::VectorXd& posOrt);	

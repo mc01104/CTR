@@ -683,7 +683,7 @@ void CCTRDoc::OnBnClickedRegst()
 unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 {
 	CCTRDoc* mySelf = (CCTRDoc*) para;		
-	
+	double tempSolution[5] = {0};
 	// CKim - Robot status and Haptic device status
 	CTR_status localStat;		
 	
@@ -816,6 +816,8 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 			// enable Jacobian Transpose controller
 			mySelf->m_bCLIK = true;
 
+			mySelf->m_kinLWPR->runOptimizationController(localStat.currJang, localStat.tgtTipPosDir, tempSolution);
+			PrintCArray(tempSolution, 5);
 		}
 
 					

@@ -244,16 +244,19 @@ void LWPRKinematics::computeObjectiveFunctionJacobian(const ::Eigen::VectorXd& t
 	}
 }
 
-void LWPRKinematics::computeObjectiveFunction(const ::Eigen::VectorXd& targetX, ::Eigen::VectorXd& x, double t, double& funVal, double& realError)
+bool LWPRKinematics::computeObjectiveFunction(const ::Eigen::VectorXd& targetX, ::Eigen::VectorXd& x, double t, double& funVal, double& realError)
 {
 	::Eigen::VectorXd outX;
 	ComputeKinematics(x, outX);
-
-	double phi = -::std::log(1 - (outX.segment(0, 3) - targetX.segment(0, 3)).norm());
-
+	double constraintSlack = max(0.001, 1.0 - (outX.segment(0, 3) - targetX.segment(0, 3)).norm());
+	
+	double phi = -::std::log(constraintSlack);
 	realError = (outX.segment(3, 3) - targetX.segment(3, 3)).norm();
-
 	funVal = t * realError + phi;
+
+	if (1.0 - (outX.segment(0, 3) - targetX.segment(0, 3)).norm() < 0) return false;
+	
+	return true;
 }
 
 void LWPRKinematics::solveFirstObjective(const ::Eigen::VectorXd& targetX, ::Eigen::VectorXd& x, double t, double eps, double mu)
@@ -262,7 +265,9 @@ void LWPRKinematics::solveFirstObjective(const ::Eigen::VectorXd& targetX, ::Eig
 	double JcostPrev = 1000.0;
 	int iterations = 0;
 	int maxIterations = 200;
-	double step = 0.40;
+	double step = 0.80;
+
+	double scalingFactors[5] = {M_PI, M_PI, 35, M_PI, 100};
 
 	::Eigen::VectorXd xPrev(x);
 	::Eigen::MatrixXd J;
@@ -275,20 +280,32 @@ void LWPRKinematics::solveFirstObjective(const ::Eigen::VectorXd& targetX, ::Eig
 		computeObjectiveFunctionJacobian(targetX, x, t, J);
 
 		xPrev = x;
-		x -= step/t * J.transpose() * (J * J.transpose()).inverse() * Jcost;
-
-		this->CheckJointLimits(x);
-
 		JcostPrev = Jcost;
+		x -= step/t * J.transpose() * (J * J.transpose()).inverse() * Jcost;
+		
+		unscaleVector(x, scalingFactors);
+		this->CheckJointLimits(x);
+		scaleVector(x, scalingFactors);
+
 		computeObjectiveFunction(targetX, x, t, Jcost, realCost);
 
-		if (JcostPrev < Jcost)
+		bool respectConstraints = computeObjectiveFunction(targetX, x, t, Jcost, realCost);
+		step = 0.8;
+		int iterationsInner = 0;
+		while ( (Jcost > JcostPrev && step > 0.0000001 && iterationsInner < maxIterations) || !respectConstraints)
 		{
-			step *= 0.8;
-			Jcost = JcostPrev;
-			x = xPrev;
-			continue;
+				step *= 0.8;
+				Jcost = JcostPrev;
+				x = xPrev;
+				x -= step * J.transpose() * (J * J.transpose()).inverse() * Jcost;
+				unscaleVector(x, scalingFactors);
+				CheckJointLimits(x);
+				scaleVector(x, scalingFactors);
+
+				respectConstraints = computeObjectiveFunction(targetX, x, t, Jcost, realCost);
+				iterationsInner++;
 		}
+
 
 		iterations++;
 	}
@@ -303,21 +320,26 @@ void LWPRKinematics::runOptimizationController(double initialConfiguration[], do
 	::Eigen::MatrixXd J, Jp;
 
 	int iterations = 0;
-	int maxIterations = 200;
+	int maxIterations = 100;
 	double step = 1.0;
 
 	::Eigen::VectorXd error(6), errorPrev(6);
+
 	double scalingFactors[5] = {M_PI, M_PI, L31_MAX, M_PI, 100};
+
 	scaleVector(configuration, scalingFactors);
 	ComputeKinematics(configuration, currentX);
 	
 	error = targetX - currentX;
-	::Eigen::VectorXd confPrev = configuration;
+	::Eigen::VectorXd confPrev;
 
-	while (error.segment(0, 3).norm() > 1.1 && iterations < maxIterations)
+	while (error.segment(0, 3).norm() > 0.5 && iterations < maxIterations)
 	{
 		ComputeJacobian(configuration, J);
 		Jp = J.block(0,0,3,5);
+
+		if (step < 1.e-10)
+			break;
 
 		confPrev = configuration;
 		configuration += step * Jp.transpose() * (Jp * Jp.transpose()).inverse() * error.segment(0, 3);
@@ -331,17 +353,34 @@ void LWPRKinematics::runOptimizationController(double initialConfiguration[], do
 		errorPrev = error;
 		error = targetX - currentX;
 
-		if (error.norm() > errorPrev.norm())
+		while (error.norm() > errorPrev.norm() && step > 0.001)
 		{
-			configuration = confPrev;
 			step *= 0.8;
+			configuration = confPrev;
 			error = errorPrev;
-			continue;
+
+			configuration += step * Jp.transpose() * (Jp * Jp.transpose()).inverse() * error.segment(0, 3);
+
+			unscaleVector(configuration, scalingFactors);
+			CheckJointLimits(configuration);
+			scaleVector(configuration, scalingFactors);
+
+			ComputeKinematics(configuration, currentX);
+
+			errorPrev = error;
+			error = targetX - currentX;
 		}
+		step = 1.0;
 		iterations++;
 	}
 
-	// check if solution is in the feasible set: if not return --- TODO
+	// if there are no feasible solutions skip orientation control and return the closest configuration to the feasible set.
+	if (error.segment(0, 3).norm() > 0.5)
+	{
+		unscaleVector(configuration,scalingFactors);
+		memcpy(outputConfiguration, configuration.data(), configuration.size() * sizeof(double));
+		return;
+	}
 	
 	double t = 1;
 	double mu = 10.0;

@@ -130,7 +130,7 @@ private:
 	}
 
 	void computeObjectiveFunctionJacobian(const ::Eigen::VectorXd& targetX, ::Eigen::VectorXd& x, double t, ::Eigen::MatrixXd& J);
-	void computeObjectiveFunction(const ::Eigen::VectorXd& targetX, ::Eigen::VectorXd& x, double t, double& funVal, double& realError);
+	bool computeObjectiveFunction(const ::Eigen::VectorXd& targetX, ::Eigen::VectorXd& x, double t, double& funVal, double& realError);
 	void solveFirstObjective(const ::Eigen::VectorXd& targetX, ::Eigen::VectorXd& x, double t, double eps, double mu);
 	
 

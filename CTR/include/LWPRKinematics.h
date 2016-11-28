@@ -25,6 +25,7 @@ class LWPRKinematics : public CTRKin
 	HANDLE m_hLWPRMutex;	
 
 	HANDLE m_hLWPRInvMutex;	
+
 public:
 	
 	/**
@@ -78,7 +79,7 @@ public:
 	  *@brief returns the dimension of the full jointspace (including rigid body transformation)
 	  */
 	int GetJoinspaceDim() {return this->forwardModel->nIn() + 2;};
-	void runOptimizationController(double initialConfiguration[], double goalInTaskSapce[6], double outputConfiguration[]);
+	void runOptimizationController(const double initialConfiguration[], double goalInTaskSapce[6], double outputConfiguration[]);
 private:
 
 	// Copy operation is not allowed at this point
@@ -124,7 +125,7 @@ private:
 		inputData[0] = 1 * atan2(sin(inputData[0]), cos(inputData[0]));
 		inputData[1] = 1 * atan2(sin(inputData[1]), cos(inputData[1]));
 
-		if (inputData[2] < 0) {inputData[2] = 1;}
+		if (inputData[2] < L31_MIN) {inputData[2] = L31_MIN;}
 		if (abs(inputData[2]) > L31_MAX) {inputData[2] = L31_MAX;}
 		inputData[4] = min(max(-100, inputData[4]), 100);
 	}

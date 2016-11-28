@@ -7,7 +7,7 @@
 
 #include <iostream>
 
-
+double scalingFactors[5] = {M_PI, M_PI, 1.0, M_PI, 1};
 
 
 LWPRKinematics::LWPRKinematics(const ::std::string& pathToForwardModel):
@@ -264,10 +264,10 @@ void LWPRKinematics::solveFirstObjective(const ::Eigen::VectorXd& targetX, ::Eig
 	double Jcost = 0.0;
 	double JcostPrev = 1000.0;
 	int iterations = 0;
-	int maxIterations = 200;
+	int maxIterations = 50;
 	double step = 0.80;
 
-	double scalingFactors[5] = {M_PI, M_PI, 35, M_PI, 100};
+	//double scalingFactors[5] = {M_PI, M_PI, 35, M_PI, 10};
 
 	::Eigen::VectorXd xPrev(x);
 	::Eigen::MatrixXd J;
@@ -312,10 +312,14 @@ void LWPRKinematics::solveFirstObjective(const ::Eigen::VectorXd& targetX, ::Eig
 }
 
 
-void LWPRKinematics::runOptimizationController(double initialConfiguration[], double goalInTaskSapce[6], double outputConfiguration[])
+void LWPRKinematics::runOptimizationController(const double initialConfiguration[], double goalInTaskSapce[6], double outputConfiguration[])
 {
+	double tmpConf[5] = {0}; 
+	memcpy(tmpConf, initialConfiguration, 5*sizeof(double));
 	::Eigen::VectorXd targetX = ::Eigen::Map<::Eigen::VectorXd> (goalInTaskSapce, 6);
-	::Eigen::VectorXd configuration = ::Eigen::Map<::Eigen::VectorXd> (initialConfiguration, 5);
+
+
+	::Eigen::VectorXd configuration = ::Eigen::Map<::Eigen::VectorXd> (tmpConf, 5);
 	::Eigen::VectorXd currentX;
 	::Eigen::MatrixXd J, Jp;
 
@@ -325,7 +329,7 @@ void LWPRKinematics::runOptimizationController(double initialConfiguration[], do
 
 	::Eigen::VectorXd error(6), errorPrev(6);
 
-	double scalingFactors[5] = {M_PI, M_PI, L31_MAX, M_PI, 100};
+	//double scalingFactors[5] = {M_PI, M_PI, L31_MAX, M_PI, 10};
 
 	scaleVector(configuration, scalingFactors);
 	ComputeKinematics(configuration, currentX);
@@ -423,7 +427,7 @@ void LWPRKinematics::scaleVector(double x[], int x_size, double scalingFactors[]
 bool
 LWPRKinematics::ComputeKinematics(const double* jAng, double* posOrt)
 {
-	double scalingFactors[5] = {M_PI, M_PI, L31_MAX, M_PI, 100};
+
 
 	::std::vector< double> inputData(jAng, jAng + this->forwardModel->nIn());
 
@@ -450,7 +454,7 @@ LWPRKinematics::ComputeKinematics(const double* jAng, double* posOrt)
 bool
 LWPRKinematics::ComputeKinematics(const ::Eigen::VectorXd& jAng, ::Eigen::VectorXd& posOrt)
 {
-	double scalingFactors[5] = {M_PI, M_PI, L31_MAX, M_PI, 100};
+	//double scalingFactors[5] = {M_PI, M_PI, L31_MAX, M_PI, 10};
 
 	::std::vector< double> inputData(jAng.data(), jAng.data() + this->forwardModel->nIn());
 

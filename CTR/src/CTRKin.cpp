@@ -1086,7 +1086,7 @@ void CTRKin::ApplyHybridPositionForceControl(const ::Eigen::MatrixXd& J, const :
 		tmpMat(i, i) += 0.01;
 
 	//orientation in the nullspace
-	double orientationGain = 1.0;
+	double orientationGain = 1000.0;
 	dotq += orientationGain*( IdMat - Jp.transpose() * tmpMat.inverse() * Jp) * Jo.transpose() * err.block(3, 0, 3, 1);
 
 	dotq = Jp.transpose() * generalizedForce;

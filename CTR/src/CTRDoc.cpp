@@ -105,7 +105,7 @@ CCTRDoc::CCTRDoc()
 	m_ref_set = false;
 	// paths for LWPR models (TIP AND BALANCED PAIR)
 	//::std::string pathToForwardModel("../models/model_ct_2016_4_6_17_25_29TIP.bin");
-	::std::string pathToForwardModel("../models/lwpr_surgery_2016_4_26_10_17_23_D40.bin");
+	::std::string pathToForwardModel("../models/lwpr_forward_2016_11_17_16_14_55.bin");
 	::std::string pathToForwardModelBP("../models/model_ct_2016_4_7_14_48_43BP.bin");
 	robot = CTRFactory::buildCTR("");
 	kinematics = new MechanicsBasedKinematics(robot, 100);
@@ -815,12 +815,16 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 
 			// enable Jacobian Transpose controller
 			mySelf->m_bCLIK = true;
-			for (int i = 0; i < 6; ++i)
-				os << localStat.currTipPosDir[i] << "  ";
 
-			for(int i = 0; i < 5; ++i)
-				os << localStat.currJang[i] << " ";
-			os << ::std::endl;
+			//double jAng[5] = {0};
+			//mySelf->m_kinLWPR->runOptimizationController(localStat.currJang, localStat.tgtTipPosDir, jAng);
+			//PrintCArray(jAng,5);
+			//for (int i = 0; i < 6; ++i)
+			//	os << localStat.currTipPosDir[i] << "  ";
+
+			//for(int i = 0; i < 5; ++i)
+			//	os << localStat.currJang[i] << " ";
+			//os << ::std::endl;
 			//mySelf->m_InvKinOn = false;
 			//mySelf->SolveInverseKin(localStat);
 
@@ -1817,7 +1821,7 @@ void CCTRDoc::dJangTodCnt(const double* dJ, double* dCnt)
 {
 	// CKim - dJ = { da21, da31, dL31, da1, dL1 }, dCnt = { L1, L3, 0, a1, a2, a3, 0 }
 	double da1, da2, da3, dL1, dL3;			
-	double scl, tmp;		double maxLinVel = 50.0;		double maxRotVel = 1.0*3.141592;
+	double scl, tmp;		double maxLinVel = 150.0;		double maxRotVel = 1.0*3.141592;
 
 	da1 = dJ[3];			da2 = dJ[0] + da1;			da3 = dJ[1] + da1;
 	dL1 = dJ[4];			dL3 = dJ[2] + dL1;
@@ -2050,7 +2054,7 @@ void CCTRDoc::SolveInverseKin(CTR_status& stat)
 	for(int i=0; i<5; i++)	{	stat.initJang[i] = stat.currJang[i];		}
 	
 	// CKim - Normalize, Apply Joint limits and covert to motor counts. 
-	InvKinJangToMtr(jAng,stat.currMotorCnt,stat.tgtJang,stat.tgtMotorCnt, isInLimit);
+	//InvKinJangToMtr(jAng,stat.currMotorCnt,stat.tgtJang,stat.tgtMotorCnt, isInLimit);
 	//for (int i = 0; i < 5; ++i)
 	//	::std::cout << (stat.currMotorCnt[i] - stat.tgtMotorCnt[i]) * c_CntToRad << " ";
 	//

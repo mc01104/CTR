@@ -1023,14 +1023,14 @@ void CTRKin::ApplyKinematicControlNullspace(const Eigen::MatrixXd& J, const Eige
 		tmpMat(i, i) += 0.01;
 
 	//position control
-	dotq = Jp.transpose() * err.block(0, 0, 3, 1);
+	dotq = Jp.transpose() * (Jp * Jp.transpose()).inverse() * err.block(0, 0, 3, 1);
 
 	//orientation in the nullspace
-	double orientationGain = 10.0;
+	double orientationGain = 100.0;
 	dotq += orientationGain*( IdMat - Jp.transpose() * tmpMat.inverse() * Jp) * Jo.transpose() * err.block(3, 0, 3, 1);
 
 	// overall gain
-	dotq *= 0.1;
+	dotq *= 0.05;
 
 	// Joint limit avoidance using potential-field method
 	double upperSoft = L31_MAX - 10;

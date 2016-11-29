@@ -22,12 +22,16 @@ LWPRKinematics::LWPRKinematics(const ::std::string& pathToForwardModel):
 	this->forwardModel->updateD(true);
 	
 	this->SetForgettingFactor(ffactor);
+
+	this->directionInJointspace = new double[this->forwardModel->nIn()];
+	this->inputArray = new double[this->forwardModel->nIn()];
 }
 
 
 LWPRKinematics::~LWPRKinematics()
 {
 	delete this->forwardModel;
+	delete[] directionInJointspace;
 }
 
 bool
@@ -251,4 +255,128 @@ LWPRKinematics::TipFwdKinJac(const double* jAng, double* posOrt, Eigen::MatrixXd
 	ReleaseMutex(this->m_hLWPRMutex);
 
 	return;
+}
+
+bool 
+LWPRKinematics::TipFwdKinEx(const double* jAng, const double jAngPrev[], double* posOrt)
+{
+	this->computeDirection(jAng, jAngPrev, this->directionInJointspace);
+
+	memcpy(this->inputArray, jAng, this->forwardModel->nIn() * sizeof(double));	
+	memcpy(&this->inputArray[this->forwardModel->nIn()], this->directionInJointspace, this->forwardModel->nIn() * sizeof(double)); 
+
+	::std::vector< double> inputData(this->inputArray, this->inputArray + 2 * this->forwardModel->nIn());
+
+	this->CheckJointLimits(inputData);
+
+#ifdef _SCALED_
+	inputData[0] /= M_PI;
+	inputData[1] /= M_PI;
+	inputData[2] = inputData[2]/L31_MAX ;
+#endif
+		
+	try 
+	{
+		::std::vector<double> outputData = this->forwardModel->predict(inputData, 0.001);	
+
+		::std::vector<double> orientation = ::std::vector<double> (outputData.begin() + 3, outputData.end());
+
+		this->CompensateForRigidBodyMotion(jAng, outputData.data(), posOrt);
+
+		return true;
+
+	}
+	catch (::std::exception& e)
+	{
+		::std::cout << e.what() << ::std::endl;
+		return false;
+	}
+}
+
+bool 
+LWPRKinematics::TipFwdKin(const double* jAng, const double jAngPrev[], double* posOrt)
+{
+	this->computeDirection(jAng, jAngPrev, this->directionInJointspace);
+
+	memcpy(this->inputArray, jAng, this->forwardModel->nIn() * sizeof(double));	
+	memcpy(&this->inputArray[this->forwardModel->nIn()], this->directionInJointspace, this->forwardModel->nIn() * sizeof(double)); 
+
+	::std::vector< double> inputData(this->inputArray, this->inputArray + 2 * this->forwardModel->nIn());
+
+	this->CheckJointLimits(inputData);
+
+#ifdef _SCALED_
+	inputData[0] /= M_PI;
+	inputData[1] /= M_PI;
+	inputData[2] = inputData[2]/L31_MAX ;
+#endif
+
+	try 
+	{
+		WaitForSingleObject(this->m_hLWPRMutex, INFINITE);
+		::std::vector<double> outputData = this->forwardModel->predict(inputData, 0.001);	
+		ReleaseMutex(this->m_hLWPRMutex);
+
+		::std::vector<double> orientation = ::std::vector<double> (outputData.begin() + 3, outputData.end());
+
+		this->CompensateForRigidBodyMotion(jAng, outputData.data(), posOrt);
+
+		return true;
+
+	}
+	catch (::std::exception& e)
+	{
+		::std::cout << e.what() << ::std::endl;
+		return false;
+	}
+
+}
+
+void 
+LWPRKinematics::computeDirection(const double jAng[], const double jAngPrev[], double directionInJointspace[])
+{
+	::Eigen::VectorXd currentAngles = ::Eigen::Map<::Eigen::VectorXd> (const_cast<double*>(jAng), this->forwardModel->nIn());
+	::Eigen::VectorXd previousAngles = ::Eigen::Map<::Eigen::VectorXd> (const_cast<double*>(jAngPrev), this->forwardModel->nIn());
+
+	::Eigen::VectorXd direction = (currentAngles - previousAngles);
+	direction.normalize();
+
+	memcpy(directionInJointspace, direction.data(), this->forwardModel->nIn());
+}
+
+void 
+LWPRKinematics::AdaptForwardModel(const double* posOrt, const double* jAng, const double jAngPrev[])
+{
+	// i may need thread protection
+	this->computeDirection(jAng, jAngPrev, this->directionInJointspace);
+
+	memcpy(this->inputArray, jAng, this->forwardModel->nIn() * sizeof(double));	
+	memcpy(&this->inputArray[this->forwardModel->nIn()], this->directionInJointspace, this->forwardModel->nIn() * sizeof(double)); 
+
+	::std::vector< double> inputData(this->inputArray, this->inputArray + 2 * this->forwardModel->nIn());
+	
+#ifdef _SCALED_	
+	inputData[0] /= M_PI;
+	inputData[1] /= M_PI;
+	inputData[2] = inputData[2]/L31_MAX;
+#endif
+
+	double posOrtFinal[6] = {0};
+
+	this->CompensateForRigidBodyMotionInverse(jAng, posOrt, posOrtFinal);
+
+	::std::vector<double> outputData(posOrtFinal, posOrtFinal + this->forwardModel->nOut());
+
+	WaitForSingleObject(this->m_hLWPRMutex, INFINITE);
+	// This is to deal with data around the boundaries of the periodic function
+	for (int i = 0; i < 1; i++)
+	{
+		this->forwardModel->update(inputData, outputData);
+		inputData[0] += 2 * M_PI;
+		this->forwardModel->update(inputData, outputData);
+		inputData[0] -= 4 * M_PI;
+		this->forwardModel->update(inputData, outputData);
+	}
+	ReleaseMutex(this->m_hLWPRMutex);
+
 }

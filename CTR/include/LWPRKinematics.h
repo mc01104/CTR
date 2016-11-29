@@ -27,6 +27,9 @@ class LWPRKinematics : public CTRKin
 
 	HANDLE m_hLWPRMutex;	
 	HANDLE m_hLWPRInvMutex;	
+
+	double* directionInJointspace;
+	double* inputArray;
 public:
 	
 	/**
@@ -46,6 +49,13 @@ public:
 	  */
 	virtual bool TipFwdKinEx(const double* jAng, double* posOrt);	
 	virtual bool TipFwdKin(const double* jAng, double* posOrt);	
+
+	// hysteresis
+	virtual bool TipFwdKinEx(const double* jAng, const double jAngPrev[], double* posOrt);	
+	virtual bool TipFwdKin(const double* jAng, const double jAngPrev[], double* posOrt);	
+	void computeDirection(const double jAng[], const double jAngPrev[], double directionInJointspace[]);
+
+
 	void TipFwdKinJac(const double* jAng, double* posOrt, Eigen::MatrixXd& J, bool evalJ);
 
 	/**
@@ -54,6 +64,13 @@ public:
 	  *@param[in] joint angles
 	  */
 	void AdaptForwardModel(const double* posOrt, const double* jAng);
+
+	/**
+	  *@brief adapt LWPR based on incoming information
+	  *@param[in] tip position and orientation
+	  *@param[in] joint angles
+	  */
+	void AdaptForwardModel(const double* posOrt, const double* jAng, const double jAngPrev[]);
 	
 	/**
 	  *@brief sets the initial and final forgetting factor for the LWPR adaptation together with the annealing parameter. For more information check LWPR's documentation

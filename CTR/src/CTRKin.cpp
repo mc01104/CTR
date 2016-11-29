@@ -821,13 +821,13 @@ void CTRKin::ApplyKinematicControlNullspace(const Eigen::MatrixXd& J, const Eige
 
 	tmpMat = (Jp * Jp.transpose());
 	for (int i = 0; i < 3; ++i)
-		tmpMat(i, i) += 0.01;
+		tmpMat(i, i) += 0.001;
 	//Eigen::Matrix<double,3,1> sv;
 	//Eigen::JacobiSVD<Eigen::Matrix<double,3,3>> Jsvd(tmpMat,Eigen::ComputeThinU | Eigen::ComputeThinV);
 	//sv = Jsvd.singularValues();
 	//::std::cout << "condition number:" << sv[0]/sv[2] << ::std::endl;
 	//position control
-	dotq = Jp.transpose() * err.block(0, 0, 3, 1);
+	dotq = 1.0 * Jp.transpose() * (Jp * Jp.transpose()).inverse() * err.block(0, 0, 3, 1);
 
 	//orientation in the nullspace
 	//if (tmpMat.determinant() < 1.7)

@@ -99,10 +99,11 @@ CCTRDoc::CCTRDoc()
 	//::std::string pathToForwardModel("../models/model_ct_2015_11_19_12_58_45.bin");
 	//::std::string pathToForwardModel("../models/model_ct_2015_11_27_13_9_5_update_metric.bin");
 	//::std::string pathToForwardModel("../models/model_ct_2015_11_27_17_24_54.bin");
-	::std::string pathToForwardModel("../models/lwpr_forward_2016_4_28_14_32_16_D80.bin");
+	/*::std::string pathToForwardModel("../models/lwpr_forward_2016_4_28_14_32_16_D80.bin");*/
 	//::std::string pathToForwardModel("../models/model_ct_2015_12_2_12_12_35.bin");
 	//::std::string pathToForwardModel("../models/2016-02-11-11-12-45_adapted.bin");
 	//::std::string pathToForwardModel("../models/2016-02-11-14-28-28_adapted.bin");
+	::std::string pathToForwardModel("../models/lwpr_forward_2016_11_17_16_14_55.bin");
 	
 	try
 	{
@@ -937,7 +938,7 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 	double dCnt[7];		
 	
 	//double K[6] = {10.0, 10.0, 10.0, 10.0, 10.0, 10.0 };	// working
-	double K[6] = {10.0, 10.0, 10.0, 1.0, 1.0, 1.0 };		// working
+	double K[6] = {10.0, 10.0, 10.0, 10.0, 10.0, 10.0 };		// working
 	
 	//double K[6] = {10.0, 10.0, 10.0, 5.0, 5.0, 5.0 };		// working
 	//double K[6] = { 5.0, 5.0, 5.0, 5.0, 5.0, 5.0 };				// For sensor feedback + estimator
@@ -1017,7 +1018,9 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 			//mySelf->m_kinLib->EvalCurrentKinematicsModelNumeric(localStat.currJang, localStat.currTipPosDir, J, mySelf->m_bCLIK);
 
 			// CKim - Apply Closed Loop Inverse kienmatics control law. dq = inv(J) x (dxd + K(xd - xm))
-
+			//localStat.tgtTipPosDir[3] = 0;
+			//localStat.tgtTipPosDir[4] = 0;
+			//localStat.tgtTipPosDir[5] = 1;
 			// Use sensor feedback
 			if(mySelf->m_FeedbackOn)
 			{
@@ -1039,8 +1042,8 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 
 			// CKim - Invert jacobian, handle singularity and solve
 			//mySelf->m_kinLib->ApplyKinematicControl(J,err,dq);
-			//mySelf->m_kinLWPR->ApplyKinematicControlNullspace(J, err, dq, localStat.currJang);
-			mySelf->m_kinLWPR->ApplyKinematicControl(J,err,dq);
+			mySelf->m_kinLWPR->ApplyKinematicControlNullspace(J, err, dq, localStat.currJang);
+			//mySelf->m_kinLWPR->ApplyKinematicControl(J,err,dq);
 
 			// CKim - Convert dotq into motor velocity
 			// Check joint limits
@@ -1435,10 +1438,9 @@ unsigned int WINAPI	CCTRDoc::JointSpacePlayback(void* para)
 	// CKim - The Loop
 	timer.ResetTime();
 	double pos[5];
-
+	int iter = 0;
 	while(mySelf->m_jointPlayback)
-	{
-	
+	{	
 		// CKim - Synch with haptic device. This is for spending 1 ms. 
 		mySelf->m_Omni->SynchState(localStat);
 		
@@ -1463,15 +1465,21 @@ unsigned int WINAPI	CCTRDoc::JointSpacePlayback(void* para)
 
 		for (int i = 0; i < 5; ++i)
 			localStat.tgtJang[i] = pos[i];
-		//memcpy(localStat.tgtJang , pos, 5 * sizeof(double));
 
-		for (int i = 0; i < 6; ++i)
-			os << localStat.sensedTipPosDir[i] << "\t";
-		for (int i = 0; i < 5; ++i)
-			os << localStat.currJang[i] << "\t";
+		if (iter % 20 == 0 )
+		{
 
-		os << ::std::endl;
+			//memcpy(localStat.tgtJang , pos, 5 * sizeof(double));
 
+			for (int i = 0; i < 6; ++i)
+				os << localStat.sensedTipPosDir[i] << "\t";
+			for (int i = 0; i < 5; ++i)
+				os << localStat.currJang[i] << "\t";
+
+			os << ::std::endl;
+		}
+		iter++;
+	
 		bool isInLim = true;
 		mySelf->InvKinJangToMtr(pos, localStat.currMotorCnt, localStat.tgtJang, localStat.tgtMotorCnt, isInLim);
 
@@ -1622,7 +1630,7 @@ void CCTRDoc::dJangTodCnt(const double* dJ, double* dCnt)
 {
 	// CKim - dJ = { da21, da31, dL31, da1, dL1 }, dCnt = { L1, L3, 0, a1, a2, a3, 0 }
 	double da1, da2, da3, dL1, dL3;			
-	double scl, tmp;		double maxLinVel = 50.0;		double maxRotVel = 5.0*3.141592;
+	double scl, tmp;		double maxLinVel = 100.0;		double maxRotVel = 1.5*3.141592;
 
 	da1 = dJ[3];			da2 = dJ[0] + da1;			da3 = dJ[1] + da1;
 	dL1 = dJ[4];			dL3 = dJ[2] + dL1;
@@ -1918,7 +1926,9 @@ void CCTRDoc::MasterToSlave(CTR_status& stat, double scl, bool absolute)
 	}
 
 	for(int i=0; i<3; i++)	{	stat.tgtTipPosDir[i] = tipPos(i);		stat.tgtTipPosDir[i+3] = tipDir(i);		}
-
+	
+	// To Stylus tip
+	for(int i=0; i<3; i++) { stat.tgtTipPosDir[i] += stat.tgtTipPosDir[i+3] * 37.5 * 0;}
 }
 
 
@@ -2063,7 +2073,7 @@ void CCTRDoc::OnBnClickedBtnPlay()
 	else if (m_jointPlayback)
 	{
 		::std::cout << "joint space trajectory playback" << ::std::endl;
-		m_TrjGen->Initialize("test.txt", 5);
+		m_TrjGen->Initialize("tube_clearance_traj.txt", 5);
 
 		m_hEMevent = CreateEvent(NULL,false,false,NULL);	// Auto reset event (2nd argument false means...)
 		

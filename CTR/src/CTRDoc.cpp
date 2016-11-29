@@ -1466,11 +1466,11 @@ unsigned int WINAPI	CCTRDoc::JointSpacePlayback(void* para)
 		for (int i = 0; i < 5; ++i)
 			localStat.tgtJang[i] = pos[i];
 
-		if (iter % 20 == 0 )
+		if (iter % 200 == 0 )
 		{
 
 			//memcpy(localStat.tgtJang , pos, 5 * sizeof(double));
-
+			os << timer.GetTime() << "\t";
 			for (int i = 0; i < 6; ++i)
 				os << localStat.sensedTipPosDir[i] << "\t";
 			for (int i = 0; i < 5; ++i)
@@ -2073,7 +2073,7 @@ void CCTRDoc::OnBnClickedBtnPlay()
 	else if (m_jointPlayback)
 	{
 		::std::cout << "joint space trajectory playback" << ::std::endl;
-		m_TrjGen->Initialize("tube_clearance_traj.txt", 5);
+		m_TrjGen->Initialize("hysteresisTest.txt", 5);
 
 		m_hEMevent = CreateEvent(NULL,false,false,NULL);	// Auto reset event (2nd argument false means...)
 		

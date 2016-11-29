@@ -2073,7 +2073,8 @@ void CCTRDoc::OnBnClickedBtnPlay()
 	else if (m_jointPlayback)
 	{
 		::std::cout << "joint space trajectory playback" << ::std::endl;
-		m_TrjGen->Initialize("hysteresisTest.txt", 5);
+		//m_TrjGen->Initialize("hysteresisTest.txt", 5);
+		m_TrjGen->Initialize("hysteresisTrainingTrajectory.txt", 5);
 
 		m_hEMevent = CreateEvent(NULL,false,false,NULL);	// Auto reset event (2nd argument false means...)
 		

@@ -55,6 +55,8 @@ typedef struct CTR_status
 	// CKim - current / commanded joint angle
 	double	currJang[5];			double	tgtJang[5];
 
+	double	currJangPrev[5];
+
 	// CKim - current / commanded tip configuration ( = position and direction)
 	double	currTipPosDir[6];		double	tgtTipPosDir[6];
 

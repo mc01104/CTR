@@ -960,8 +960,9 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 		mySelf->m_motionCtrl->GetErrorFlag(localStat.errFlag);
 
 		// CKim - Calculate current joint angle
+		memcpy(localStat.currJangPrev, localStat.currJang, 5 * sizeof(double));
 		mySelf->MtrToJang(localStat.currMotorCnt, localStat.currJang);
-
+		
 		// TODO: learn an LWPR model for the balanced pair as well
 		// CKim - Evaluate Kinematics Model for balanced pair position and orientation
 		mySelf->m_kinLib->BalancedPairFwdKin(localStat.currJang, localStat.bpTipPosDir);

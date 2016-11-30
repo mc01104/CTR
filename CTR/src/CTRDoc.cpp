@@ -711,7 +711,7 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 
 	//mySelf->m_fileStream = new ::std::ofstream(filename);   
 	//LeaveCriticalSection(&m_cSection);
-	ofstream os("debug_control.txt");
+	ofstream os("debug_control_no_scaling.txt");
 
 	// CKim - The Loop
 	while(mySelf->m_teleOpMode)

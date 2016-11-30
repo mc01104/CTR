@@ -7,7 +7,7 @@
 
 #include <iostream>
 
-double scalingFactors[5] = {M_PI, M_PI, 1.0, M_PI, 1};
+double scalingFactors[5] = {M_PI, M_PI, 35.0, M_PI, 100};
 
 
 LWPRKinematics::LWPRKinematics(const ::std::string& pathToForwardModel):
@@ -337,12 +337,12 @@ void LWPRKinematics::runOptimizationController(const double initialConfiguration
 	error = targetX - currentX;
 	::Eigen::VectorXd confPrev;
 
-	while (error.segment(0, 3).norm() > 0.5 && iterations < maxIterations)
+	while (error.segment(0, 3).norm() > 1.0 && iterations < maxIterations)
 	{
 		ComputeJacobian(configuration, J);
 		Jp = J.block(0,0,3,5);
 
-		if (step < 1.e-10)
+		if (step < 1.e-6)
 			break;
 
 		confPrev = configuration;
@@ -379,7 +379,7 @@ void LWPRKinematics::runOptimizationController(const double initialConfiguration
 	}
 
 	// if there are no feasible solutions skip orientation control and return the closest configuration to the feasible set.
-	if (error.segment(0, 3).norm() > 0.5)
+	if (error.segment(0, 3).norm() > 1.0)
 	{
 		unscaleVector(configuration,scalingFactors);
 		memcpy(outputConfiguration, configuration.data(), configuration.size() * sizeof(double));

@@ -156,7 +156,7 @@ void CCTRView::OnInitialUpdate()
 
 	// CKim - Initialize controls here
 	this->SetDlgItemTextA(m_idCmdJang[0],"105.324");		this->SetDlgItemTextA(m_idCmdJang[1],"125.421");	
-	this->SetDlgItemTextA(m_idCmdJang[2],"5");			this->SetDlgItemTextA(m_idCmdJang[3],"180.576");			this->SetDlgItemTextA(m_idCmdJang[4],"67.310");
+	this->SetDlgItemTextA(m_idCmdJang[2],"5");			this->SetDlgItemTextA(m_idCmdJang[3],"180.576");			this->SetDlgItemTextA(m_idCmdJang[4],"0");
 	
 	//// CKim - Open the graphics dialog
 	//if(!m_vtkDlg)
@@ -213,6 +213,17 @@ void CCTRView::OnTimer(UINT_PTR nIDEvent)
 	for (int i = 0; i < 5; ++i)
 		m_actJang[i].Format("%.3f",jAng[i]);
 
+	double jAngCmd[5];
+	if (m_ctrlMode == 1)
+	{
+		memcpy(jAngCmd, stat.tgtJang, 5 * sizeof(double));
+		jAngCmd[0] *= 180.0/3.141592;
+		jAngCmd[1] *= 180.0/3.141592;
+		jAngCmd[3] *= 180.0/3.141592;
+	
+		for (int i = 0; i < 5; ++i)
+			m_cmdJang[i].Format("%.3f",jAngCmd[i]);
+	}
 
 	UpdateData(false);
 

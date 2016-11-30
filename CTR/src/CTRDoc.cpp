@@ -688,7 +688,7 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 	CTR_status localStat;		
 	
 	// CKim - Flags
-	bool teleOpCtrl = false;		bool safeToTeleOp = false;			double scl = 1.00;	double kp = 3.0;
+	bool teleOpCtrl = false;		bool safeToTeleOp = false;			double scl = 1.00;	double kp = 1.1;
 
 	bool adaptModelFlag = false;
 
@@ -816,19 +816,22 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 			// enable Jacobian Transpose controller
 			mySelf->m_bCLIK = true;
 
-			//double jAng[5] = {0};
-			//mySelf->m_kinLWPR->runOptimizationController(localStat.currJang, localStat.tgtTipPosDir, jAng);
+			double jAng[5] = {0};
+			mySelf->m_kinLWPR->runOptimizationController(localStat.currJang, localStat.tgtTipPosDir, jAng);
 			//PrintCArray(jAng,5);
-			//for (int i = 0; i < 6; ++i)
-			//	os << localStat.currTipPosDir[i] << "  ";
 
-			//for(int i = 0; i < 5; ++i)
-			//	os << localStat.currJang[i] << " ";
-			//os << ::std::endl;
-			//mySelf->m_InvKinOn = false;
+			for (int i = 0; i < 5; ++i)
+				os << jAng[i] << " ";
+			for (int i = 0; i < 6; ++i)
+				os << localStat.currTipPosDir[i] << "  ";
+
+			for(int i = 0; i < 5; ++i)
+				os << localStat.currJang[i] << " ";
+			os << ::std::endl;
+			//mySelf->m_InvKinOn = true;
 			//mySelf->SolveInverseKin(localStat);
 
-			//PrintCArray(tempSolution, 5);
+			//PrintCArray(localStat.tgtJang, 5);
 		}
 
 					
@@ -860,6 +863,7 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 		LeaveCriticalSection(&m_cSection);
 	}
 	mySelf->m_ref_set = false;
+	mySelf->m_InvKinOn = false;
 	os.close();
 	return 0;
 
@@ -2041,7 +2045,7 @@ void CCTRDoc::SolveInverseKin(CTR_status& stat)
 	//m_kinLWPR->InverseKinematicsLSQ(stat.tgtTipPosDir, stat.initJang, jAng, Err, exitCond);
 	//m_kinLib->InverseKinematicsLSQ(stat.tgtTipPosDir, stat.initJang, jAng, Err, exitCond);
 	m_kinLWPR->runOptimizationController(stat.currJang, stat.tgtTipPosDir, jAng);
-	PrintCArray(jAng,5);
+	
 	//memcpy(tempSolution, localStat.tgtJang, 5 * sizeof(double));
 	stat.condNum = Err[0];		stat.invKinErr[0] = Err[1];		stat.invKinErr[1] = Err[2];
 	//::std::cout << Err[0] << ::std::endl;
@@ -2054,7 +2058,7 @@ void CCTRDoc::SolveInverseKin(CTR_status& stat)
 	for(int i=0; i<5; i++)	{	stat.initJang[i] = stat.currJang[i];		}
 	
 	// CKim - Normalize, Apply Joint limits and covert to motor counts. 
-	//InvKinJangToMtr(jAng,stat.currMotorCnt,stat.tgtJang,stat.tgtMotorCnt, isInLimit);
+	InvKinJangToMtr(jAng,stat.currMotorCnt,stat.tgtJang,stat.tgtMotorCnt, isInLimit);
 	//for (int i = 0; i < 5; ++i)
 	//	::std::cout << (stat.currMotorCnt[i] - stat.tgtMotorCnt[i]) * c_CntToRad << " ";
 	//

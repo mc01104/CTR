@@ -132,8 +132,8 @@ LWPRKinematics::CompensateForRigidBodyMotion(const double* jAng, const double* p
 	::std::vector<double> finalOrientation;
 	HTransform::applyRotation(baseTransform, ::std::vector<double> (posOrt + 3, posOrt + 6), finalOrientation);
 
-	finalOrientation /= Norm2(finalOrientation);
-	double a = Norm2(finalOrientation);
+	//finalOrientation /= Norm2(finalOrientation);
+	//double a = Norm2(finalOrientation);
 
 	memcpy(posOrtFinal + 3, finalOrientation.data(), 3 * sizeof(double));
 
@@ -298,10 +298,10 @@ LWPRKinematics::TipFwdKin(const double* jAng, const double jAngPrev[], double* p
 {
 	this->computeDirection(jAng, jAngPrev, this->directionInJointspace);
 
-	memcpy(this->inputArray, jAng, this->forwardModel->nIn() * sizeof(double));	
-	memcpy(&this->inputArray[this->forwardModel->nIn()], this->directionInJointspace, this->forwardModel->nIn() * sizeof(double)); 
+	memcpy(this->inputArray, jAng, 3 * sizeof(double));	
+	memcpy(&this->inputArray[3], this->directionInJointspace, 3 * sizeof(double)); 
 
-	::std::vector< double> inputData(this->inputArray, this->inputArray + 2 * this->forwardModel->nIn());
+	::std::vector< double> inputData(this->inputArray, this->inputArray + 2 * 3);
 
 	this->CheckJointLimits(inputData);
 
@@ -338,10 +338,12 @@ LWPRKinematics::computeDirection(const double jAng[], const double jAngPrev[], d
 	::Eigen::VectorXd currentAngles = ::Eigen::Map<::Eigen::VectorXd> (const_cast<double*>(jAng), this->forwardModel->nIn());
 	::Eigen::VectorXd previousAngles = ::Eigen::Map<::Eigen::VectorXd> (const_cast<double*>(jAngPrev), this->forwardModel->nIn());
 
-	::Eigen::VectorXd direction = (currentAngles - previousAngles);
-	direction.normalize();
+	::Eigen::VectorXd direction = (currentAngles.segment(0, 3) - previousAngles.segment(0, 3));
+	
+	if (direction.norm() >= 0.0001)
+		direction.normalize();
 
-	memcpy(directionInJointspace, direction.data(), this->forwardModel->nIn());
+	memcpy(directionInJointspace, direction.data(), 3 * sizeof(double));
 }
 
 void 

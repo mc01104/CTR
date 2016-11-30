@@ -480,6 +480,8 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 		EnterCriticalSection(&m_cSection);
 		for(int i=0; i<7; i++)	{	localStat.currMotorCnt[i] = mySelf->m_Status.currMotorCnt[i];	}
 		for(int i=0; i<5; i++)	{	localStat.currJang[i] = mySelf->m_Status.currJang[i];	}
+		for(int i=0; i<5; i++)	{	localStat.currJangPrev[i] = mySelf->m_Status.currJangPrev[i];	}
+
 		for(int i=0; i<6; i++)	{	localStat.currTipPosDir[i] = mySelf->m_Status.currTipPosDir[i];	}
 		for(int i=0; i<6; i++)  {   localStat.sensedTipPosDir[i] = mySelf->m_Status.sensedTipPosDir[i]; }
 		LeaveCriticalSection(&m_cSection);
@@ -588,13 +590,13 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 			double hysteresisPrediction[3] = {0};
 			double standardPrediction[3] = {0};
 			mySelf->m_kinLWPR_hyst->TipFwdKin(localStat.currJang, localStat.currJangPrev, hysteresisPrediction);
-			mySelf->m_kinLWPR->TipFwdKin(localStat.currJang, standardPrediction);
-			
-			if (mySelf->m_adapt_LWPR)
-				mySelf->m_kinLWPR_hyst->AdaptForwardModel(localStat.sensedTipPosDir, localStat.currJang,localStat.currJangPrev);
+			//mySelf->m_kinLWPR->TipFwdKin(localStat.currJang, standardPrediction);
+			//PrintCArray(localStat.currJangPrev, 5);
+			//if (mySelf->m_adapt_LWPR)
+			//	mySelf->m_kinLWPR_hyst->AdaptForwardModel(localStat.sensedTipPosDir, localStat.currJang,localStat.currJangPrev);
 
 			PrintCArray(hysteresisPrediction, 3);
-			PrintCArray(standardPrediction, 3); 
+			//PrintCArray(standardPrediction, 3); 
 
 			// CKim - Teleoperation safety check - gradually increase the resistance and decrease controller gain
 			// when the leastSquare error is above threshold and jont limit is reached. This is to prevent any 
@@ -962,7 +964,7 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 	int perfcnt = 0;	
 	int navg = 50;		
 	timer.ResetTime();		
-	long endTime;		
+	long endTime = 0;		
 
 	while(mySelf->m_motorConnected)
 	{
@@ -972,9 +974,9 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 		mySelf->m_motionCtrl->GetErrorFlag(localStat.errFlag);
 
 		// CKim - Calculate current joint angle
-		memcpy(localStat.currJangPrev, localStat.currJang, 5 * sizeof(double));
 		mySelf->MtrToJang(localStat.currMotorCnt, localStat.currJang);
-		
+		memcpy(localStat.currJangPrev, localStat.currJang, 5 * sizeof(double));
+		//PrintCArray(localStat.currJangPrev, 5);
 		// TODO: learn an LWPR model for the balanced pair as well
 		// CKim - Evaluate Kinematics Model for balanced pair position and orientation
 		mySelf->m_kinLib->BalancedPairFwdKin(localStat.currJang, localStat.bpTipPosDir);
@@ -1128,6 +1130,8 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 		for(int i=0; i<7; i++)	{
 			mySelf->m_Status.currMotorCnt[i] = localStat.currMotorCnt[i];		mySelf->m_Status.errFlag[i] = localStat.errFlag[i];			}
 		for(int i=0; i<5; i++)	{	mySelf->m_Status.currJang[i] = localStat.currJang[i];		}
+		for(int i=0; i<5; i++)	{	mySelf->m_Status.currJangPrev[i] = localStat.currJangPrev[i];		}
+
 		for(int i=0; i<6; i++)	
 		{	
 			mySelf->m_Status.currTipPosDir[i] = localStat.currTipPosDir[i];		mySelf->m_Status.bpTipPosDir[i] = localStat.bpTipPosDir[i];	

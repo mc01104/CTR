@@ -594,7 +594,7 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 				mySelf->m_kinLWPR_hyst->AdaptForwardModel(localStat.sensedTipPosDir, localStat.currJang,localStat.currJangPrev);
 
 			PrintCArray(hysteresisPrediction, 3);
-			PrintCArray(standardPrediction, 3);
+			PrintCArray(standardPrediction, 3); 
 
 			// CKim - Teleoperation safety check - gradually increase the resistance and decrease controller gain
 			// when the leastSquare error is above threshold and jont limit is reached. This is to prevent any 

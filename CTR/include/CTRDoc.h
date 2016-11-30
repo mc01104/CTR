@@ -23,7 +23,7 @@ class LWPRKinematics;
 class ChunTracker;
 class TrjGenerator;
 
-
+ 
 class CCTRDoc : public CDocument
 {
 protected: // create from serialization only

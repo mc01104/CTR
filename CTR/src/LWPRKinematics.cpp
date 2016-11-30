@@ -7,7 +7,7 @@
 
 #include <iostream>
 
-double scalingFactors[5] = {M_PI, M_PI, 35.0, M_PI, 100};
+double scalingFactors[5] = {M_PI, M_PI, 1, M_PI, 1};
 
 
 LWPRKinematics::LWPRKinematics(const ::std::string& pathToForwardModel):

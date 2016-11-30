@@ -104,10 +104,12 @@ CCTRDoc::CCTRDoc()
 	//::std::string pathToForwardModel("../models/2016-02-11-11-12-45_adapted.bin");
 	//::std::string pathToForwardModel("../models/2016-02-11-14-28-28_adapted.bin");
 	//::std::string pathToForwardModel("../models/lwpr_forward_2016_11_17_16_14_55.bin");
-	
+	::std::string pathToForwardModelWithHysteresis("../models/hysteresis.bin");
+
 	try
 	{
 		m_kinLWPR = new LWPRKinematics(pathToForwardModel);
+		m_kinLWPR_hyst = new LWPRKinematics(pathToForwardModelWithHysteresis);
 	}
 	catch(LWPR_Exception& e)
 	{
@@ -583,6 +585,16 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 				if (mySelf->m_adapt_LWPR)
 					mySelf->m_kinLWPR->AdaptForwardModel(localStat.sensedTipPosDir, localStat.currJang);
 			}
+			double hysteresisPrediction[3] = {0};
+			double standardPrediction[3] = {0};
+			mySelf->m_kinLWPR_hyst->TipFwdKin(localStat.currJang, localStat.currJangPrev, hysteresisPrediction);
+			mySelf->m_kinLWPR->TipFwdKin(localStat.currJang, standardPrediction);
+			
+			if (mySelf->m_adapt_LWPR)
+				mySelf->m_kinLWPR_hyst->AdaptForwardModel(localStat.sensedTipPosDir, localStat.currJang,localStat.currJangPrev);
+
+			PrintCArray(hysteresisPrediction, 3);
+			PrintCArray(standardPrediction, 3);
 
 			// CKim - Teleoperation safety check - gradually increase the resistance and decrease controller gain
 			// when the leastSquare error is above threshold and jont limit is reached. This is to prevent any 

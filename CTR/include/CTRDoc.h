@@ -53,6 +53,7 @@ private:
 	ChunMotion*			m_motionCtrl;
 	CTRKin*				m_kinLib;
 	LWPRKinematics*		m_kinLWPR;
+	LWPRKinematics*		m_kinLWPR_hyst;
 	ChunTracker*		m_Tracker;
 	TrjGenerator*		m_TrjGen;
 

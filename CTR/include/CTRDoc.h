@@ -127,6 +127,8 @@ public:
 
 	// CKim - Send command to robot
 	void	SendCommand(int type, const double* para);
+	void	SendDitheringCommand(int type, const double* para);
+
 	
 	// CKim - Set tele op mode on/off
 	void	SwitchTeleOpMode(bool onoff);

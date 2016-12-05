@@ -302,7 +302,8 @@ void CCTRView::OnClickedBtnMove()
 	{
 		CTR_cmd tmp =  this->GetDocument()->GetNextCommand();
 		memcpy(angles, tmp.para, 5 * sizeof(double));
-		this->GetDocument()->SendCommand(0,tmp.para);
+		//this->GetDocument()->SendCommand(0,tmp.para);
+		this->GetDocument()->SendDitheringCommand(0,tmp.para);
 
 	}
 

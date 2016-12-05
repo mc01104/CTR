@@ -1773,6 +1773,25 @@ void CCTRDoc::SendCommand(int type, const double* para)
 	LeaveCriticalSection(&m_cSection);
 }
 
+void CCTRDoc::SendDitheringCommand(int type, const double* para)
+{
+	double angles[5] = {0};
+	double perturbedAngles[5] = {0};
+
+	memcpy(perturbedAngles, para, 5 * sizeof(double));
+	memcpy(angles, para, 5 * sizeof(double));
+
+	double ditherAmplitude = 10.0;
+	this->SendCommand(0, angles);
+	for (int i = 1; i < 10; i++)
+	{
+		perturbedAngles[1] = angles[1];
+		perturbedAngles[1] += ::std::pow(-1, i+1) * static_cast<double> (ditherAmplitude/i);
+		this->SendCommand(0, perturbedAngles);
+	}
+	this->SendCommand(0, angles);
+}
+
 void CCTRDoc::ClearCommandQueue()
 {
 	EnterCriticalSection(&m_cSection);

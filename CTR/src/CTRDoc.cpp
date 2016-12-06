@@ -1790,7 +1790,7 @@ void CCTRDoc::SendDitheringCommand(int type, const double* para)
 		perturbedAngles[0] = angles[0] + ::std::pow(-1, i+1) * ditherAmplitude * (1 - i/20.0);
 		this->SendCommand(0, perturbedAngles);
 		
-		Sleep(1000);
+		Sleep(300);
 	}
 	this->SendCommand(0, angles);
 
@@ -1798,7 +1798,7 @@ void CCTRDoc::SendDitheringCommand(int type, const double* para)
 	{
 		perturbedAngles[1] = angles[1] + ::std::pow(-1, i+1) * ditherAmplitude * (1 - i/20.0);
 		this->SendCommand(0, perturbedAngles);
-		Sleep(1000);
+		Sleep(300);
 	}
 	this->SendCommand(0, angles);
 }

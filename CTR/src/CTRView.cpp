@@ -110,7 +110,7 @@ void CCTRView::DoDataExchange(CDataExchange* pDX)
 	CString strFilename;
 	for (int i = 0; i < 5; ++i)
 	{
-		strFilename += "-";
+		strFilename += "_";
 		strFilename += m_cmdJang[i];
 	}
 
@@ -313,7 +313,11 @@ void CCTRView::OnClickedBtnMove()
 
 	CString tmpSTR;
 	for (int i = 0; i < 5; ++i)
+	{
+		if (angles[i] < 0)
+			angles[i] += 360;
 		m_cmdJang[i].Format("%d",(int) angles[i]);
+	}
 
 	if(m_vtkDlg)
 		m_vtkDlg->ResetCam();

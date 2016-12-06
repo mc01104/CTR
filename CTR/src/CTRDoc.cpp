@@ -1783,16 +1783,15 @@ void CCTRDoc::SendDitheringCommand(int type, const double* para)
 
 	double ditherAmplitude = 20.0 * M_PI/180.0;
 	this->SendCommand(0, angles);
-	this->m_motionCtrl->WaitMotionDone();
-	//Sleep(3000);
+	//this->m_motionCtrl->WaitMotionDone();
+	Sleep(3000);
 	for (int i = 1; i < 20; i++)
 	{
 		::std::cout << perturbedAngles[0] * 180/M_PI << ::std::endl;
 		perturbedAngles[0] = angles[0] + ::std::pow(-1, i+1) * ditherAmplitude * (1 - i/20.0);
 		this->SendCommand(0, perturbedAngles);
 		
-		//Sleep(300);
-		this->m_motionCtrl->WaitMotionDone();
+		Sleep(300);
 	}
 	this->SendCommand(0, angles);
 
@@ -1800,8 +1799,8 @@ void CCTRDoc::SendDitheringCommand(int type, const double* para)
 	{
 		perturbedAngles[1] = angles[1] + ::std::pow(-1, i+1) * ditherAmplitude * (1 - i/20.0);
 		this->SendCommand(0, perturbedAngles);
-		this->m_motionCtrl->WaitMotionDone();
-		//Sleep(300);
+		//this->m_motionCtrl->WaitMotionDone();
+		Sleep(300);
 	}
 	this->SendCommand(0, angles);
 }

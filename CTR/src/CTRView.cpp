@@ -107,13 +107,15 @@ void CCTRView::DoDataExchange(CDataExchange* pDX)
 	str.Format("%d", (int) this->GetDocument()->GetCommandQueueSize());	
 	DDX_Text(pDX, m_idNumPoints, str);
 
-	CString strFilename;
+	::std::string tmpStr = "_" + GetDateString(); 
+	CString strFilename = tmpStr.c_str();
+
 	for (int i = 0; i < 5; ++i)
 	{
 		strFilename += "_";
 		strFilename += m_cmdJang[i];
 	}
-
+	
 	DDX_Text(pDX, m_filename_id, strFilename);
 
 	

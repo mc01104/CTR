@@ -83,7 +83,7 @@ double NormSquared(const ::std::vector<double>& input)
   time (&rawtime);
   timeinfo = localtime(&rawtime);
 
-  strftime (buffer,80,"%Y-%m-%d-%H-%M-%S", timeinfo);
+  strftime (buffer,80,"%Y_%m_%d_%H_%M_%S", timeinfo);
 
   return ::std::string(buffer);
 }

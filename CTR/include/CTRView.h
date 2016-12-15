@@ -72,7 +72,7 @@ public:
 	
 	bool logDataFlag;
 	::std::ofstream logStream;
-
+	CString m_strFilename;
 	double transIncrement;
 	double recConfiguration[5];
 

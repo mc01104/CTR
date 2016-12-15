@@ -29,7 +29,7 @@ Loop %loopNum%
 	WinWaitActive, %ctrGUI%
 
 	MouseClick, left, 310, 230 ; Move button
-	Sleep, 30000
+	Sleep, 20000
 
 	MouseClick, left, 300, 300
 	MouseClick, left, 300, 300 
@@ -43,7 +43,7 @@ Loop %loopNum%
 	WinWaitActive, %david%
 
 	MouseClick, left, 180, 430 ; Start button
-	Sleep, 40000
+	Sleep, 25000
 
 	MouseClick, left, 240, 670 ; Save button
 	Sleep, 1000
@@ -51,7 +51,7 @@ Loop %loopNum%
 	Send, file^v.stl{Enter}
 	Sleep, 1000
 	;Send, {Enter}
-	Sleep, 12000
+	Sleep, 7000
 	Send, {Enter}
 
 

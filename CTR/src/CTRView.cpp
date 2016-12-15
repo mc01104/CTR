@@ -107,17 +107,7 @@ void CCTRView::DoDataExchange(CDataExchange* pDX)
 	str.Format("%d", (int) this->GetDocument()->GetCommandQueueSize());	
 	DDX_Text(pDX, m_idNumPoints, str);
 
-	::std::string tmpStr = "_" + GetDateString(); 
-	CString strFilename = tmpStr.c_str();
-
-	for (int i = 0; i < 5; ++i)
-	{
-		strFilename += "_";
-		strFilename += m_cmdJang[i];
-	}
-	
-	DDX_Text(pDX, m_filename_id, strFilename);
-
+	DDX_Text(pDX, m_filename_id, m_strFilename);
 	
 }
 
@@ -320,6 +310,15 @@ void CCTRView::OnClickedBtnMove()
 			angles[i] += 360;
 		m_cmdJang[i].Format("%d",(int) angles[i]);
 	}
+	::std::string tmpStr = "_" + GetDateString(); 
+	m_strFilename = tmpStr.c_str();
+
+	for (int i = 0; i < 5; ++i)
+	{
+		m_strFilename += "_";
+		m_strFilename += m_cmdJang[i];
+	}
+	
 
 	if(m_vtkDlg)
 		m_vtkDlg->ResetCam();

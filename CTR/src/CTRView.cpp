@@ -310,8 +310,12 @@ void CCTRView::OnClickedBtnMove()
 			angles[i] += 360;
 		m_cmdJang[i].Format("%d",(int) angles[i]);
 	}
-	::std::string tmpStr = "_" + GetDateString(); 
-	m_strFilename = tmpStr.c_str();
+
+	int id  = (int) this->GetDocument()->GetCommandQueueSize();	
+
+	::std::ostringstream ss;
+	ss << "_" << id << "_" + GetDateString(); 
+	m_strFilename = ss.str().c_str();
 
 	for (int i = 0; i < 5; ++i)
 	{
@@ -425,11 +429,10 @@ HBRUSH CCTRView::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 	return hbr;
 }
 
-// TODO: refactor that to move tubes one by one
 void CCTRView::OnClickedBtnHome()
 {
 
-	double home[5] =  {M_PI, 0, 5, 0, 0};
+	double home[5] =  {0, 0, 0.5 * M_PI * 55, 0, 0};
 
 	CString str;
 	double p[10] = {0};

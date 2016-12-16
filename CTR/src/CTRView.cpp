@@ -430,9 +430,9 @@ HBRUSH CCTRView::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 }
 
 void CCTRView::OnClickedBtnHome()
-{
+{ 
 
-	double home[5] =  {0, 0, 0.5 * M_PI * 55, 0, 0};
+	double home[5] =  {0, 0, 86.35, 0, 0};
 
 	CString str;
 	double p[10] = {0};

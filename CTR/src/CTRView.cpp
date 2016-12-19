@@ -314,7 +314,9 @@ void CCTRView::OnClickedBtnMove()
 		m_cmdJang[i].Format("%d",(int) angles[i]);
 	}
 
+
 	::std::ostringstream ss;
+	ss << setw(5) << setfill('0');
 	ss << "_" << id << "_" + GetDateString(); 
 	m_strFilename = ss.str().c_str();
 

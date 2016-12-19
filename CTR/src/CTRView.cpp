@@ -290,6 +290,9 @@ void CCTRView::OnClickedBtnMove()
 {
 	CString str;	double p[10];
 	double angles[5];
+
+	int id  = 2.0 * 1331 - (int) this->GetDocument()->GetCommandQueueSize() + 1;	
+
 	if(m_ctrlMode == 0)	//0: joint angle, 1: tip configuration, 2: tele op
 	{
 		CTR_cmd tmp =  this->GetDocument()->GetNextCommand();
@@ -310,8 +313,6 @@ void CCTRView::OnClickedBtnMove()
 			angles[i] += 360;
 		m_cmdJang[i].Format("%d",(int) angles[i]);
 	}
-
-	int id  = (int) this->GetDocument()->GetCommandQueueSize();	
 
 	::std::ostringstream ss;
 	ss << "_" << id << "_" + GetDateString(); 

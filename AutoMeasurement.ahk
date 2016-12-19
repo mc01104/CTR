@@ -12,21 +12,22 @@ Return
 ctrGUI = Untitled - CTR
 david = DAVID-LASERSCANNER v3.10.4
 loopNum=1 
-winactivate, %ctrGUI%
-WinWaitActive, %ctrGUI%
-MouseClick, left, 210, 230 
-MouseClick, left, 210, 230 
-Sleep, 500
-MouseClick, right, 210, 230
-Send, {Down}{Down}{Down}{Enter}
+;winactivate, %ctrGUI%
+;WinWaitActive, %ctrGUI%
+;MouseClick, left, 210, 230 
+;MouseClick, left, 210, 230 
+;Sleep, 500
+;MouseClick, right, 210, 230
+;Send, {Down}{Down}{Down}{Enter}
  
-loopNum :=clipboard
+;loopNum :=clipboard
+loopNum := 3
 Loop %loopNum%
 {
 
 	;=========== Move Configuration and Copy Configuration from ctr GUI =========
-	winactivate, %ctrGUI%
-	WinWaitActive, %ctrGUI%
+	;winactivate, %ctrGUI%
+	;WinWaitActive, %ctrGUI%
 
 	MouseClick, left, 310, 230 ; Move button
 	Sleep, 20000
@@ -43,7 +44,7 @@ Loop %loopNum%
 	WinWaitActive, %david%
 
 	MouseClick, left, 180, 430 ; Start button
-	Sleep, 25000
+	Sleep, 60000
 
 	MouseClick, left, 240, 670 ; Save button
 	Sleep, 1000
@@ -51,9 +52,9 @@ Loop %loopNum%
 	Send, file^v.stl{Enter}
 	Sleep, 1000
 	;Send, {Enter}
-	Sleep, 7000
-	Send, {Enter}
-
+	Sleep, 1000
+	;Send, {Enter}
+	MouseClick, left, 960, 580 ; Save button
 
 
 	;=========== Save file as stl =====================

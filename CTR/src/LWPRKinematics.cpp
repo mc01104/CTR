@@ -132,8 +132,7 @@ LWPRKinematics::CompensateForRigidBodyMotion(const double* jAng, const double* p
 	::std::vector<double> finalOrientation;
 	HTransform::applyRotation(baseTransform, ::std::vector<double> (posOrt + 3, posOrt + 6), finalOrientation);
 
-	//finalOrientation /= Norm2(finalOrientation);
-	//double a = Norm2(finalOrientation);
+	finalOrientation /= Norm2(finalOrientation);
 
 	memcpy(posOrtFinal + 3, finalOrientation.data(), 3 * sizeof(double));
 

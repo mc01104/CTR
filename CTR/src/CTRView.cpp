@@ -316,8 +316,8 @@ void CCTRView::OnClickedBtnMove()
 
 
 	::std::ostringstream ss;
-	ss << setw(5) << setfill('0');
-	ss << "_" << id << "_" + GetDateString(); 
+	
+	ss << "_" << setw(4) << setfill('0') << id << "_" + GetDateString(); 
 	m_strFilename = ss.str().c_str();
 
 	for (int i = 0; i < 5; ++i)

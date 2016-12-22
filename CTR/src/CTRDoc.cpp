@@ -76,7 +76,7 @@ END_MESSAGE_MAP()
 // Rotary 10.936 equals to one turn, 1 translation 3.175mm;
 CRITICAL_SECTION	CCTRDoc::m_cSection;
 double CCTRDoc::c_PI = acos(-1.0);
-double CCTRDoc::c_CntToRad = -(2*c_PI)/10.936;
+double CCTRDoc::c_CntToRad = -(2*c_PI)/(10.936 * 0.998888 * 1.000049260526897);
 double CCTRDoc::c_CntToMM = 3.175;
 
 // CCTRDoc construction/destruction

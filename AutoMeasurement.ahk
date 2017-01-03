@@ -30,7 +30,7 @@ Loop %loopNum%
 	WinWaitActive, %ctrGUI%
 
 	MouseClick, left, 310, 230 ; Move button
-	Sleep, 20000
+	Sleep, 4000
 
 	MouseClick, left, 300, 300
 	MouseClick, left, 300, 300 

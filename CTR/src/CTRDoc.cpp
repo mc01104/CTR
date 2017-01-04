@@ -143,7 +143,7 @@ CCTRDoc::CCTRDoc()
 
 	m_force = 0.0;
 
-	this->ReadJointSpaceTrajectory("joints.txt");
+	this->ReadJointSpaceTrajectory("joints_add.txt");
 }
 
 CCTRDoc::~CCTRDoc()

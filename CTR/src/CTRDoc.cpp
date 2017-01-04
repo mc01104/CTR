@@ -63,7 +63,7 @@ END_MESSAGE_MAP()
 // Rotary 10.936 equals to one turn, 1 translation 3.175mm;
 CRITICAL_SECTION	CCTRDoc::m_cSection;
 double CCTRDoc::c_PI = acos(-1.0);
-double CCTRDoc::c_CntToRad = -(2*c_PI)/10.936;
+double CCTRDoc::c_CntToRad = -(2*c_PI)/(10.936 * 0.998888 * 1.000049260526897);
 double CCTRDoc::c_CntToMM = 3.175;
 
 // CCTRDoc construction/destruction
@@ -587,15 +587,15 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 				if (mySelf->m_adapt_LWPR)
 					mySelf->m_kinLWPR->AdaptForwardModel(localStat.sensedTipPosDir, localStat.currJang);
 			}
-			double hysteresisPrediction[3] = {0};
+/*			double hysteresisPrediction[3] = {0};
 			double standardPrediction[3] = {0};
-			mySelf->m_kinLWPR_hyst->TipFwdKin(localStat.currJang, localStat.currJangPrev, hysteresisPrediction);
+			mySelf->m_kinLWPR_hyst->TipFwdKin(localStat.currJang, localStat.currJangPrev, hysteresisPrediction);*/
 			//mySelf->m_kinLWPR->TipFwdKin(localStat.currJang, standardPrediction);
 			//PrintCArray(localStat.currJangPrev, 5);
 			//if (mySelf->m_adapt_LWPR)
 			//	mySelf->m_kinLWPR_hyst->AdaptForwardModel(localStat.sensedTipPosDir, localStat.currJang,localStat.currJangPrev);
 
-			PrintCArray(hysteresisPrediction, 3);
+			//PrintCArray(hysteresisPrediction, 3);
 			//PrintCArray(standardPrediction, 3); 
 
 			// CKim - Teleoperation safety check - gradually increase the resistance and decrease controller gain
@@ -1559,6 +1559,8 @@ void CCTRDoc::InvKinJangToMtr(const double* jA, const double* currCnt, double* t
 	// a1 : Rotation of tube 1 (outer tube of the balanced pair), Joint Angle [3], Motor Count [3]
 	// This is in range of 0 to 2pi, so normalize. sin(th) = sin(th + 2npi), cos(th) = cos(th + 2npi)
 	tgtJang[3] = a1 = jA[3] - 2.0*c_PI*floor(jA[3]/(2.0*c_PI));
+	//tgtJang[3] = a1 = atan2(sin(jA[3]),cos(jA[3]));
+	//tgtJang[3] = a1 = jA[3];
 	
 	// a21 : Rotation of tube 2 (inner tube of the balanced pair) w.r.t. tube 1, Joint Angle [0], Motor Count [4-3]
 	// This is in range of -pi to pi, so normalize using atan2, sin(th) = atan2(sin(th),cos(th)), cos(th) = atan2(sin(th),cos(th))
@@ -1575,19 +1577,40 @@ void CCTRDoc::InvKinJangToMtr(const double* jA, const double* currCnt, double* t
 	// Motor Count [3] : Rotation of tube 1 (outer tube of the balanced pair), a1 = jA[3]
 	// Since a1 is in [0, 2pi], motor should move either clockwise or counter clockwise which ever is close from current location. 
 	// Calculate the difference between current and new joint angle, normalize in [-pi, pi] using atan2, convert to counts, and add
+	///////////////////////// before ///////////////////////////////////
+	//tmp = a1 - currCnt[3]*c_CntToRad;
+	//delta = atan2(sin(tmp),cos(tmp));
+	//tgtCnt[3] = currCnt[3] + delta/c_CntToRad;
+
+	//// Motor Count [4] : Rotation of tube 2 (inner tube of the balanced pair), a21 + a1 = jA[3+0]
+	//tmp = a21 + a1 - currCnt[4]*c_CntToRad;
+	//delta = atan2(sin(tmp),cos(tmp));
+	//tgtCnt[4] = currCnt[4] + delta/c_CntToRad;
+
+	//// Motor Count [5] : Rotation of tube 3, a31 + a1 = jA[3+1]
+	//tmp = a31 + a1 - currCnt[5]*c_CntToRad;
+	//delta = atan2(sin(tmp),cos(tmp));
+	//tgtCnt[5] = currCnt[5] + delta/c_CntToRad;
+	/////////////////////////////// after //////////////////////////////////
+	double da1, da21, da31;
+
 	tmp = a1 - currCnt[3]*c_CntToRad;
-	delta = atan2(sin(tmp),cos(tmp));
-	tgtCnt[3] = currCnt[3] + delta/c_CntToRad;
+	da1 = atan2(sin(tmp),cos(tmp));
+
+	tmp = a21 - (currCnt[4] - currCnt[3])*c_CntToRad;
+	da21 = atan2(sin(tmp),cos(tmp));
+
+	tmp = a31 - (currCnt[5] - currCnt[3])*c_CntToRad;
+	da31 = atan2(sin(tmp),cos(tmp));
+
+	tgtCnt[3] = currCnt[3] + da1/c_CntToRad;
 
 	// Motor Count [4] : Rotation of tube 2 (inner tube of the balanced pair), a21 + a1 = jA[3+0]
-	tmp = a21 + a1 - currCnt[4]*c_CntToRad;
-	delta = atan2(sin(tmp),cos(tmp));
-	tgtCnt[4] = currCnt[4] + delta/c_CntToRad;
+	tgtCnt[4] = currCnt[4] + (da21+da1)/c_CntToRad;
 
 	// Motor Count [5] : Rotation of tube 3, a31 + a1 = jA[3+1]
-	tmp = a31 + a1 - currCnt[5]*c_CntToRad;
-	delta = atan2(sin(tmp),cos(tmp));
-	tgtCnt[5] = currCnt[5] + delta/c_CntToRad;
+	tgtCnt[5] = currCnt[5] + (da31+da1)/c_CntToRad;
+	////////////////////////////////////////////////////////////////////////
 
 
 	// L1 : Translation of balanced pair, Joint Angle [4], Motor Count [0], No normalizatio needed for this. 
@@ -2091,7 +2114,7 @@ void CCTRDoc::OnBnClickedBtnPlay()
 	{
 		::std::cout << "joint space trajectory playback" << ::std::endl;
 		//m_TrjGen->Initialize("hysteresisTest.txt", 5);
-		m_TrjGen->Initialize("hysteresisTrainingTrajectory.txt", 5);
+		m_TrjGen->Initialize("drift.txt", 5);
 
 		m_hEMevent = CreateEvent(NULL,false,false,NULL);	// Auto reset event (2nd argument false means...)
 		

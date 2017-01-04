@@ -297,8 +297,8 @@ void CCTRView::OnClickedBtnMove()
 	{
 		CTR_cmd tmp =  this->GetDocument()->GetNextCommand();
 		memcpy(angles, tmp.para, 5 * sizeof(double));
-		//this->GetDocument()->SendCommand(0,tmp.para);
-		this->GetDocument()->SendDitheringCommand(0,tmp.para);
+		this->GetDocument()->SendCommand(0,tmp.para);
+		//this->GetDocument()->SendDitheringCommand(0,tmp.para);
 
 	}
 
@@ -437,25 +437,7 @@ void CCTRView::OnClickedBtnHome()
 
 	double home[5] =  {0, 0, 86.35, 0, 0};
 
-	CString str;
-	double p[10] = {0};
-	for (int i = 0; i < 5; ++i)
-	{
-		this->GetDlgItemTextA(m_idActJang[i], str);		
-		p[i] = atof(str);
-	}
-	p[2] = home[2];
-	this->GetDocument()->SendCommand(0, p);
-	
-	Sleep(3000);
-	p[1] = home[1];
-	p[0] = home[0];
-	this->GetDocument()->SendCommand(0, p);
-	 
-	Sleep(1000);
-	p[3] = home[3];
-	p[4] = home[4];
-	this->GetDocument()->SendCommand(0, p);
+	this->GetDocument()->SendCommand(0, home);
 }
 
 void CCTRView::OnClickedBtnLeft()

@@ -24,7 +24,7 @@ class ChunTracker;
 class TrjGenerator;
 class MechanicsBasedKinematics;
 class CTR;
-
+class Filter;
 
 class CCTRDoc : public CDocument
 {
@@ -46,6 +46,7 @@ private:
 	std::queue<CTR_cmd>	m_cmdQueue; 
 	CTR* robot;
 	MechanicsBasedKinematics* kinematics;
+	//RecursiveFilter::Filter* filters;
 
 	// CKim - Robot state parameters - position of the haptic device, motor
 	bool	m_motorConnected;

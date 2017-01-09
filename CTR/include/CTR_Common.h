@@ -29,6 +29,9 @@ typedef struct HapticDeviceState
 	double		Force[3];
 	HDErrorInfo err;
 
+	// George - for camera frame velocity control
+	double	position[3];
+	double  previousPosition[3];
 	// CKim - Storage for the event data
 	std::queue<HapticEventData> eventQueue;
 
@@ -70,6 +73,7 @@ typedef struct CTR_status
 	double currTipPosDirLWPR[6];
 	bool isInLimitLWPR;
 
+	double haptic_velocity[3];
 	// CKim - Flags for each amp status
 	int	errFlag[7];
 

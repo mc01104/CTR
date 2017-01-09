@@ -41,6 +41,7 @@
 // CKim - Eigen Header. Located at "C:\Chun\ChunLib"
 #include <Eigen/Dense>
 #include "Utilities.h"
+#include "FilterLibrary.h"
 #include "MechanicsBasedKinematics.h"
 #include "CTRFactory.h"
 
@@ -86,6 +87,8 @@ CCTRDoc::CCTRDoc()
 	m_ioRunning = false;		m_teleOpMode = false;
 	
 	m_date = GetDateString();
+
+	//filters = new RecursiveFilter::MovingAverageFilter[3];
 
 	// CKim - Initialize critical section
 	// Initializes a critical section object and sets the spin count for the critical section.
@@ -712,7 +715,7 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 	//mySelf->m_fileStream = new ::std::ofstream(filename);   
 	//LeaveCriticalSection(&m_cSection);
 	ofstream os("debug_control_no_scaling.txt");
-
+	RecursiveFilter::Filter* filters = new RecursiveFilter::MovingAverageFilter[3];
 	// CKim - The Loop
 	while(mySelf->m_teleOpMode)
 	{
@@ -801,8 +804,14 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 		// scheduled and executed by the haptic device. Haptic device parameters are safely 
 		// accessed inside this function teleoperation commands are handled here.
 		// ---------------------------------------------------------------------------------------- //
+		clock_t start_loop, end_loop;
+		double delta_t;
+		double vel[3] = {0};
+
+
 		if(teleOpCtrl)	
 		{
+			start_loop = clock();
 			// CKim - In teleop mode, command comes as a desired tip position and orientation, 
 			// defined in Haptic device system, transform haptic device input into the 
 			// target position and direction of the robot
@@ -816,18 +825,26 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 			// enable Jacobian Transpose controller
 			mySelf->m_bCLIK = true;
 
-			double jAng[5] = {0};
-			mySelf->m_kinLWPR->runOptimizationController(localStat.currJang, localStat.tgtTipPosDir, jAng);
-			//PrintCArray(jAng,5);
+			end_loop = clock();
+			delta_t = (double) (end_loop - start_loop)/CLOCKS_PER_SEC;
+			
+			for(int i = 0; i <3 ; ++i)
+				vel[i] = filters[i].step((localStat.hapticState.position[i] - localStat.hapticState.previousPosition[i])/delta_t);
 
-			for (int i = 0; i < 5; ++i)
-				os << jAng[i] << " ";
-			for (int i = 0; i < 6; ++i)
-				os << localStat.currTipPosDir[i] << "  ";
+			memcpy(localStat.haptic_velocity, vel, 3 * sizeof(double));
 
-			for(int i = 0; i < 5; ++i)
-				os << localStat.currJang[i] << " ";
-			os << ::std::endl;
+			//double jAng[5] = {0};
+			//mySelf->m_kinLWPR->runOptimizationController(localStat.currJang, localStat.tgtTipPosDir, jAng);
+			////PrintCArray(jAng,5);
+
+			//for (int i = 0; i < 5; ++i)
+			//	os << jAng[i] << " ";
+			//for (int i = 0; i < 6; ++i)
+			//	os << localStat.currTipPosDir[i] << "  ";
+
+			//for(int i = 0; i < 5; ++i)
+			//	os << localStat.currJang[i] << " ";
+			//os << ::std::endl;
 			//mySelf->m_InvKinOn = true;
 			//mySelf->SolveInverseKin(localStat);
 
@@ -849,7 +866,8 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 			mySelf->m_Status.tgtJang[i] = localStat.tgtJang[i];		}
 		for(int i=0; i<7; i++)	{
 			mySelf->m_Status.tgtMotorCnt[i] = localStat.tgtMotorCnt[i];		}
-
+		for(int i=0; i<3; i++)	{
+			mySelf->m_Status.haptic_velocity[i] = localStat.haptic_velocity[i];		}
 
 		mySelf->m_Status.invKinOK = localStat.invKinOK;
 		mySelf->m_Status.limitOK = localStat.limitOK;
@@ -2101,6 +2119,10 @@ void CCTRDoc::MasterToSlave(CTR_status& stat, double scl, bool absolute)
 		t(i) = stat.hapticState.tfMat[12+i];
 		p(i) = stat.refTipPosDir[i];	
 	}
+	
+	// update current and previous positions
+	memcpy(stat.hapticState.previousPosition , stat.hapticState.position, 3  * sizeof(double));
+	memcpy(stat.hapticState.position, t.data(), 3  * sizeof(double));
 
 	::Eigen::Matrix<double, 3, 3> MtipToBase;
 	//this->GetTipTransformation(MtipToBase);

@@ -14,7 +14,7 @@ CTRKin::CTRKin(void)
 	os.open("conditionNumber.txt");
 	if (readCTR_FAC_file(fName, m_Tip_px, m_Tip_py, m_Tip_pz, m_Tip_ox, m_Tip_oy, m_Tip_oz) == false) //file read error
 	{
-		AfxMessageBox("Sparta!!!!");
+		//AfxMessageBox("Sparta!!!!");
 	}
 
 	// CKim - Initialize local variable used in adaptive update.
@@ -30,7 +30,7 @@ CTRKin::CTRKin(void)
 	
 	if (readCTR_FAC_file(fName, m_BP_px, m_BP_py, m_BP_pz, m_BP_ox, m_BP_oy, m_BP_oz) == false) //file read error
 	{
-		AfxMessageBox("Sparta!!!!");
+		//AfxMessageBox("Sparta!!!!");
 	}
 
 	// CKim - Initialize matrices for recursive least square
@@ -82,7 +82,7 @@ void CTRKin::ReInitializeModel()
 
 	if (readCTR_FAC_file(fName, m_Tip_px, m_Tip_py, m_Tip_pz, m_Tip_ox, m_Tip_oy, m_Tip_oz) == false) //file read error
 	{
-		AfxMessageBox("Sparta!!!!");
+		//AfxMessageBox("Sparta!!!!");
 	}
 
 	// CKim - Initialize local variable used in adaptive update.
@@ -99,7 +99,7 @@ void CTRKin::ReInitializeModel()
 	
 	if (readCTR_FAC_file(fName, m_BP_px, m_BP_py, m_BP_pz, m_BP_ox, m_BP_oy, m_BP_oz) == false) //file read error
 	{
-		AfxMessageBox("Sparta!!!!");
+		//AfxMessageBox("Sparta!!!!");
 	}
 }
 

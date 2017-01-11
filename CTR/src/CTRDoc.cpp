@@ -96,7 +96,7 @@ CCTRDoc::CCTRDoc()
 	InitializeCriticalSectionAndSpinCount(&m_cSection,16);
 
 	// CKim - Initialize Haptic device
-	ChunHaptic::InitDevice();		m_Omni = new ChunHaptic();		m_Omni->StartLoop();
+	//ChunHaptic::InitDevice();		m_Omni = new ChunHaptic();		m_Omni->StartLoop();
 
 	// CKim - Initialize motor controller	
 	m_motionCtrl = new ChunMotion();		m_motorConnected = false;
@@ -469,9 +469,9 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 		//::std::cout << "forces" << ::std::endl;
 		//::std::cout << force << ::std::endl;
 
-		EnterCriticalSection(&m_cSection);
-		mySelf->m_Omni->SetForce(force);
-		LeaveCriticalSection(&m_cSection);
+		//EnterCriticalSection(&m_cSection);
+		//mySelf->m_Omni->SetForce(force);
+		//LeaveCriticalSection(&m_cSection);
 		
 		//::std::cout << recvbuf << ::std::endl;
     } while (iResult > 0);

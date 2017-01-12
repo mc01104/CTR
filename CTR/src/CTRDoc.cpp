@@ -520,15 +520,17 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 				LeaveCriticalSection(&m_cSection);
 				::std::cout << "Ratio:" << contactRatio << ::std::endl;
 				end_loop = clock();
-				//if(os)
-				//{
-				//	//::std::cout << "inside" << ::std::endl;
-				//	for (int i = 0; i < 6; i++)
-				//		*os << localStat.currTipPosDir[i] << "\t";
 
-				//	*os << contactRatio << "\t";
-				//	*os << ((float) (end_loop - start_loop))/CLOCKS_PER_SEC << ::std::endl;
-				//}
+				EnterCriticalSection(&m_cSection);
+				if(os)
+				{
+					//for (int i = 0; i < 6; i++)
+					//	*os << localStat.currTipPosDir[i] << "\t";
+
+					*os << contactRatio << "\t";
+					*os << ((float) (end_loop - start_loop))/CLOCKS_PER_SEC << ::std::endl;
+				}
+				LeaveCriticalSection(&m_cSection);
 				//::std::cout << "Desired Ratio:" << desiredContactRatio << ::std::endl;
 				//::std::cout << ::std::endl;
 				//::std::cout << "Contact Ratio Error:" << desiredContactRatio - atof(recvbuf) << ::std::endl;
@@ -833,22 +835,6 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 
 			memcpy(localStat.haptic_velocity, vel, 3 * sizeof(double));
 
-			//double jAng[5] = {0};
-			//mySelf->m_kinLWPR->runOptimizationController(localStat.currJang, localStat.tgtTipPosDir, jAng);
-			////PrintCArray(jAng,5);
-
-			//for (int i = 0; i < 5; ++i)
-			//	os << jAng[i] << " ";
-			//for (int i = 0; i < 6; ++i)
-			//	os << localStat.currTipPosDir[i] << "  ";
-
-			//for(int i = 0; i < 5; ++i)
-			//	os << localStat.currJang[i] << " ";
-			//os << ::std::endl;
-			//mySelf->m_InvKinOn = true;
-			//mySelf->SolveInverseKin(localStat);
-
-			//PrintCArray(localStat.tgtJang, 5);
 		}
 
 					

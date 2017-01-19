@@ -23,8 +23,14 @@
 int CCTRView::m_idActJang[5] = { IDC_A12_ACT, IDC_A13_ACT, IDC_L3_ACT, IDC_A1_ACT, IDC_L1_ACT };
 int CCTRView::m_idCmdJang[5] = { IDC_A12_CMD, IDC_A13_CMD, IDC_L3_CMD, IDC_A1_CMD, IDC_L1_CMD };
 
-int CCTRView::manual_point_ENABLE[4] = {IDC_BTN_MOVE3, IDC_BTN_MOVE4, IDC_BTN_MOVE5, IDC_BTN_MOVE6};
-int CCTRView::manual_point_DISABLE[8] = {IDC_EDIT8, IDC_EDIT9, IDC_EDIT10, IDC_BTN_MOVE8, IDC_EDIT11, IDC_EDIT12, IDC_EDIT13, IDC_BTN_MOVE8};
+int CCTRView::manual_point_ENABLE[15] = {IDC_BTN_MOVE3, IDC_BTN_MOVE4, IDC_BTN_MOVE5, IDC_BTN_MOVE6, IDC_BTN_MOVE7, -1};
+int CCTRView::manual_point_DISABLE[15] = {IDC_EDIT8, IDC_EDIT9, IDC_EDIT10, IDC_BTN_MOVE8, IDC_EDIT11, IDC_EDIT12, IDC_EDIT13, IDC_BTN_MOVE8, -1};
+
+int CCTRView::manual_ENABLE[15] = {IDC_EDIT8, IDC_EDIT9, IDC_EDIT10, IDC_BTN_MOVE8, -1};
+int CCTRView::manual_DISABLE[15] = {IDC_BTN_MOVE3, IDC_BTN_MOVE4, IDC_BTN_MOVE5, IDC_BTN_MOVE6, -1};
+
+int CCTRView::online_ENABLE[15] = {IDC_EDIT11, IDC_EDIT12, IDC_EDIT13, IDC_BTN_MOVE9, -1};
+int CCTRView::online_DISABLE[15] = {IDC_EDIT8, IDC_EDIT9, IDC_EDIT10, IDC_BTN_MOVE8, -1};
 
 IMPLEMENT_DYNCREATE(CCTRView, CFormView)
 
@@ -64,7 +70,11 @@ BEGIN_MESSAGE_MAP(CCTRView, CFormView)
 	ON_BN_CLICKED(IDC_BTN_MOVE4, &CCTRView::OnClickedBtnPopPoint)
 	ON_BN_CLICKED(IDC_BTN_MOVE6, &CCTRView::OnClickedBtnCleanAll)
 	ON_BN_CLICKED(IDC_BTN_MOVE5, &CCTRView::OnClickedBtnComputePlane)
-	
+	ON_BN_CLICKED(IDC_BTN_MOVE7, &CCTRView::OnClickedBtnUpdate)
+	ON_BN_CLICKED(IDC_BTN_MOVE8, &CCTRView::OnClickedBtnUpdate)
+	ON_BN_CLICKED(IDC_BTN_MOVE9, &CCTRView::OnClickedBtnUpdate)
+
+
 	ON_BN_CLICKED(IDC_CHECK1, &CCTRView::ToggleForceControl)
 
 	ON_WM_CTLCOLOR()
@@ -577,9 +587,13 @@ void CCTRView::OnClickedBtnComputePlane()
 	int setting = Eigen::ComputeFullU | Eigen::ComputeFullU;
 	Eigen::JacobiSVD<Eigen::Matrix3Xd> svd = points_centered.jacobiSvd(setting);
 	::Eigen::MatrixXd U = svd.matrixU();
-	Eigen::Vector3d normal = U.col(2);
+	Eigen::Vector3d normal_tmp = U.col(2);
 
-	::std::cout << normal << ::std::endl;
+	if (normal_tmp(2) < 0)
+		normal_tmp = -normal_tmp;
+
+	//::std::cout << normal << ::std::endl;
+	this->normal = normal_tmp;
 
 }
 
@@ -592,14 +606,63 @@ void CCTRView::OnBnClickedRadioModesPlane()
 	if(m_PlaneEstimationMode == 0)	
 	{
 		::std::cout << "Estimate plane from number of points" << ::std::endl;
+		this->updateGUIActivationState(manual_point_ENABLE, manual_point_DISABLE);
 	}
 	else if (m_PlaneEstimationMode == 1)
 	{
 		::std::cout << "Manual input of plane normal" << ::std::endl;
+		this->updateGUIActivationState(manual_ENABLE, manual_DISABLE);
 	}
 	else if (m_PlaneEstimationMode == 2)
 	{
 		::std::cout << "Online plane estimation!" << ::std::endl;
+		this->updateGUIActivationState(manual_point_ENABLE, manual_point_DISABLE);
+	}
+
+	return;		
+}
+
+void CCTRView::updateGUIActivationState(int handlesToActivate[], int handlesToDectivate[])
+{
+	int value = 0;
+	int i = 0;
+	while (value >= 0)
+	{
+		value = handlesToActivate[i];
+		GetDlgItem(value)->EnableWindow(TRUE);
+		i++;
+	}
+
+	value = 0;
+	i = 0;
+	while (value >= 0)
+	{
+		value = handlesToActivate[i];
+		GetDlgItem(value)->EnableWindow(TRUE);
+		i++;
+	}
+}
+
+void CCTRView::OnClickedBtnUpdate()
+{
+	UpdateData(true);	
+	
+	CString str;
+	//Except from updating the displays, I need to push the computed plane normal to the contact controller -> TODO;
+	switch(m_PlaneEstimationMode)
+	{
+	case 0:
+		str.Format("%4.f", this->normal[0]);
+		this->SetDlgItemTextA(IDC_EDIT5, str);
+		str.Format("%4.f", this->normal[0]);
+		this->SetDlgItemTextA(IDC_EDIT6, str);
+		str.Format("%4.f", this->normal[0]);
+		this->SetDlgItemTextA(IDC_EDIT7, str);
+		break;
+	case 1:
+		break;
+	case 2:
+		break;
 	}
 
 	return;		

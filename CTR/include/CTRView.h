@@ -75,6 +75,7 @@ public:
 	afx_msg void OnUpdateViewGraphicwin(CCmdUI *pCmdUI);
 	afx_msg void OnBnClickedRadioModes();
 	afx_msg void OnBnClickedRadioModesPlane();
+	afx_msg void OnClickedBtnUpdate();
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 	
 	int m_PlaneEstimationMode;
@@ -97,15 +98,21 @@ public:
 	static int		m_idEMMat[12];			CString		m_emMat[12];
 	static int		m_idSensConfig[6];		CString		m_sensConfig[6];
 
-	static int		manual_point_ENABLE[4];
-	static int		manual_point_DISABLE[8];
+	static int		manual_point_ENABLE[15];
+	static int		manual_point_DISABLE[15];
+	static int		manual_ENABLE[15];
+	static int		manual_DISABLE[15];
+	static int		online_ENABLE[15];
+	static int		online_DISABLE[15];
+
 	// CKim - 3D graphic dialog using vtk
 	ChunVtkDlg*		m_vtkDlg;
 
 	// CKim - When something in document changes, call UpdatAllView() and this OnUpdata() is called in the view
 	// Perfor UI updates here.
 	virtual void OnUpdate(CView* /*pSender*/, LPARAM /*lHint*/, CObject* /*pHint*/);
-	
+
+	void updateGUIActivationState(int handlesToActivate[], int handlesToDectivate[]);
 	CString m_sysMsg;
 	int m_ctrlMode;
 	bool m_Warning[2];
@@ -124,6 +131,8 @@ public:
 
 	CComboBox m_traj_type;
 	CString IDC_CIRCLE;
+
+	::Eigen::Vector3d normal;
 };
 
 #ifndef _DEBUG  // debug version in CTRView.cpp

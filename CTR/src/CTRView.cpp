@@ -150,7 +150,7 @@ void CCTRView::DoDataExchange(CDataExchange* pDX)
 
 	// update number of collected points
 	CString tmp;
-	tmp.Format("%.3f",this->points_for_plane_estimation.size());
+	tmp.Format("%d",this->points_for_plane_estimation.size());
 	DDX_Text(pDX, IDC_EDIT4, tmp);
 	
 	DDX_Radio(pDX, IDC_RADIO_JA2, m_PlaneEstimationMode);
@@ -176,7 +176,7 @@ void CCTRView::OnInitialUpdate()
 	GetParentFrame()->SetWindowPos(&CWnd::wndTop,0,0,850,950, SWP_SHOWWINDOW );
 
 	CString tmp;
-	tmp.Format("%.3f",this->points_for_plane_estimation.size());
+	tmp.Format("%d",this->points_for_plane_estimation.size());
 	this->SetDlgItemTextA(IDC_EDIT4,tmp);
 
 	// CKim - Initialize controls here

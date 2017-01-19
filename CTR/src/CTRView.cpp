@@ -592,9 +592,9 @@ void CCTRView::OnClickedBtnComputePlane()
 	if (normal_tmp(2) < 0)
 		normal_tmp = -normal_tmp;
 
-	//::std::cout << normal << ::std::endl;
-	this->normal = normal_tmp;
-
+	::std::cout << normal_tmp << ::std::endl;
+	this->normal = normal_tmp;;
+	::std::cout << this->normal << ::std::endl;
 }
 
 
@@ -652,11 +652,11 @@ void CCTRView::OnClickedBtnUpdate()
 	switch(m_PlaneEstimationMode)
 	{
 	case 0:
-		str.Format("%4.f", this->normal[0]);
+		str.Format("%1.4f", this->normal(0));
 		this->SetDlgItemTextA(IDC_EDIT5, str);
-		str.Format("%4.f", this->normal[0]);
+		str.Format("%1.4f", this->normal(1));
 		this->SetDlgItemTextA(IDC_EDIT6, str);
-		str.Format("%4.f", this->normal[0]);
+		str.Format("%1.4f", this->normal(2));
 		this->SetDlgItemTextA(IDC_EDIT7, str);
 		break;
 	case 1:

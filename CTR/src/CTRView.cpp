@@ -175,6 +175,9 @@ void CCTRView::OnInitialUpdate()
 	ResizeParentToFit();
 	GetParentFrame()->SetWindowPos(&CWnd::wndTop,0,0,850,950, SWP_SHOWWINDOW );
 
+	CString tmp;
+	tmp.Format("%.3f",this->points_for_plane_estimation.size());
+	this->SetDlgItemTextA(IDC_EDIT4,tmp);
 
 	// CKim - Initialize controls here
 	this->SetDlgItemTextA(m_idCmdJang[0],"105.324");		this->SetDlgItemTextA(m_idCmdJang[1],"125.421");	

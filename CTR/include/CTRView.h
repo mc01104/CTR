@@ -61,8 +61,12 @@ public:
 	afx_msg void OnClickedBtnRight();
 	afx_msg void OnClickedBtnRecConf();
 	afx_msg void OnClickedBtnGoToRecConf();
-	afx_msg void OnClickedBtnStartLog();
-	afx_msg void OnClickedBtnStopLog();
+
+	afx_msg void OnClickedBtnRecPoint();
+	afx_msg void OnClickedBtnPopPoint();
+	afx_msg void OnClickedBtnCleanAll();
+	afx_msg void OnClickedBtnComputePlane();
+
 	afx_msg void OnKillFocusForce();
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	afx_msg void OnViewGraphicwin();
@@ -70,10 +74,14 @@ public:
 
 	afx_msg void OnUpdateViewGraphicwin(CCmdUI *pCmdUI);
 	afx_msg void OnBnClickedRadioModes();
+	afx_msg void OnBnClickedRadioModesPlane();
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 	
+	int m_PlaneEstimationMode;
 	bool logDataFlag;
 	::std::ofstream logStream;
+
+	::std::vector<::Eigen::Vector3d> points_for_plane_estimation;
 
 	double transIncrement;
 	double recConfiguration[5];
@@ -89,6 +97,8 @@ public:
 	static int		m_idEMMat[12];			CString		m_emMat[12];
 	static int		m_idSensConfig[6];		CString		m_sensConfig[6];
 
+	static int		manual_point_ENABLE[4];
+	static int		manual_point_DISABLE[8];
 	// CKim - 3D graphic dialog using vtk
 	ChunVtkDlg*		m_vtkDlg;
 

@@ -107,6 +107,15 @@ private:
 	double				m_contactRatio;
 	double				m_contactRatioDesired;
 	::std::ofstream*	m_fileStream;
+
+	// plane computation
+	bool				m_compute_plane;
+	void				IncrementalPlaneUpdate();
+	::Eigen::Vector2d	m_plane_coefficients;
+	::Eigen::Matrix2d   m_plane_covar;
+
+	void				TogglePlaneEstimation();
+
 // Operations
 public:
 	bool				m_adapt_LWPR;
@@ -156,6 +165,8 @@ public:
 	/////////////// CONTACT ////////////
 	void	UpdateDesiredPosition();
 	void	ComputeDesiredPosition(double tmpPosition[6]);
+
+	Eigen::Vector3d GetTipPosition();
 
 #ifdef _DEBUG
 	virtual void AssertValid() const;

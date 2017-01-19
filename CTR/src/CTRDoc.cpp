@@ -87,7 +87,7 @@ CCTRDoc::CCTRDoc()
 	m_ioRunning = false;		m_teleOpMode = false;
 	
 	m_date = GetDateString();
-
+	m_compute_plane = false;
 	//filters = new RecursiveFilter::MovingAverageFilter[3];
 
 	// CKim - Initialize critical section
@@ -148,6 +148,11 @@ CCTRDoc::CCTRDoc()
 	m_contactRatioDesired = 0.0;
 
 	m_fileStream = NULL;
+
+	m_plane_coefficients(0) = 0.01;
+	m_plane_coefficients(1) = 0.02;
+
+	m_plane_covar = 0.01 * ::Eigen::Matrix<double, 2, 2>::Identity();
 }
 
 CCTRDoc::~CCTRDoc()
@@ -710,12 +715,12 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 	gainStr = strs.str();
 	::std::string filename = "ExperimentData/" + GetDateString() + "-Gain" + gainStr + ".txt";
 	
-	//EnterCriticalSection(&m_cSection);
-	//if (mySelf->m_fileStream)
-	//	delete mySelf->m_fileStream;
+	EnterCriticalSection(&m_cSection);
+	if (mySelf->m_fileStream)
+		delete mySelf->m_fileStream;
 
-	//mySelf->m_fileStream = new ::std::ofstream(filename);   
-	//LeaveCriticalSection(&m_cSection);
+	mySelf->m_fileStream = new ::std::ofstream(filename);   
+	LeaveCriticalSection(&m_cSection);
 	ofstream os("debug_control_no_scaling.txt");
 	RecursiveFilter::Filter* filters = new RecursiveFilter::MovingAverageFilter[3];
 	// CKim - The Loop
@@ -820,6 +825,9 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 			mySelf->MasterToSlave(localStat, scl);		// Updates robotStat.tgtTipPosDir
 			
 			mySelf->UpdateDesiredPosition();
+
+			if (mySelf->m_compute_plane)
+				mySelf->IncrementalPlaneUpdate();
 
 			// CKim - Update proxy location from current tip position.....
 			mySelf->SlaveToMaster(localStat, scl);		// Updates robotStat.hapticState.slavePos
@@ -2267,4 +2275,31 @@ bool CCTRDoc::TeleOpSafetyCheck()
 void CCTRDoc::ToggleForceControl()
 {
 	this->m_forceControlActivated = !this->m_forceControlActivated;
+}
+
+void CCTRDoc::TogglePlaneEstimation()
+{
+	this->m_compute_plane = !this->m_compute_plane;
+}
+
+::Eigen::Vector3d
+CCTRDoc::GetTipPosition()
+{
+	return Eigen::Map<::Eigen::Vector3d> (this->m_Status.currTipPosDir, 3);
+}
+
+void CCTRDoc::IncrementalPlaneUpdate()
+{
+	double kappa = 1.0;
+
+	::Eigen::Vector3d tmpPosition = this->GetTipPosition();
+	::Eigen::Vector2d phi_k = tmpPosition.segment(0, 2);
+
+	double epsilon_k = tmpPosition(2) - m_plane_coefficients.transpose() * phi_k;
+
+	m_plane_covar = 1.0/kappa * (m_plane_covar - 1.0/(kappa + phi_k.transpose() * m_plane_covar * phi_k) * m_plane_covar * phi_k * phi_k.transpose() * m_plane_covar);
+
+	m_plane_coefficients += epsilon_k * m_plane_covar * m_plane_coefficients;
+
+	::std::cout << m_plane_coefficients << ::std::endl;
 }

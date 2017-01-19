@@ -23,6 +23,8 @@
 int CCTRView::m_idActJang[5] = { IDC_A12_ACT, IDC_A13_ACT, IDC_L3_ACT, IDC_A1_ACT, IDC_L1_ACT };
 int CCTRView::m_idCmdJang[5] = { IDC_A12_CMD, IDC_A13_CMD, IDC_L3_CMD, IDC_A1_CMD, IDC_L1_CMD };
 
+int CCTRView::manual_point_ENABLE[4] = {IDC_BTN_MOVE3, IDC_BTN_MOVE4, IDC_BTN_MOVE5, IDC_BTN_MOVE6};
+int CCTRView::manual_point_DISABLE[8] = {IDC_EDIT8, IDC_EDIT9, IDC_EDIT10, IDC_BTN_MOVE8, IDC_EDIT11, IDC_EDIT12, IDC_EDIT13, IDC_BTN_MOVE8};
 
 IMPLEMENT_DYNCREATE(CCTRView, CFormView)
 
@@ -42,6 +44,12 @@ BEGIN_MESSAGE_MAP(CCTRView, CFormView)
 	ON_BN_CLICKED(IDC_RADIO_JA, &CCTRView::OnBnClickedRadioModes)	
 	ON_BN_CLICKED(IDC_RADIO_TELE, &CCTRView::OnBnClickedRadioModes)
 
+	// plane radio controls
+	ON_BN_CLICKED(IDC_RADIO_JA2, &CCTRView::OnBnClickedRadioModesPlane)	
+	ON_BN_CLICKED(IDC_RADIO_TELE2, &CCTRView::OnBnClickedRadioModesPlane)
+	ON_BN_CLICKED(IDC_RADIO_TELE3, &CCTRView::OnBnClickedRadioModesPlane)
+
+
 	ON_BN_CLICKED(IDC_BUTTON10, &CCTRView::OnClickedBtnLeft)
 	ON_BN_CLICKED(IDC_BUTTON8, &CCTRView::OnClickedBtnRight)
 	ON_BN_CLICKED(IDC_BUTTON9, &CCTRView::OnClickedBtnRecConf)
@@ -52,8 +60,11 @@ BEGIN_MESSAGE_MAP(CCTRView, CFormView)
 	ON_EN_KILLFOCUS(IDC_EDIT2, &CCTRView::OnKillFocusGain)
 	ON_EN_KILLFOCUS(IDC_EDIT3, &CCTRView::OnKillFocusContactRatio)
 
-	ON_BN_CLICKED(IDC_BTN_MOVE3, &CCTRView::OnClickedBtnStartLog)
-	ON_BN_CLICKED(IDC_BTN_MOVE4, &CCTRView::OnClickedBtnStopLog)
+	ON_BN_CLICKED(IDC_BTN_MOVE3, &CCTRView::OnClickedBtnRecPoint)
+	ON_BN_CLICKED(IDC_BTN_MOVE4, &CCTRView::OnClickedBtnPopPoint)
+	ON_BN_CLICKED(IDC_BTN_MOVE6, &CCTRView::OnClickedBtnCleanAll)
+	ON_BN_CLICKED(IDC_BTN_MOVE5, &CCTRView::OnClickedBtnComputePlane)
+	
 	ON_BN_CLICKED(IDC_CHECK1, &CCTRView::ToggleForceControl)
 
 	ON_WM_CTLCOLOR()
@@ -80,6 +91,10 @@ CCTRView::CCTRView()
 	
 	for(int i = 0; i < 5; ++i)
 		this->recConfiguration[i] = 0.0;
+
+	points_for_plane_estimation.resize(0);
+	m_PlaneEstimationMode = 0;
+
 }
 
 CCTRView::~CCTRView()
@@ -133,6 +148,13 @@ void CCTRView::DoDataExchange(CDataExchange* pDX)
 
 	DDV_MinMaxInt(pDX, m_ctrlMode, 0, 1);
 
+	// update number of collected points
+	CString tmp;
+	tmp.Format("%.3f",this->points_for_plane_estimation.size());
+	DDX_Text(pDX, IDC_EDIT4, tmp);
+	
+	DDX_Radio(pDX, IDC_RADIO_JA2, m_PlaneEstimationMode);
+
 	m_ctrlMode != 1 ? GetDlgItem(IDC_CHECK1)->EnableWindow(false) : GetDlgItem(IDC_CHECK1)->EnableWindow(true);
 
 }
@@ -158,18 +180,6 @@ void CCTRView::OnInitialUpdate()
 	this->SetDlgItemTextA(m_idCmdJang[0],"105.324");		this->SetDlgItemTextA(m_idCmdJang[1],"125.421");	
 	this->SetDlgItemTextA(m_idCmdJang[2],"5");			this->SetDlgItemTextA(m_idCmdJang[3],"180.576");			this->SetDlgItemTextA(m_idCmdJang[4],"0");
 	
-	//// CKim - Open the graphics dialog
-	//if(!m_vtkDlg)
-	//{
-	//	// CKim - This creates modeless dialog using ChunVtkDlg class
-	//	m_vtkDlg = new ChunVtkDlg();		m_vtkDlg->Create(ChunVtkDlg::IDD);		
-	//	
-	//	// CKim - Move to (640,480) and don't change size. Show window and draw
-	//	m_vtkDlg->SetWindowPos(&CWnd::wndTop,900,200,0,0,SWP_NOSIZE);		
-	//	m_vtkDlg->ShowWindow(SW_SHOW);
-	//	m_vtkDlg->Invalidate();
-	//}
-
 	this->SetTimer(100,30,NULL);
 	QueryPerformanceFrequency(&m_Freq);
 
@@ -523,22 +533,21 @@ void CCTRView::OnClickedBtnGoToRecConf()
 		this->GetDocument()->SendCommand(0, this->recConfiguration);
 }
 
-void CCTRView::OnClickedBtnStartLog()
+void CCTRView::OnClickedBtnRecPoint()
 {
-	::std::string filename = GetDateString() + ".txt";
-	this->logStream  = ::std::ofstream(filename.c_str());
-	
-	this->logDataFlag = true;
-	
-	GetDlgItem(IDC_BTN_MOVE3)->EnableWindow(FALSE);
-	GetDlgItem(IDC_BTN_MOVE4)->EnableWindow(TRUE);
+	::Eigen::Vector3d tmpPoint = this->GetDocument()->GetTipPosition();
+	this->points_for_plane_estimation.push_back(tmpPoint);
+
 }
 
-void CCTRView::OnClickedBtnStopLog()
+void CCTRView::OnClickedBtnPopPoint()
 {
-	this->logStream.close();
-	GetDlgItem(IDC_BTN_MOVE4)->EnableWindow(FALSE);
-	GetDlgItem(IDC_BTN_MOVE3)->EnableWindow(TRUE);
+	this->points_for_plane_estimation.pop_back();
+}
+
+void CCTRView::OnClickedBtnCleanAll()
+{
+	this->points_for_plane_estimation.clear();
 }
 
 void CCTRView::ToggleForceChkbox(bool flag)
@@ -550,4 +559,45 @@ void CCTRView::ToggleForceControl()
 {
 	if (m_ctrlMode == 1)
 		this->GetDocument()->ToggleForceControl();
+}
+
+void CCTRView::OnClickedBtnComputePlane()
+{
+	::Eigen::MatrixXd data(3, this->points_for_plane_estimation.size());
+	for (int i = 0; i < this->points_for_plane_estimation.size(); ++i)
+		data.col(i) = this->points_for_plane_estimation[i];
+	
+	// not sure if this is correct
+	::Eigen::Vector3d mu = data.rowwise().mean();
+	::Eigen::Matrix3Xd points_centered = data.colwise() - mu;
+
+	int setting = Eigen::ComputeFullU | Eigen::ComputeFullU;
+	Eigen::JacobiSVD<Eigen::Matrix3Xd> svd = points_centered.jacobiSvd(setting);
+	::Eigen::MatrixXd U = svd.matrixU();
+	Eigen::Vector3d normal = U.col(2);
+
+	::std::cout << normal << ::std::endl;
+
+}
+
+
+void CCTRView::OnBnClickedRadioModesPlane()
+{
+
+	UpdateData(true);	
+	
+	if(m_PlaneEstimationMode == 0)	
+	{
+		::std::cout << "Estimate plane from number of points" << ::std::endl;
+	}
+	else if (m_PlaneEstimationMode == 1)
+	{
+		::std::cout << "Manual input of plane normal" << ::std::endl;
+	}
+	else if (m_PlaneEstimationMode == 2)
+	{
+		::std::cout << "Online plane estimation!" << ::std::endl;
+	}
+
+	return;		
 }

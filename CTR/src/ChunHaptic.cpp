@@ -159,6 +159,13 @@ HDCallbackCode HDCALLBACK ChunHaptic::synchCallback(void *pData)
 
 	// CKim - Copy the current haptic device state to the robot state
 	for(int i=0; i<3; i++)	{		state->hapticState.Force[i] = m_currentState.Force[i];			}
+
+	// store the current position to previous position variable
+	memcpy(state->hapticState.previousPosition, state->hapticState.position, 3 * sizeof(double));
+
+	// update current position
+	memcpy(state->hapticState.position, &state->hapticState.tfMat[13], 3 * sizeof(double));
+
 	for(int i=0; i<16; i++)	{		state->hapticState.tfMat[i] = m_currentState.tfMat[i];			}
 
 	while(!m_currentState.eventQueue.empty())

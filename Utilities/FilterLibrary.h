@@ -15,6 +15,7 @@ namespace RecursiveFilter
 		Filter(int windowSize);
 		virtual ~Filter();
 		void	updateDataBuffer(double incomingValue);
+		void	resetFilter();
 		virtual double step(double incomingValue) = 0;
 	};
 

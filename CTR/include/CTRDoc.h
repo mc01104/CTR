@@ -10,7 +10,7 @@
 #include <fstream>
 #include <Eigen/Dense>
 #include "time.h"
-
+#include "FilterLibrary.h"
 
 #include "VtkOnLinePlot.h"
 
@@ -24,7 +24,7 @@ class ChunTracker;
 class TrjGenerator;
 class MechanicsBasedKinematics;
 class CTR;
-class Filter;
+//class RecursiveFilter::Filter;
 
 class CCTRDoc : public CDocument
 {
@@ -46,7 +46,7 @@ private:
 	std::queue<CTR_cmd>	m_cmdQueue; 
 	CTR* robot;
 	MechanicsBasedKinematics* kinematics;
-	//RecursiveFilter::Filter* filters;
+	RecursiveFilter::Filter* filters;
 
 	// CKim - Robot state parameters - position of the haptic device, motor
 	bool	m_motorConnected;
@@ -115,6 +115,15 @@ private:
 	::Eigen::Matrix2d   m_plane_covar;
 
 	void				TogglePlaneEstimation();
+
+	// new teleoperation control
+	void				computeHapticDisplacement(CTR_status stat, double dP[3]);
+	void				computeCameraDesiredMotion(CTR_status stat, const double image_dir[3], double camera_dir[3]);
+	void				computeCameraJacobian(CTR_status stat);
+	void				computeMechanicsKinematics(CTR_status stat);
+	bool				cameraControlFlag;
+
+
 
 // Operations
 public:

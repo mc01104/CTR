@@ -88,7 +88,7 @@ CCTRDoc::CCTRDoc()
 	
 	m_date = GetDateString();
 	m_compute_plane = false;
-	//filters = new RecursiveFilter::MovingAverageFilter[3];
+	filters = new RecursiveFilter::MovingAverageFilter[3];
 
 	// CKim - Initialize critical section
 	// Initializes a critical section object and sets the spin count for the critical section.
@@ -103,7 +103,7 @@ CCTRDoc::CCTRDoc()
 	// CKim - Initialize motor controller	
 	m_motionCtrl = new ChunMotion();		m_motorConnected = false;
 	m_motorConnected = m_motionCtrl->Initialize();
-
+	cameraControlFlag = true;
 	m_kinLib = new CTRKin;
 	m_ref_set = false;
 	// paths for LWPR models (TIP AND BALANCED PAIR)
@@ -815,34 +815,46 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 		double delta_t;
 		double vel[3] = {0};
 
-
+		double camera_dir[3] = {0};
+		double haptic_dir[3] = {0};
+		double filtered_haptic_dir[3] = {0};
 		if(teleOpCtrl)	
 		{
-			start_loop = clock();
-			// CKim - In teleop mode, command comes as a desired tip position and orientation, 
-			// defined in Haptic device system, transform haptic device input into the 
-			// target position and direction of the robot
-			mySelf->MasterToSlave(localStat, scl);		// Updates robotStat.tgtTipPosDir
+			//start_loop = clock();
+			//// CKim - In teleop mode, command comes as a desired tip position and orientation, 
+			//// defined in Haptic device system, transform haptic device input into the 
+			//// target position and direction of the robot
+			//mySelf->MasterToSlave(localStat, scl);		// Updates robotStat.tgtTipPosDir
+			//
+			//mySelf->UpdateDesiredPosition();
+
+			//if (mySelf->m_compute_plane)
+			//	mySelf->IncrementalPlaneUpdate();
+
+			//// CKim - Update proxy location from current tip position.....
+			//mySelf->SlaveToMaster(localStat, scl);		// Updates robotStat.hapticState.slavePos
+
+			//// enable Jacobian Transpose controller
+			//mySelf->m_bCLIK = true;
+
+			//end_loop = clock();
+			//delta_t = (double) (end_loop - start_loop)/CLOCKS_PER_SEC;
+			//
+			//for(int i = 0; i <3 ; ++i)
+			//	vel[i] = filters[i].step((localStat.hapticState.position[i] - localStat.hapticState.previousPosition[i])/delta_t);
+
+			//memcpy(localStat.haptic_velocity, vel, 3 * sizeof(double));
 			
-			mySelf->UpdateDesiredPosition();
 
-			if (mySelf->m_compute_plane)
-				mySelf->IncrementalPlaneUpdate();
+			// compute haptic diplacement
+			mySelf->computeHapticDisplacement(localStat, haptic_dir);
+			for (int i = 0; i < 3; i++)
+				filtered_haptic_dir[i] = filters[i].step(haptic_dir[i]);
 
-			// CKim - Update proxy location from current tip position.....
-			mySelf->SlaveToMaster(localStat, scl);		// Updates robotStat.hapticState.slavePos
-
-			// enable Jacobian Transpose controller
+			// compute direction of motion of the camera
+			mySelf->computeCameraDesiredMotion(localStat, haptic_dir, camera_dir);
+			memcpy(localStat.tgtWorkspaceVelocity, camera_dir, 3 * sizeof(double));
 			mySelf->m_bCLIK = true;
-
-			end_loop = clock();
-			delta_t = (double) (end_loop - start_loop)/CLOCKS_PER_SEC;
-			
-			for(int i = 0; i <3 ; ++i)
-				vel[i] = filters[i].step((localStat.hapticState.position[i] - localStat.hapticState.previousPosition[i])/delta_t);
-
-			memcpy(localStat.haptic_velocity, vel, 3 * sizeof(double));
-
 		}
 
 					
@@ -862,6 +874,8 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 			mySelf->m_Status.tgtMotorCnt[i] = localStat.tgtMotorCnt[i];		}
 		for(int i=0; i<3; i++)	{
 			mySelf->m_Status.haptic_velocity[i] = localStat.haptic_velocity[i];		}
+		for(int i=0; i<3; i++)	{
+			mySelf->m_Status.tgtWorkspaceVelocity[i] = localStat.tgtWorkspaceVelocity[i];		}
 
 		mySelf->m_Status.invKinOK = localStat.invKinOK;
 		mySelf->m_Status.limitOK = localStat.limitOK;
@@ -874,6 +888,9 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 
 		LeaveCriticalSection(&m_cSection);
 	}
+	for (int i = 0; i < 3; i++)
+		mySelf->filters[i].resetFilter();
+
 	mySelf->m_ref_set = false;
 	mySelf->m_InvKinOn = false;
 	os.close();
@@ -1234,6 +1251,10 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 				localStat.sensedTipPosDir[i] = mySelf->m_Status.sensedTipPosDir[i];		
 			for(int i=0; i<6; i++)	
 				localStat.tgtMotorVel[i] = mySelf->m_Status.tgtMotorVel[i];	
+
+			for (int i = 0; i < 3; i++)
+				localStat.tgtWorkspaceVelocity[i] = mySelf->m_Status.tgtWorkspaceVelocity[i];
+
 			actualForce[2] = mySelf->m_force;
 			safeToTeleOp = mySelf->m_Status.isTeleOpMoving;
 			LeaveCriticalSection(&m_cSection);
@@ -1243,6 +1264,12 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 			// CKim - Evaluate model
 			//mySelf->m_kinLWPR->TipFwdKinJac(localStat.currJang, localStat.currTipPosDir, J,true);
 			mySelf->m_kinLib->EvalCurrentKinematicsModelNumeric(localStat.currJang, localStat.currTipPosDir, J, mySelf->m_bCLIK);
+
+			// compute the Jacobian
+
+
+			// update error
+
 
 			// CKim - Apply Closed Loop Inverse kienmatics control law. dq = inv(J) x (dxd + K(xd - xm))
 
@@ -1255,13 +1282,15 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 			// Use fwd kin output
 			else
 			{
+				//needs to change -> this should be the normal of the valve-plane
 				localStat.tgtTipPosDir[3] = 0;
 				localStat.tgtTipPosDir[4] = 0;
 				localStat.tgtTipPosDir[5] = 1;
 				double sum = 0;
 				for(int i=0; i<3; i++)	
 				{	
-					err(i,0) = K[i]*(localStat.tgtTipPosDir[i] - localStat.currTipPosDir[i]);
+					//err(i,0) = K[i]*(localStat.tgtTipPosDir[i] - localStat.currTipPosDir[i]);
+					err(i, 0) = K[i] * localStat.tgtWorkspaceVelocity[i];   // this is to control the robot at the image-frame of the cardioscope
 					sum += (localStat.tgtTipPosDir[i+3]*localStat.currTipPosDir[i+3]);				
 				}
 				for(int i=3; i<6; i++)
@@ -2056,7 +2085,7 @@ void CCTRDoc::SolveInverseKin(CTR_status& stat)
 
 	//m_kinLWPR->InverseKinematicsLSQ(stat.tgtTipPosDir, stat.initJang, jAng, Err, exitCond);
 	//m_kinLib->InverseKinematicsLSQ(stat.tgtTipPosDir, stat.initJang, jAng, Err, exitCond);
-	m_kinLWPR->runOptimizationController(stat.currJang, stat.tgtTipPosDir, jAng);
+	//m_kinLWPR->runOptimizationController(stat.currJang, stat.tgtTipPosDir, jAng);
 	
 	//memcpy(tempSolution, localStat.tgtJang, 5 * sizeof(double));
 	stat.condNum = Err[0];		stat.invKinErr[0] = Err[1];		stat.invKinErr[1] = Err[2];
@@ -2076,6 +2105,17 @@ void CCTRDoc::SolveInverseKin(CTR_status& stat)
 	//
 	//::std::cout << ::std::endl;
 	stat.exitCond = exitCond;		stat.invKinOK = isConverged;		stat.limitOK = isInLimit;
+}
+void CCTRDoc::computeMechanicsKinematics(CTR_status stat)
+{
+	double configuration[5] = {0};
+	memcpy(configuration, stat.currJang, 5 * sizeof(double));
+
+	double rotation[3] = {0};
+	double translation[3] = {0};
+	MechanicsBasedKinematics::RelativeToAbsolute(this->robot, configuration, rotation, translation);
+	this->kinematics->ComputeKinematics(rotation, translation);
+
 }
 
 void CCTRDoc::GetTipTransformation(::Eigen::Matrix<double, 3, 3>& trans)
@@ -2302,4 +2342,47 @@ void CCTRDoc::IncrementalPlaneUpdate()
 	m_plane_coefficients += epsilon_k * m_plane_covar * m_plane_coefficients;
 
 	::std::cout << m_plane_coefficients << ::std::endl;
+}
+
+
+void
+CCTRDoc::computeHapticDisplacement(CTR_status stat, double dP[3])
+{
+	for(int i = 0; i < 3; ++i)
+		dP[i] = stat.hapticState.position[i] - stat.hapticState.previousPosition[i];
+}
+
+void
+CCTRDoc::computeCameraDesiredMotion(CTR_status stat, const double haptic_dir[3], double camera_dir[3])
+{
+	// from haptic to image frame
+	::Eigen::Matrix3d RImageToHaptic;
+	RImageToHaptic << 0, 0,-1,
+					  0,-1, 0,
+					 -1, 0, 0;
+	::Eigen::Vector3d image_dir = RImageToHaptic * ::Eigen::Map < ::Eigen::Vector3d> (const_cast<double*> (haptic_dir), 3);
+
+	/* from image to camera frame */
+	// solve kinematics
+	this->computeMechanicsKinematics(stat);
+
+	// compute transformation
+	::Eigen::Matrix3d RCameraToImage;
+	GetImageToCameraTransformation(RCameraToImage);
+
+	::Eigen::Matrix3d RTipToCamera;
+	RTipToCamera = ::Eigen::AngleAxis<double>(-9.9 * M_PI/180.0, ::Eigen::Vector3d::UnitY());
+
+	// compute camera desired direction of motion
+	::Eigen::Matrix3d RbaseToTip;
+	SE3 bodyFrame;
+	this->kinematics->GetBodyFrame(bodyFrame);
+	SO3ToEigen(bodyFrame.GetOrientation(), RbaseToTip);
+	::Eigen::Vector3d camera_dir_Eigen = RbaseToTip * RTipToCamera * RCameraToImage * image_dir;
+	memcpy(camera_dir, camera_dir_Eigen.data(), 3 * sizeof(double));
+}
+
+void
+CCTRDoc::computeCameraJacobian(CTR_status stat)
+{
 }

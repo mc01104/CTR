@@ -2,10 +2,10 @@
 #include <fstream>
 #include "../Utilities/Utilities.h"
 
-#define CTR_EPSILON 0.0001
+#define CTR_EPSILON 0.01
 
 MechanicsBasedKinematics::MechanicsBasedKinematics(CTR* _robot, int numOfGridPoints)
-	: maxIter(100), stepSize(1.0), isUsingIVPJacobian(false)
+	: maxIter(10000), stepSize(1.0), isUsingIVPJacobian(false)
 {
 	this->robot = _robot;
 
@@ -36,7 +36,149 @@ bool MechanicsBasedKinematics::ComputeKinematics(double* rotation, double* trans
 	return true;
 }
 
-void MechanicsBasedKinematics::GetBishopFrame(SE3& bishopFrame)
+bool MechanicsBasedKinematics::ComputeInveseKinematics(double* const targetWorkspace, double rotation[], double translation[], int maxIter)
+{
+	// compute the kinematics using the initial solution 
+	if(!this->ComputeKinematics(rotation, translation))
+		return false;
+
+	// update the error
+	::Eigen::Matrix<double, 4, 1> error, tmpError;
+	this->ComputeInverseKinematicsError(targetWorkspace, error);
+
+	::Eigen::VectorXd x(5);
+	for(int i = 0; i < 3; ++i)
+		x(i) = rotation[i];
+
+	x(3) = translation[0];
+	x(4) = translation[2];
+
+
+	double step = 0.05;
+
+	::Eigen::MatrixXd errorJacobian(4,5);
+	int iter = 0;
+	while (error.segment(0, 3).norm() >= 0.1 || error(3) >  M_PI /180.0)
+	{
+		if (iter > maxIter)
+			return false;
+
+		if(!this->ComputeInverseLSQJacobian(errorJacobian, targetWorkspace))
+			return false;
+
+//		this->ComputeInverseKinematicsError(targetWorkspace, error);
+
+		::Eigen::VectorXd dx = -step * errorJacobian.transpose() *(errorJacobian*errorJacobian.transpose()).inverse() * error;
+		
+		::Eigen::VectorXd tmpX = x + dx;
+
+		double tmpTranslation[3] = {0};
+		tmpTranslation[0] = tmpX(3);
+		tmpTranslation[1] = tmpX(3) - this->robot->GetTubes().front().GetCollarLength();
+		tmpTranslation[2] = tmpX(4);
+
+		if(!this->ComputeKinematics(tmpX.segment(0, 3).data(), tmpTranslation))
+		{
+			step *= 0.5;
+			continue;
+		}
+		
+		this->ComputeInverseKinematicsError(targetWorkspace, tmpError);
+
+		if (tmpError.norm() > error.norm())
+		{
+			step *= 0.1;
+			continue;
+		}
+
+		dx = -step * errorJacobian.transpose() *(errorJacobian*errorJacobian.transpose()).inverse() * error;
+		x += dx;
+
+		step = 0.05;
+
+		::std::cout << "configuration: [" << x.transpose() << "]"<< ::std::endl;
+		::std::cout << "Error: " << error.norm() << ::std::endl;
+		::std::cout << "Position Error:" << error.segment(0, 3).norm() << ::std::endl;
+		::std::cout << "Orientation Error:" << ::std::acos( 1 - error(3) *  0.1) * 180.0 / M_PI << ::std::endl;
+		//double tmpTranslation[3] = {0};
+		tmpTranslation[0] = x(3);
+		tmpTranslation[1] = x(3) - this->robot->GetTubes().front().GetCollarLength();
+		tmpTranslation[2] = x(4);
+
+		if( !this->ComputeKinematics(x.segment(0, 3).data(), tmpTranslation))
+			return false;
+
+		this->ComputeInverseKinematicsError(targetWorkspace, error);
+
+		iter++;
+	}
+
+	for(int i = 0; i < 3; ++i)
+		rotation[i] = x(i);
+
+	translation[0] = x(3);
+	translation[2] = x(4);
+
+	return true;
+}
+
+bool MechanicsBasedKinematics::ComputeInverseLSQJacobian(::Eigen::MatrixXd& errorJacobian, double* targetWorkspace)
+{
+	::Eigen::MatrixXd tmpJacobian;
+	if(!this->GetControlJacobian(this->robot->GetLength(), tmpJacobian))
+		return false;
+
+	::Eigen::MatrixXd tmp(4,6);
+	tmp.setZero();
+	tmp.block(0, 0, 3, 3).setIdentity();
+	tmp.block(0, 0, 3, 3) *= -1.0;
+	
+	tmp.block(3, 3, 1, 3) = -10 * ::Eigen::Map<::Eigen::Vector3d > (&targetWorkspace[3]).transpose();
+
+	errorJacobian = tmp * tmpJacobian;
+
+	return true;
+}
+
+void MechanicsBasedKinematics::ComputeInverseKinematicsError(double* const targetWorkspace, ::Eigen::Matrix<double, 4, 1>& error)
+{
+	::Eigen::Vector3d currentPosition, tipTangent;
+	this->GetTipPosition(currentPosition);
+	this->GetTipTangentVector(tipTangent);
+
+	error.segment(0, 3) = ::Eigen::Map<::Eigen::Vector3d > (targetWorkspace) - currentPosition;
+
+	error(3) = 1.0 - ::Eigen::Map<::Eigen::Vector3d > (&targetWorkspace[3]).transpose() * tipTangent;
+	error(3) *= 10;
+}
+
+void MechanicsBasedKinematics::GetTipPosition(::Eigen::Vector3d& position) const
+{
+	SE3 tmp;
+	this->GetBishopFrame(tmp);
+	Vec3  tmpVec = tmp.GetPosition();
+
+	position = Vec3ToEigen(tmpVec);
+}
+
+void MechanicsBasedKinematics::GetTipTangentVector(::Eigen::Vector3d& tangent) const
+{
+	SE3 tmp;
+	this->GetBishopFrame(tmp);
+	
+	tangent = Vec3ToEigen(tmp.GetOrientation().GetZ());
+}
+
+void MechanicsBasedKinematics::GetRobotShape(const ::std::vector<double>& svector, ::std::vector<::Eigen::Vector3d>& points) 
+{
+	::std::vector<SE3> bishopFramesLocal;
+	GetBishopFrame(svector, bishopFramesLocal);
+
+	for(::std::vector<SE3>::iterator it = bishopFramesLocal.begin(); it != bishopFramesLocal.end(); ++it)
+		points.push_back(Vec3ToEigen(it->GetPosition()));
+}
+
+void MechanicsBasedKinematics::GetBishopFrame(SE3& bishopFrame) const
 {
 	bishopFrame = this->bishopFrames.back();
 }
@@ -46,7 +188,7 @@ void MechanicsBasedKinematics::GetBishopFrame(double s, SE3& bishopFrame)
 	GetBishopFrame(s, bishopFrame, this->bishopFrames);
 }
 
-void MechanicsBasedKinematics::GetBishopFrame(std::vector<double> s, std::vector<SE3>& bishopFrame)
+void MechanicsBasedKinematics::GetBishopFrame(const std::vector<double>& s, std::vector<SE3>& bishopFrame)
 {
 	int sizeS = s.size();
 	if(bishopFrame.size() != sizeS)
@@ -56,7 +198,7 @@ void MechanicsBasedKinematics::GetBishopFrame(std::vector<double> s, std::vector
 		this->GetBishopFrame(s[i], bishopFrame[i]);
 }
 
-double MechanicsBasedKinematics::GetInnerTubeRotation(double s)
+double MechanicsBasedKinematics::GetInnerTubeRotation(double s) const
 {
 	int numTube = robot->GetNumOfTubes();
 	
@@ -70,13 +212,10 @@ double MechanicsBasedKinematics::GetInnerTubeRotation(double s)
 	return frac*rotation1 + (1-frac)*rotation0;
 }
 
-double MechanicsBasedKinematics::GetInnerTubeRotation()
+double MechanicsBasedKinematics::GetInnerTubeRotation() const
 {
 	return this->BVPSolutionGrid(robot->GetNumOfTubes()-1, this->BVPSolutionGrid.cols()-1);
 }
-
-
-
 
 bool MechanicsBasedKinematics::GetControlJacobian(double s, Eigen::MatrixXd& controlJacobian)
 {
@@ -86,8 +225,11 @@ bool MechanicsBasedKinematics::GetControlJacobian(double s, Eigen::MatrixXd& con
 	if(controlJacobian.cols() != 2*numTubes || controlJacobian.rows() != 6)
 		controlJacobian.resize(6,2*numTubes);
 	
-	double* rotation = this->robot->GetRotation();
-	double* translation = this->robot->GetTranslation();
+	double* rotation = new double[3];
+	double* translation = new double[3];
+
+	memcpy(rotation, this->robot->GetRotation(), sizeof(double) * 3);
+	memcpy(translation, this->robot->GetTranslation(), sizeof(double) * 3);
 
 	double* perturbedRot = new double[numTubes];
 	double* perturbedTrans = new double[numTubes];
@@ -98,39 +240,62 @@ bool MechanicsBasedKinematics::GetControlJacobian(double s, Eigen::MatrixXd& con
 	
 	SE3 frameBeforePerturb, frameAfterPerturb;
 	
+	if(!this->ComputeKinematics(rotation, translation))
+		return false;
 	this->GetBishopFrame(s, frameBeforePerturb, this->bishopFrames);
 
 	double invEps = (1.0/CTR_EPSILON);
 	for(int i = 0; i < numTubes; ++i)
 	{
 		perturbedRot[i] += CTR_EPSILON;
-		perturbedTrans[i] += CTR_EPSILON;
 		
+		if (i == 0)
+		{
+			perturbedTrans[i] += CTR_EPSILON;
+			perturbedTrans[i + 1] = perturbedTrans[i] - this->robot->GetTubes().front().GetCollarLength();
+		}
+		else if (i == 1)
+			perturbedTrans[i] += 0;
+		else
+			perturbedTrans[i] += CTR_EPSILON;
+
 		// Jacobian w.r.t. rotation
-		this->robot->UpdateConfiguration(perturbedRot, translation);
+		if(!this->robot->UpdateConfiguration(perturbedRot, translation))
+			return false;
 		if(!this->solveBVP(perturbedSolGrid))
 			return false;
 		this->propagateBishopFrame(this->perturbedBishopFrames, perturbedSolGrid);
 		this->GetBishopFrame(s, frameAfterPerturb, this->perturbedBishopFrames);
-
-		se3 TmpColumn = Log(Inv(frameBeforePerturb)*frameAfterPerturb) * invEps;
-		controlJacobian.col(i) = Eigen::Map<Eigen::VectorXd>(&TmpColumn[0],6);	// This couldn't work.
+	
+		controlJacobian.block(0, i, 3, 1) = Vec3ToEigen(frameAfterPerturb.GetPosition() - frameBeforePerturb.GetPosition()) * invEps;
+		controlJacobian.block(3, i, 3, 1) = Vec3ToEigen(frameAfterPerturb.GetZ() - frameBeforePerturb.GetZ()) * invEps;
 
 		// Jacobin w.r.t. translation
-		this->robot->UpdateConfiguration(rotation, perturbedTrans);
+		if(!this->robot->UpdateConfiguration(rotation, perturbedTrans))
+			return false;
 		if(!this->solveBVP(perturbedSolGrid))
 			return false;
 		this->propagateBishopFrame(this->perturbedBishopFrames, perturbedSolGrid);
 		this->GetBishopFrame(s, frameAfterPerturb, this->perturbedBishopFrames);
 
-		TmpColumn = Log(Inv(frameBeforePerturb)*frameAfterPerturb) * invEps;
-		controlJacobian.col(i + numTubes) = Eigen::Map<Eigen::VectorXd>(&TmpColumn[0],6);	// This couldn't work.
+		
+		controlJacobian.block(0, i + numTubes, 3, 1) = Vec3ToEigen(frameAfterPerturb.GetPosition() - frameBeforePerturb.GetPosition()) * invEps;
+		controlJacobian.block(3, i + numTubes, 3, 1) = Vec3ToEigen(frameAfterPerturb.GetZ() - frameBeforePerturb.GetZ()) * invEps;
 
-		perturbedRot[i] = rotation[i];
-		perturbedTrans[i] = translation[i];
+
+		for (int i = 0; i < 3; ++i)
+		{
+			perturbedRot[i] = rotation[i];
+			perturbedTrans[i] = translation[i];
+		}
 	}
+
 	this->robot->UpdateConfiguration(rotation, translation);
 
+	::Eigen::MatrixXd tmp = controlJacobian;
+	tmp.col(4) = tmp.col(5);
+	controlJacobian =tmp.block(0, 0, 6, 5);
+	
 	delete perturbedRot, perturbedTrans;
 
 	return true;
@@ -140,7 +305,7 @@ bool MechanicsBasedKinematics::GetControlJacobian(double s, Eigen::MatrixXd& con
 bool MechanicsBasedKinematics::solveBVP (Eigen::MatrixXd& solution)
 {
 	this->stepSize = 1.0;
-	//int halfMaxIter = this->maxIter/2;
+	
 	int subMaxIter = this->maxIter/5;
 
 	// scale arcLengthGrid to robot length
@@ -165,7 +330,7 @@ bool MechanicsBasedKinematics::solveBVP (Eigen::MatrixXd& solution)
 		
 	}
 
-	//std::cout << "BVP Failed!" <<std::endl;
+	std::cout << "BVP Failed!" <<std::endl;
 	return false;
 }
 
@@ -429,7 +594,7 @@ bool MechanicsBasedKinematics::hasBVPConverged(Eigen::MatrixXd& solution, Eigen:
 	//std::cout << "estimated BC at base = [" << estimatedBC.transpose() << "]"<< std::endl;
 	//std::cout<< "Convergence error = " << errorNorm << std::endl;
 	
-	if (errorNorm < 0.001)
+	if (errorNorm < 0.00000001)
 		return true;
 
 	return false;
@@ -457,7 +622,7 @@ void MechanicsBasedKinematics::propagateBishopFrame (std::vector<SE3>& bishopFra
 
 }
 
-void MechanicsBasedKinematics::findNearestGridPoint(double s, int* beginIdx, double* fracFromBegin)
+void MechanicsBasedKinematics::findNearestGridPoint(double s, int* beginIdx, double* fracFromBegin) const
 {
 	// TODO: change it to be binary search
 	for(int i = 0; i < this->arcLengthGrid.size(); ++i)
@@ -476,8 +641,13 @@ void MechanicsBasedKinematics::GetBishopFrame(double s, SE3& bishopFrame, std::v
 	double frac;
 	this->findNearestGridPoint(s, &beginIdx, &frac);
 
-	se3 w1 = Log(Inv(frames[beginIdx])*frames[beginIdx+1]);
-	bishopFrame = frames[beginIdx] * Exp(frac*w1);
+	if (beginIdx < this->bishopFrames.size() - 1)
+	{
+		se3 w1 = Log(Inv(frames[beginIdx])*frames[beginIdx+1]);
+		bishopFrame = frames[beginIdx] * Exp(frac*w1);
+	}
+	else
+		bishopFrame = frames.back();
 }
 
 void MechanicsBasedKinematics::ComputeBCJacobianNumerical(Eigen::MatrixXd& solution)
@@ -595,4 +765,10 @@ void MechanicsBasedKinematics::RelativeToAbsolute(const CTR* const robot, const 
 	translation[1] = -collarLength + translation[0];
 	translation[2] = relativeConf[2] + translationLowerLimit;
 
+}
+
+void MechanicsBasedKinematics::GetBodyFrame(SE3& bodyFrame) const
+{
+	this->GetBishopFrame(bodyFrame);
+	bodyFrame = bodyFrame *RotZ(this->GetInnerTubeRotation());
 }

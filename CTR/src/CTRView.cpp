@@ -637,8 +637,8 @@ void CCTRView::updateGUIActivationState(int handlesToActivate[], int handlesToDe
 	i = 0;
 	while (value >= 0)
 	{
-		value = handlesToActivate[i];
-		GetDlgItem(value)->EnableWindow(TRUE);
+		value = handlesToDectivate[i];
+		GetDlgItem(value)->EnableWindow(FALSE);
 		i++;
 	}
 }

@@ -7,6 +7,12 @@ Tube::Tube(double bendingStiffness, double PoissonsRatio, std::vector<Section> _
 		this->sections = _sections;
 }
 
+Tube::Tube(double bendingStiffness, double* PoissonsRatio, std::vector<Section> sections)
+		: kxy(bendingStiffness), nu(*PoissonsRatio), length(0.0), collarLength(17)
+{
+	this->poissonRatio = PoissonsRatio;
+}
+
 std::vector<Section>& Tube::GetSections ()
 {
     return this->sections;

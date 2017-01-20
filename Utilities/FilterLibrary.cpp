@@ -51,6 +51,12 @@ Filter::updateDataBuffer(double incomingValue)
 	}
 }
 
+void
+Filter::resetFilter()
+{
+	this->data.clear();
+}
+
 double 
 MedianFilter::computeMedian()
 {

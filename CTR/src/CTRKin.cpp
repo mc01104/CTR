@@ -1004,6 +1004,8 @@ void CTRKin::EvalCurrentKinematicsModel_NEW(const double* jAng,  const double* t
 
 void CTRKin::ApplyKinematicControlNullspace(const Eigen::MatrixXd& J, const Eigen::MatrixXd& err, double* dq, double* q)
 {
+	//::std::cout << err.block(0,0,3,1).transpose() << ::std::endl;
+
 	::Eigen::VectorXd dotq(5);
 	::Eigen::Matrix<double, 6, 5> Jtemp = J;			// this can be avoided - it's just to overcome the const
 	Jtemp.col(0) *= M_PI / 180.0;
@@ -1023,14 +1025,17 @@ void CTRKin::ApplyKinematicControlNullspace(const Eigen::MatrixXd& J, const Eige
 		tmpMat(i, i) += 0.01;
 
 	//position control
-	dotq = Jp.transpose() * (Jp * Jp.transpose()).inverse() * err.block(0, 0, 3, 1);
+	dotq = Jp.transpose() /** (Jp * Jp.transpose()).inverse()*/ * err.block(0, 0, 3, 1);
 
 	//orientation in the nullspace
-	double orientationGain = 100.0;
-	dotq += orientationGain*( IdMat - Jp.transpose() * tmpMat.inverse() * Jp) * Jo.transpose() * err.block(3, 0, 3, 1);
+	//double orientationGain = 100.0;
+	//dotq += orientationGain*( IdMat - Jp.transpose() * tmpMat.inverse() * Jp) * Jo.transpose() * err.block(3, 0, 3, 1);
 
 	// overall gain
-	dotq *= 0.05;
+	//dotq *= 0.05;
+	//dotq *= 3;
+	::std::cout << dotq.transpose() << ::std::endl;
+	//dotq *= 0.0;
 
 	// Joint limit avoidance using potential-field method
 	double upperSoft = L31_MAX - 10;

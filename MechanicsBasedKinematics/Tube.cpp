@@ -5,6 +5,7 @@ Tube::Tube(double bendingStiffness, double PoissonsRatio, std::vector<Section> _
 {
 	if(!_sections.empty())
 		this->sections = _sections;
+	this->poissonRatio = &nu;
 }
 
 Tube::Tube(double bendingStiffness, double* PoissonsRatio, std::vector<Section> sections)

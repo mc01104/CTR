@@ -164,7 +164,7 @@ HDCallbackCode HDCALLBACK ChunHaptic::synchCallback(void *pData)
 	memcpy(state->hapticState.previousPosition, state->hapticState.position, 3 * sizeof(double));
 
 	// update current position
-	memcpy(state->hapticState.position, &state->hapticState.tfMat[13], 3 * sizeof(double));
+	memcpy(state->hapticState.position, &state->hapticState.tfMat[12], 3 * sizeof(double));
 
 	for(int i=0; i<16; i++)	{		state->hapticState.tfMat[i] = m_currentState.tfMat[i];			}
 

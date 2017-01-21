@@ -523,7 +523,7 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 				mySelf->m_contactError = contactRatioError;
 				mySelf->m_contactRatio = contactRatio;
 				LeaveCriticalSection(&m_cSection);
-				::std::cout << "Ratio:" << contactRatio << ::std::endl;
+				//::std::cout << "Ratio:" << contactRatio << ::std::endl;
 				end_loop = clock();
 
 				EnterCriticalSection(&m_cSection);
@@ -851,8 +851,13 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 			for (int i = 0; i < 3; i++)
 				filtered_haptic_dir[i] = filters[i].step(haptic_dir[i]);
 
+			//filtered_haptic_dir[0] = 0;
+			//filtered_haptic_dir[1] = 0;
+			//filtered_haptic_dir[2] = 1;
+
 			// compute direction of motion of the camera
-			mySelf->computeCameraDesiredMotion(localStat, haptic_dir, camera_dir);
+			mySelf->computeCameraDesiredMotion(localStat, filtered_haptic_dir, camera_dir);
+			//PrintCArray(filtered_haptic_dir, 3);
 			memcpy(localStat.tgtWorkspaceVelocity, camera_dir, 3 * sizeof(double));
 			mySelf->m_bCLIK = true;
 		}
@@ -1167,7 +1172,8 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 	//double K[6] = {5.0, 5.0, 5.0, 0.5, 0.5, 0.5 };	// working
 	//double K[6] = {10.0, 10.0, 10.0, 1.0, 1.0, 1.0 };		// working
 	
-	double K[6] = {10.0, 10.0, 10.0, 10.0, 10.0, 10.0 };		// working
+	double K[6] = {100.0, 100.0, 100.0, 100.0, 100.0, 100.0 };		// for image frame control
+	//double K[6] = {10.0, 10.0, 10.0, 10.0, 10.0, 10.0 };		// working
 	//double K[6] = { 5.0, 5.0, 5.0, 5.0, 5.0, 5.0 };				// For sensor feedback + estimator
 	//double K[6] = { 1.5, 1.5, 1.5, 0.1, 0.1, 0.1 };				// For sensor feedback + estimator
 	//double K[6] = {1.0, 1.0, 1.0, 0.5, 0.5, 0.5 };	// working	
@@ -2357,8 +2363,8 @@ CCTRDoc::computeCameraDesiredMotion(CTR_status stat, const double haptic_dir[3],
 {
 	// from haptic to image frame
 	::Eigen::Matrix3d RImageToHaptic;
-	RImageToHaptic << 0, 0,-1,
-					  0,-1, 0,
+	RImageToHaptic << 0, 1, 0,
+					  0, 0,-1,
 					 -1, 0, 0;
 	::Eigen::Vector3d image_dir = RImageToHaptic * ::Eigen::Map < ::Eigen::Vector3d> (const_cast<double*> (haptic_dir), 3);
 

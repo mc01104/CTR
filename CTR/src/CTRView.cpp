@@ -76,6 +76,7 @@ BEGIN_MESSAGE_MAP(CCTRView, CFormView)
 
 
 	ON_BN_CLICKED(IDC_CHECK1, &CCTRView::ToggleForceControl)
+	ON_BN_CLICKED(IDC_CHECK3, &CCTRView::ToggleCameraControl)
 
 	ON_WM_CTLCOLOR()
 	ON_BN_CLICKED(IDC_BUTTON6, &CCTRView::OnClickedBtnHome)
@@ -166,6 +167,7 @@ void CCTRView::DoDataExchange(CDataExchange* pDX)
 	DDX_Radio(pDX, IDC_RADIO_JA2, m_PlaneEstimationMode);
 
 	m_ctrlMode != 1 ? GetDlgItem(IDC_CHECK1)->EnableWindow(false) : GetDlgItem(IDC_CHECK1)->EnableWindow(true);
+	m_ctrlMode != 1 ? GetDlgItem(IDC_CHECK3)->EnableWindow(false) : GetDlgItem(IDC_CHECK3)->EnableWindow(true);
 
 }
 
@@ -574,6 +576,12 @@ void CCTRView::ToggleForceControl()
 		this->GetDocument()->ToggleForceControl();
 }
 
+void CCTRView::ToggleCameraControl()
+{
+	if (m_ctrlMode == 1)
+		this->GetDocument()->ToggleForceControl();
+}
+
 void CCTRView::OnClickedBtnComputePlane()
 {
 	::Eigen::MatrixXd data(3, this->points_for_plane_estimation.size());
@@ -658,8 +666,15 @@ void CCTRView::OnClickedBtnUpdate()
 		this->SetDlgItemTextA(IDC_EDIT6, str);
 		str.Format("%1.4f", this->normal(2));
 		this->SetDlgItemTextA(IDC_EDIT7, str);
+		this->GetDocument()->setContactControlNormal(this->normal);
 		break;
 	case 1:
+		this->GetDlgItemTextA(IDC_EDIT8, str);		
+		this->normal[0] = atof(str);
+		this->GetDlgItemTextA(IDC_EDIT9, str);		
+		this->normal[1] = atof(str);
+		this->GetDlgItemTextA(IDC_EDIT10, str);		
+		this->normal[2] = atof(str);
 		break;
 	case 2:
 		break;

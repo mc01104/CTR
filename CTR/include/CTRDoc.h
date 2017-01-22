@@ -113,6 +113,8 @@ private:
 	void				IncrementalPlaneUpdate();
 	::Eigen::Vector2d	m_plane_coefficients;
 	::Eigen::Matrix2d   m_plane_covar;
+	::Eigen::Vector3d	m_contact_control_normal;
+
 
 	void				TogglePlaneEstimation();
 
@@ -122,6 +124,9 @@ private:
 	void				computeCameraJacobian(CTR_status stat);
 	void				computeMechanicsKinematics(CTR_status stat);
 	bool				cameraControlFlag;
+	bool				m_camera_control;
+	void				ToggleCameraControl();
+	
 
 
 
@@ -176,6 +181,7 @@ public:
 	void	ComputeDesiredPosition(double tmpPosition[6]);
 
 	Eigen::Vector3d GetTipPosition();
+	void setContactControlNormal(const ::Eigen::Vector3d& computedNormal);
 
 #ifdef _DEBUG
 	virtual void AssertValid() const;

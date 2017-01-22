@@ -128,6 +128,7 @@ public:
 	//afx_msg void OnCheckTraj();
 	void ToggleForceChkbox(bool flag);
 	void ToggleForceControl();
+	void ToggleCameraControl();
 
 	CComboBox m_traj_type;
 	CString IDC_CIRCLE;

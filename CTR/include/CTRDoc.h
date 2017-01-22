@@ -125,7 +125,7 @@ private:
 	void				computeMechanicsKinematics(CTR_status stat);
 	bool				cameraControlFlag;
 	bool				m_camera_control;
-	void				ToggleCameraControl();
+	
 	
 
 
@@ -149,7 +149,7 @@ public:
 	void StartUIupdate();
 
 	void SwitchAllControlFlagsOff();
-
+	void				ToggleCameraControl();
 	// CKim - Get thread safe copy of the robot status
 	void	GetCurrentStatus(CTR_status& stat);
 

@@ -77,25 +77,25 @@ CTR* const CTRFactory::buildCTR (std::string robotXML)
 	robot->Initialize();
 
 	// free parameters - Poisson's ratios of all tubes should be synced.
-	double scale = 1.0e-7;
-	for(int i = 0 ; i < 3; ++i)
-	{
-		if(i != 0)
-		{
-			robot->freeParameters.push_back(&robot->tubes[i].kxy);
-			robot->variances.push_back(scale * ::std::pow(*robot->freeParameters.back(),2) );
-		}
-		robot->freeParameters.push_back(&robot->tubes[i].sections.back().precurvature[1]);
-		robot->variances.push_back(scale * ::std::pow(*robot->freeParameters.back(),2) );
+	//double scale = 1.0e-7;
+	//for(int i = 0 ; i < 3; ++i)
+	//{
+	//	if(i != 0)
+	//	{
+	//		robot->freeParameters.push_back(&robot->tubes[i].kxy);
+	//		robot->variances.push_back(scale * ::std::pow(*robot->freeParameters.back(),2) );
+	//	}
+	//	robot->freeParameters.push_back(&robot->tubes[i].sections.back().precurvature[1]);
+	//	robot->variances.push_back(scale * ::std::pow(*robot->freeParameters.back(),2) );
 
-		robot->freeParameters.push_back(&robot->tubes[i].sections.back().precurvature[0]);
-		robot->variances.push_back(*robot->variances.end());
+	//	robot->freeParameters.push_back(&robot->tubes[i].sections.back().precurvature[0]);
+	//	robot->variances.push_back(*robot->variances.end());
 
-		//robot->variances.push_back(1.0e-13);
-	}
-	// add poisson ratio
-	robot->freeParameters.push_back(poissonRatio);
-	robot->variances.push_back(scale * ::std::pow(*robot->freeParameters.back(),2) );
+	//	//robot->variances.push_back(1.0e-13);
+	//}
+	//// add poisson ratio
+	//robot->freeParameters.push_back(poissonRatio);
+	//robot->variances.push_back(scale * ::std::pow(*robot->freeParameters.back(),2) );
 	/////////////////////////////////////
 
 	return robot;

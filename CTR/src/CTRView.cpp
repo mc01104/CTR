@@ -579,7 +579,7 @@ void CCTRView::ToggleForceControl()
 void CCTRView::ToggleCameraControl()
 {
 	if (m_ctrlMode == 1)
-		this->GetDocument()->ToggleForceControl();
+		this->GetDocument()->ToggleCameraControl();
 }
 
 void CCTRView::OnClickedBtnComputePlane()

@@ -85,7 +85,8 @@ CCTRDoc::CCTRDoc()
 {
 	// TODO: add one-time construction code here
 	m_ioRunning = false;		m_teleOpMode = false;
-	
+	for (int i = 0; i < 3; ++i)
+		this->m_Status.tgtWorkspaceVelocity[i] = 0;
 	m_date = GetDateString();
 	m_compute_plane = false;
 	m_camera_control = false;
@@ -106,7 +107,7 @@ CCTRDoc::CCTRDoc()
 	// CKim - Initialize motor controller	
 	m_motionCtrl = new ChunMotion();		m_motorConnected = false;
 	m_motorConnected = m_motionCtrl->Initialize();
-	cameraControlFlag = true;
+	cameraControlFlag = false;
 	m_kinLib = new CTRKin;
 	m_ref_set = false;
 	// paths for LWPR models (TIP AND BALANCED PAIR)
@@ -209,6 +210,7 @@ void CCTRDoc::UpdateDesiredPosition()
 	//::std::cout << "updated target:" << targetTmp[2] << ::std::endl;
 
 	memcpy(m_desiredPosition, targetTmp, 6 * sizeof(double));
+	//PrintCArray(m_desiredPosition, 6);
 }
 
 void CCTRDoc::ComputeDesiredPosition(double tmpPosition[6])
@@ -233,7 +235,7 @@ void CCTRDoc::ComputeDesiredPosition(double tmpPosition[6])
 	
 	m_deltaT = 1.0/40.0; // CHANGE to be computed by the network thread
 	// Implement in a more general way
-	::Eigen::Vector3d tmp = this->m_contact_control_normal *  m_contactGain * m_contactError * m_deltaT /*+ ::Eigen::Map<::Eigen::Vector3d> (m_desiredPosition,3)*/;
+	::Eigen::Vector3d tmp = 100 * this->m_contact_control_normal *  m_contactGain * m_contactError * m_deltaT /*+ ::Eigen::Map<::Eigen::Vector3d> (m_desiredPosition,3)*/;
 	memcpy(tmpPosition, tmp.data(), 3 * sizeof(double));
 
 	m_ContactUpdateReceived = !m_ContactUpdateReceived;
@@ -538,7 +540,7 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 				mySelf->m_contactError = contactRatioError;
 				mySelf->m_contactRatio = contactRatio;
 				LeaveCriticalSection(&m_cSection);
-				//::std::cout << "Ratio:" << contactRatio << ::std::endl;
+				::std::cout << "Ratio:" << contactRatio << ::std::endl;
 				end_loop = clock();
 
 				EnterCriticalSection(&m_cSection);
@@ -845,7 +847,8 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 					mySelf->IncrementalPlaneUpdate();
 
 				mySelf->SlaveToMaster(localStat, scl);		// Updates robotStat.hapticState.slavePos
-
+				//PrintCArray(localStat.refTipPosDir, 6);
+				//PrintCArray(localStat.tgtTipPosDir, 6);
 
 				mySelf->m_bCLIK = true;
 			}
@@ -859,7 +862,16 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 				// compute direction of motion of the camera
 				mySelf->computeCameraDesiredMotion(localStat, filtered_haptic_dir, camera_dir);
 				memcpy(localStat.tgtWorkspaceVelocity, camera_dir, 3 * sizeof(double));
-				mySelf->m_bCLIK = true;
+				//PrintCArray(localStat.tgtWorkspaceVelocity, 3);
+				mySelf->m_bCLIK = true;	
+
+				for(int i=0; i<6; i++)	
+				{
+					localStat.tgtTipPosDir[i] = localStat.currTipPosDir[i];	
+					//localStat.refTipPosDir[i] = localStat.currTipPosDir[i];	
+				}
+				//mySelf->SlaveToMaster(localStat, scl);
+
 			}
 		}
 
@@ -874,6 +886,8 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 
 		for(int i=0; i<6; i++)	{
 			mySelf->m_Status.tgtTipPosDir[i] = localStat.tgtTipPosDir[i];		}
+		for(int i=0; i<6; i++)	{
+			mySelf->m_Status.refTipPosDir[i] = localStat.refTipPosDir[i];		}
 		for(int i=0; i<5; i++)	{
 			mySelf->m_Status.tgtJang[i] = localStat.tgtJang[i];		}
 		for(int i=0; i<7; i++)	{
@@ -1166,15 +1180,16 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 
 	// CKim - Variables for Differential inverse kinematics control. Jacobian matrix
 	Eigen::MatrixXd J(6,5);			
-	Eigen::Matrix<double,6,1> err;		
+	Eigen::Matrix<double,6,1> err;
+	err.setZero();
 	double dq[5];		
 	double dCnt[7];		
 	
 	//double K[6] = {5.0, 5.0, 5.0, 0.5, 0.5, 0.5 };	// working
 	//double K[6] = {10.0, 10.0, 10.0, 1.0, 1.0, 1.0 };		// working
 	
-	double K[6] = {100.0, 100.0, 100.0, 100.0, 100.0, 100.0 };		// for image frame control
-	//double K[6] = {10.0, 10.0, 10.0, 10.0, 10.0, 10.0 };		// working
+	double K_image[6] = {100.0, 100.0, 100.0, 10.0, 10.0, 10.0 };		// for image frame control
+	double K[6] = {10.0, 10.0, 10.0, 10.0, 10.0, 10.0 };		// working
 	//double K[6] = { 5.0, 5.0, 5.0, 5.0, 5.0, 5.0 };				// For sensor feedback + estimator
 	//double K[6] = { 1.5, 1.5, 1.5, 0.1, 0.1, 0.1 };				// For sensor feedback + estimator
 	//double K[6] = {1.0, 1.0, 1.0, 0.5, 0.5, 0.5 };	// working	
@@ -1200,7 +1215,7 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 		// TODO: learn an LWPR model for the balanced pair as well
 		// CKim - Evaluate Kinematics Model for balanced pair position and orientation
 		//mySelf->m_kinLib->BalancedPairFwdKin(localStat.currJang, localStat.bpTipPosDir);
-		mySelf->m_kinLWPR_BP->TipFwdKin(localStat.currJang, localStat.bpTipPosDir);
+		//mySelf->m_kinLWPR_BP->TipFwdKin(localStat.currJang, localStat.bpTipPosDir);
 
 		// CKim - Apply Control Law to calculate joint velocity
 		// CKim - Position FeedForward Control.
@@ -1266,6 +1281,7 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 			safeToTeleOp = mySelf->m_Status.isTeleOpMoving;
 			for (int i = 0; i < 3; ++i)
 				planeNormal(i) = mySelf->m_contact_control_normal(i);
+
 			LeaveCriticalSection(&m_cSection);
 
 			//::std::cout << " This is the fake sensed force" << ::std::endl;
@@ -1281,7 +1297,8 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 
 
 			// CKim - Apply Closed Loop Inverse kienmatics control law. dq = inv(J) x (dxd + K(xd - xm))
-
+			//::std::cout << " before" << ::std::endl;
+			//::std::cout << err.transpose() << ::std::endl;
 			// Use sensor feedback
 			if(mySelf->m_FeedbackOn)
 			{
@@ -1298,10 +1315,10 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 				double sum = 0;
 				for(int i=0; i<3; i++)	
 				{	
-					if (!mySelf->cameraControlFlag)
+					if (!mySelf->m_camera_control)
 						err(i,0) = K[i]*(localStat.tgtTipPosDir[i] - localStat.currTipPosDir[i]);
 					else
-						err(i, 0) = K[i] * localStat.tgtWorkspaceVelocity[i];   // this is to control the robot at the image-frame of the cardioscope
+						err(i, 0) = K_image[i] * localStat.tgtWorkspaceVelocity[i];   // this is to control the robot at the image-frame of the cardioscope
 					sum += (localStat.tgtTipPosDir[i+3]*localStat.currTipPosDir[i+3]);				
 				}
 				for(int i=3; i<6; i++)
@@ -1309,6 +1326,9 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 					err(i,0) = K[i]*(localStat.tgtTipPosDir[i] - localStat.currTipPosDir[i]);		
 				}
 			}
+			//::std::cout << "wvel" << ::std::endl;
+			//PrintCArray(localStat.tgtWorkspaceVelocity, 3);
+			//::std::cout << err.col(0).segment(0,3).transpose() << ::std::endl;
 	/*		::Eigen::Matrix<double, 3, 1> desiredForce;
 			desiredForce.setZero();
 			desiredForce[2] = 0.4;*/
@@ -1322,13 +1342,17 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 			//else
 
 			//project the error on the plane
-			::Eigen::Matrix3d PlaneNullProjection = ::Eigen::Matrix3d::Identity() - planeNormal * planeNormal.transpose();
-			err.segment(0, 3) = PlaneNullProjection * err.segment(0, 3);
 			if (mySelf->m_forceControlActivated)
-				err += ::Eigen::Map<::Eigen::VectorXd> (desiredPosition, 6);   
+			{
+			::Eigen::Matrix3d PlaneNullProjection = ::Eigen::Matrix3d::Identity() - planeNormal * planeNormal.transpose();
+			err.block(0,0, 3, 1) = PlaneNullProjection * err.block(0,0, 3, 1);
+			
+				for (int i = 0; i < 3; i++)
+					err(i, 0) += desiredPosition[i];   
+			}
 
-
-
+			//::std::cout << err.block(0, 0, 3, 1).transpose() << ::std::endl;
+			//PrintCArray(desiredPosition, 6);
 			mySelf->m_kinLib->ApplyKinematicControlNullspace(J,err,dq, localStat.currJang);
 			//mySelf->m_kinLWPR->ApplyKinematicControl(J,err,dq);
 

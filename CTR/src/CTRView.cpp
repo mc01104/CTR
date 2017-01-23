@@ -74,6 +74,8 @@ BEGIN_MESSAGE_MAP(CCTRView, CFormView)
 	ON_BN_CLICKED(IDC_BTN_MOVE8, &CCTRView::OnClickedBtnUpdate)
 	ON_BN_CLICKED(IDC_BTN_MOVE9, &CCTRView::OnClickedBtnUpdate)
 
+	ON_BN_CLICKED(IDC_BTN_MOVE10, &CCTRView::OnClickedBtnStartLog)
+	ON_BN_CLICKED(IDC_BTN_MOVE11, &CCTRView::OnClickedBtnStopLog)
 
 	ON_BN_CLICKED(IDC_CHECK1, &CCTRView::ToggleForceControl)
 	ON_BN_CLICKED(IDC_CHECK3, &CCTRView::ToggleCameraControl)
@@ -252,23 +254,23 @@ void CCTRView::OnTimer(UINT_PTR nIDEvent)
 
 	UpdateData(false);
 
-	if(this->logDataFlag)
-	{
-		QueryPerformanceCounter(&m_Etime);	
-		m_Elapsed.QuadPart = m_Etime.QuadPart - m_Stime.QuadPart;
-		m_Elapsed.QuadPart *= 1000000;
-		m_Elapsed.QuadPart /= m_Freq.QuadPart;
-		double dt = m_Elapsed.QuadPart/1000;
+	//if(this->logDataFlag)
+	//{
+	//	QueryPerformanceCounter(&m_Etime);	
+	//	m_Elapsed.QuadPart = m_Etime.QuadPart - m_Stime.QuadPart;
+	//	m_Elapsed.QuadPart *= 1000000;
+	//	m_Elapsed.QuadPart /= m_Freq.QuadPart;
+	//	double dt = m_Elapsed.QuadPart/1000;
 
-		for(int i=0; i<6; i++)	
-			this->logStream << stat.tgtTipPosDir[i] << "\t";		
-		//this->logStream << ::std::endl;
+	//	for(int i=0; i<6; i++)	
+	//		this->logStream << stat.tgtTipPosDir[i] << "\t";		
+	//	//this->logStream << ::std::endl;
 
-		for(int i = 0; i < 5; ++i)
-			this->logStream << stat.currJang[i] << "\t";
-		this->logStream << ::std::endl;
+	//	for(int i = 0; i < 5; ++i)
+	//		this->logStream << stat.currJang[i] << "\t";
+	//	this->logStream << ::std::endl;
 
-	}
+	//}
 
 	///////////// FIX TO UPDATE GRAPHICS //////////////////
 	// CKim - Update 3D graphics
@@ -681,4 +683,20 @@ void CCTRView::OnClickedBtnUpdate()
 	}
 
 	return;		
+}
+
+void CCTRView::OnClickedBtnStartLog()
+{
+	this->GetDlgItem(IDC_BTN_MOVE10)->EnableWindow(FALSE);
+	this->GetDlgItem(IDC_BTN_MOVE11)->EnableWindow(TRUE);
+	this->GetDocument()->ToggleLog();
+}
+
+void CCTRView::OnClickedBtnStopLog()
+{
+	this->GetDlgItem(IDC_BTN_MOVE10)->EnableWindow(TRUE);
+	this->GetDlgItem(IDC_BTN_MOVE11)->EnableWindow(FALSE);
+
+	this->GetDocument()->ToggleLog();
+
 }

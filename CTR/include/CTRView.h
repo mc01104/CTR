@@ -62,6 +62,9 @@ public:
 	afx_msg void OnClickedBtnRecConf();
 	afx_msg void OnClickedBtnGoToRecConf();
 
+	afx_msg void OnClickedBtnStartLog();
+	afx_msg void OnClickedBtnStopLog();
+
 	afx_msg void OnClickedBtnRecPoint();
 	afx_msg void OnClickedBtnPopPoint();
 	afx_msg void OnClickedBtnCleanAll();
@@ -76,6 +79,7 @@ public:
 	afx_msg void OnBnClickedRadioModes();
 	afx_msg void OnBnClickedRadioModesPlane();
 	afx_msg void OnClickedBtnUpdate();
+
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 	
 	int m_PlaneEstimationMode;

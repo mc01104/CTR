@@ -91,7 +91,7 @@ CCTRDoc::CCTRDoc()
 	m_compute_plane = false;
 	m_camera_control = false;
 	m_contact_control_normal << 0, 0, 1;
-
+	m_logData = false;
 	filters = new RecursiveFilter::MovingAverageFilter[3];
 
 	// CKim - Initialize critical section
@@ -485,9 +485,9 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 	clock_t start_loop, end_loop;
 	start_loop = clock();
 
-	EnterCriticalSection(&m_cSection);
-	::std::ofstream* os = mySelf->m_fileStream;
-	LeaveCriticalSection(&m_cSection);
+	//EnterCriticalSection(&m_cSection);
+	::std::ofstream* os;
+	//LeaveCriticalSection(&m_cSection);
 
     do {
 		::std::ostringstream ss;
@@ -544,15 +544,19 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 				end_loop = clock();
 
 				EnterCriticalSection(&m_cSection);
-				if(os)
+				bool logData = mySelf->m_logData;
+				os = mySelf->m_fileStream;
+				LeaveCriticalSection(&m_cSection);
+
+				if (logData)
 				{
-					//for (int i = 0; i < 6; i++)
-					//	*os << localStat.currTipPosDir[i] << "\t";
+					for (int i = 0; i < 6; i++)
+						*os << localStat.currTipPosDir[i] << "\t";
 
 					*os << contactRatio << "\t";
 					*os << ((float) (end_loop - start_loop))/CLOCKS_PER_SEC << ::std::endl;
 				}
-				LeaveCriticalSection(&m_cSection);
+
 				//::std::cout << "Desired Ratio:" << desiredContactRatio << ::std::endl;
 				//::std::cout << ::std::endl;
 				//::std::cout << "Contact Ratio Error:" << desiredContactRatio - atof(recvbuf) << ::std::endl;
@@ -726,19 +730,19 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 	// CKim - Parameters for loop speed measurement
 	ChunTimer timer;	int perfcnt = 0;	int navg = 5;		long loopTime = 0;
 
-	::std::string gainStr;
-	std::ostringstream strs;
-	strs << mySelf->m_contactGain;
-	gainStr = strs.str();
-	::std::string filename = "ExperimentData/" + GetDateString() + "-Gain" + gainStr + ".txt";
+	//::std::string gainStr;
+	//std::ostringstream strs;
+	//strs << mySelf->m_contactGain;
+	//gainStr = strs.str();
+	//::std::string filename = "ExperimentData/" + GetDateString() + "-Gain" + gainStr + ".txt";
 	
-	EnterCriticalSection(&m_cSection);
-	if (mySelf->m_fileStream)
-		delete mySelf->m_fileStream;
+	//EnterCriticalSection(&m_cSection);
+	//if (mySelf->m_fileStream)
+	//	delete mySelf->m_fileStream;
 
-	mySelf->m_fileStream = new ::std::ofstream(filename);   
-	LeaveCriticalSection(&m_cSection);
-	ofstream os("debug_control_no_scaling.txt");
+	//mySelf->m_fileStream = new ::std::ofstream(filename);   
+	//LeaveCriticalSection(&m_cSection);
+	//ofstream os("debug_control_no_scaling.txt");
 	RecursiveFilter::Filter* filters = new RecursiveFilter::MovingAverageFilter[3];
 	// CKim - The Loop
 	bool prevControl=false;
@@ -917,7 +921,7 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 
 	mySelf->m_ref_set = false;
 	mySelf->m_InvKinOn = false;
-	os.close();
+	//os.close();
 	return 0;
 
 }
@@ -2415,4 +2419,20 @@ CCTRDoc::setContactControlNormal(const ::Eigen::Vector3d& computedNormal)
 {
 	for(int i = 0; i < 3; i++)
 		this->m_contact_control_normal(i) = computedNormal(i);
+}
+
+void 
+CCTRDoc::ToggleLog()
+{
+	if (this->m_logData)
+	{
+		this->m_fileStream->close();
+		this->m_logData = false;
+	}
+	else
+	{
+		::std::string filename = GetDateString();
+		this->m_fileStream = new ::std::ofstream(filename);
+		this->m_logData = true;
+	}
 }

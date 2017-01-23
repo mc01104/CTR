@@ -107,6 +107,7 @@ private:
 	double				m_contactRatio;
 	double				m_contactRatioDesired;
 	::std::ofstream*	m_fileStream;
+	bool				m_logData;
 
 	// plane computation
 	bool				m_compute_plane;
@@ -117,6 +118,7 @@ private:
 
 
 	void				TogglePlaneEstimation();
+	
 
 	// new teleoperation control
 	void				computeHapticDisplacement(CTR_status stat, double dP[3]);
@@ -167,6 +169,7 @@ public:
 	void	SetForgettingFactor(double val);
 	LWPRKinematics* GetKinematics() { return this->m_kinLWPR;};
 	void	ToggleForceControl();
+	void	ToggleLog();
 
 	void	ChangeForceForTuning(double force);
 	void	SetForceGain(double forceGain);

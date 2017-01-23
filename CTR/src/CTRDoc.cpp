@@ -2431,7 +2431,7 @@ CCTRDoc::ToggleLog()
 	}
 	else
 	{
-		::std::string filename = GetDateString();
+		::std::string filename = GetDateString() + ".txt";
 		this->m_fileStream = new ::std::ofstream(filename);
 		this->m_logData = true;
 	}

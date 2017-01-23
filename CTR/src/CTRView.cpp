@@ -27,7 +27,7 @@ int CCTRView::manual_point_ENABLE[15] = {IDC_BTN_MOVE3, IDC_BTN_MOVE4, IDC_BTN_M
 int CCTRView::manual_point_DISABLE[15] = {IDC_EDIT8, IDC_EDIT9, IDC_EDIT10, IDC_BTN_MOVE8, IDC_EDIT11, IDC_EDIT12, IDC_EDIT13, IDC_BTN_MOVE8, -1};
 
 int CCTRView::manual_ENABLE[15] = {IDC_EDIT8, IDC_EDIT9, IDC_EDIT10, IDC_BTN_MOVE8, -1};
-int CCTRView::manual_DISABLE[15] = {IDC_BTN_MOVE3, IDC_BTN_MOVE4, IDC_BTN_MOVE5, IDC_BTN_MOVE6, -1};
+int CCTRView::manual_DISABLE[15] = {IDC_BTN_MOVE7, IDC_BTN_MOVE3, IDC_BTN_MOVE4, IDC_BTN_MOVE5, IDC_BTN_MOVE6, -1};
 
 int CCTRView::online_ENABLE[15] = {IDC_EDIT11, IDC_EDIT12, IDC_EDIT13, IDC_BTN_MOVE9, -1};
 int CCTRView::online_DISABLE[15] = {IDC_EDIT8, IDC_EDIT9, IDC_EDIT10, IDC_BTN_MOVE8, -1};
@@ -194,9 +194,11 @@ void CCTRView::OnInitialUpdate()
 	this->SetDlgItemTextA(IDC_EDIT4,tmp);
 
 	// CKim - Initialize controls here
-	this->SetDlgItemTextA(m_idCmdJang[0],"105.324");		this->SetDlgItemTextA(m_idCmdJang[1],"125.421");	
-	this->SetDlgItemTextA(m_idCmdJang[2],"5");			this->SetDlgItemTextA(m_idCmdJang[3],"180.576");			this->SetDlgItemTextA(m_idCmdJang[4],"0");
+	this->SetDlgItemTextA(m_idCmdJang[0],"180");		this->SetDlgItemTextA(m_idCmdJang[1],"0");	
+	this->SetDlgItemTextA(m_idCmdJang[2],"5");			this->SetDlgItemTextA(m_idCmdJang[3],"0");			this->SetDlgItemTextA(m_idCmdJang[4],"0");
 	
+	this->updateGUIActivationState(manual_point_ENABLE, manual_point_DISABLE);
+
 	this->SetTimer(100,30,NULL);
 	QueryPerformanceFrequency(&m_Freq);
 

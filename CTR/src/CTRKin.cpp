@@ -1034,7 +1034,7 @@ void CTRKin::ApplyKinematicControlNullspace(const Eigen::MatrixXd& J, const Eige
 	// overall gain
 	dotq *= 0.05;
 	//dotq *= 3;
-	//::std::cout << dotq.transpose() << ::std::endl;
+	::std::cout << dotq.transpose() << ::std::endl;
 	//dotq *= 0.0;
 
 	// Joint limit avoidance using potential-field method

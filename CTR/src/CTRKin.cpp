@@ -1015,6 +1015,7 @@ void CTRKin::ApplyKinematicControlNullspace(const Eigen::MatrixXd& J, const Eige
 	::Eigen::Matrix<double, 3, 5> Jp  = Jtemp.block(0,0, 3, 5);
 	::Eigen::Matrix<double, 3, 3> tmpMat (Jp * Jp.transpose());
 	::Eigen::Matrix<double, 3, 5> tmpOrient;
+	::Eigen::Matrix<double, 3, 3> tmpOrientPseudo;
 	::Eigen::Matrix<double, 3, 5> Jo = Jtemp.block(3,0, 3, 5);
 	
 	::Eigen::Matrix<double, 5, 5> IdMat;
@@ -1022,27 +1023,34 @@ void CTRKin::ApplyKinematicControlNullspace(const Eigen::MatrixXd& J, const Eige
 
 	// add small epsilon in the diagonal to avoid singular matrix inversion - damped pseudoinverse
 	for (int i = 0; i < 3; ++i)
-		tmpMat(i, i) += 0.01;
+		tmpMat(i, i) += 0.000001;
 
+	//dotq = J.transpose() * err;
+	
 	//position control
 	//dotq = Jp.transpose() /** (Jp * Jp.transpose()).inverse()*/ * err.block(0, 0, 3, 1);
-	//dotq = Jp.transpose() * (Jp * Jp.transpose()).inverse() * err.block(0, 0, 3, 1);
+	//dotq = Jp.transpose() * tmpMat.inverse() * err.block(0, 0, 3, 1);
 	//orientation in the nullspace
-	//double orientationGain = 100.0;
+	//double orientationGain = 10.0;
 	//dotq += orientationGain*( IdMat - Jp.transpose() * tmpMat.inverse() * Jp) * Jo.transpose() * err.block(3, 0, 3, 1);
 
-	::Eigen::MatrixXd task1_pseudo = Jp.transpose() * (Jp * Jp.transpose()).inverse();
+	double orientationGain = 10.0;
+	::Eigen::MatrixXd task1_pseudo = Jp.transpose() * (tmpMat).inverse();
 	dotq = task1_pseudo * err.block(0, 0, 3, 1);
 	tmpOrient = Jo * (IdMat - task1_pseudo * Jp);
-	::Eigen::MatrixXd orientPseudo = tmpOrient.transpose() * (tmpOrient * tmpOrient.transpose()).inverse();
-	dotq += orientPseudo * (err.block(3, 0, 3, 1) - Jo * task1_pseudo * err.block(0, 0, 3, 1));
+	tmpOrientPseudo = tmpOrient * tmpOrient.transpose();
+	for (int i = 0; i < 3; ++i)
+		tmpOrientPseudo(i, i) += 0.001;
+	::Eigen::MatrixXd orientPseudo = tmpOrient.transpose() * tmpOrientPseudo.inverse();
+	dotq += orientationGain * orientPseudo * ( err.block(3, 0, 3, 1) - Jo * task1_pseudo * err.block(0, 0, 3, 1));
 	
 
 	// overall gain
-	dotq *= 0.05;
+	//dotq *= 1;
 	//dotq *= 3;
-	//::std::cout << dotq.transpose() << ::std::endl;
-	//dotq *= 0.0;
+	::std::cout << dotq.transpose() << ::std::endl;
+	dotq *= 0.1; 
+
 
 	// Joint limit avoidance using potential-field method
 	double upperSoft = L31_MAX - 10;

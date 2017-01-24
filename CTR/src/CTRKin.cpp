@@ -1014,7 +1014,7 @@ void CTRKin::ApplyKinematicControlNullspace(const Eigen::MatrixXd& J, const Eige
 
 	::Eigen::Matrix<double, 3, 5> Jp  = Jtemp.block(0,0, 3, 5);
 	::Eigen::Matrix<double, 3, 3> tmpMat (Jp * Jp.transpose());
-
+	::Eigen::Matrix<double, 3, 5> tmpOrient;
 	::Eigen::Matrix<double, 3, 5> Jo = Jtemp.block(3,0, 3, 5);
 	
 	::Eigen::Matrix<double, 5, 5> IdMat;
@@ -1026,10 +1026,17 @@ void CTRKin::ApplyKinematicControlNullspace(const Eigen::MatrixXd& J, const Eige
 
 	//position control
 	//dotq = Jp.transpose() /** (Jp * Jp.transpose()).inverse()*/ * err.block(0, 0, 3, 1);
-	dotq = Jp.transpose() * (Jp * Jp.transpose()).inverse() * err.block(0, 0, 3, 1);
+	//dotq = Jp.transpose() * (Jp * Jp.transpose()).inverse() * err.block(0, 0, 3, 1);
 	//orientation in the nullspace
-	double orientationGain = 100.0;
-	dotq += orientationGain*( IdMat - Jp.transpose() * tmpMat.inverse() * Jp) * Jo.transpose() * err.block(3, 0, 3, 1);
+	//double orientationGain = 100.0;
+	//dotq += orientationGain*( IdMat - Jp.transpose() * tmpMat.inverse() * Jp) * Jo.transpose() * err.block(3, 0, 3, 1);
+
+	::Eigen::MatrixXd task1_pseudo = Jp.transpose() * (Jp * Jp.transpose()).inverse();
+	dotq = task1_pseudo * err.block(0, 0, 3, 1);
+	tmpOrient = Jo * (IdMat - task1_pseudo * Jp);
+	::Eigen::MatrixXd orientPseudo = tmpOrient.transpose() * (tmpOrient * tmpOrient.transpose()).inverse();
+	dotq += orientPseudo * (err.block(3, 0, 3, 1) - Jo * task1_pseudo * err.block(0, 0, 3, 1));
+	
 
 	// overall gain
 	dotq *= 0.05;

@@ -1304,9 +1304,12 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 			// Use fwd kin output
 			else
 			{
-				localStat.tgtTipPosDir[3] = planeNormal(0);
-				localStat.tgtTipPosDir[4] = planeNormal(1);
-				localStat.tgtTipPosDir[5] = planeNormal(2);
+				if (mySelf->m_forceControlActivated)
+				{
+					localStat.tgtTipPosDir[3] = planeNormal(0);
+					localStat.tgtTipPosDir[4] = planeNormal(1);
+					localStat.tgtTipPosDir[5] = planeNormal(2);
+				}
 
 				double sum = 0;
 				for(int i=0; i<3; i++)	

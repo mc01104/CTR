@@ -85,6 +85,8 @@ CCTRDoc::CCTRDoc()
 {
 	// TODO: add one-time construction code here
 	m_ioRunning = false;		m_teleOpMode = false;
+	m_frequency_changed = false;
+
 	for (int i = 0; i < 3; ++i)
 		this->m_Status.tgtWorkspaceVelocity[i] = 0;
 	m_date = GetDateString();
@@ -157,6 +159,7 @@ CCTRDoc::CCTRDoc()
 	m_plane_coefficients(1) = 0.02;
 
 	m_plane_covar = 0.01 * ::Eigen::Matrix<double, 2, 2>::Identity();
+	m_plane_changed =false;
 }
 
 CCTRDoc::~CCTRDoc()
@@ -506,6 +509,19 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 			ss << localStat.currJang[i] << " ";
 
 		ss << teleopOn;
+		if (mySelf->m_frequency_changed)
+		{
+			ss << " " << 0 << " "  << mySelf->m_frequency;
+			mySelf->m_frequency_changed = false;
+		}
+
+		if (mySelf->m_plane_changed)
+		{
+			ss << " " << 1 << " ";
+			for (int j = 0; j < 3; ++j)
+				ss << mySelf->m_contact_control_normal[j] << " ";
+			mySelf->m_frequency_changed = false;
+		}
 
         // send data
         iSendResult = send( ClientSocket, ss.str().c_str(),  ss.str().size() + 1, 0 );
@@ -2422,6 +2438,7 @@ CCTRDoc::setContactControlNormal(const ::Eigen::Vector3d& computedNormal)
 {
 	for(int i = 0; i < 3; i++)
 		this->m_contact_control_normal(i) = computedNormal(i);
+	this->m_plane_changed = true;
 }
 
 void 

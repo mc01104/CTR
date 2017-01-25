@@ -170,6 +170,7 @@ public:
 	LWPRKinematics* GetKinematics() { return this->m_kinLWPR;};
 	void	ToggleForceControl();
 	void	ToggleLog();
+	void	SetFrequency(double frequency) {this->m_frequency = frequency; this->m_frequency_changed = true;};
 
 	void	ChangeForceForTuning(double force);
 	void	SetForceGain(double forceGain);
@@ -256,6 +257,9 @@ protected:
 
 	bool	TeleOpSafetyCheck();
 
+	double	m_frequency;
+	bool	m_frequency_changed;
+	bool	m_plane_changed;
 
 
 // Generated message map functions

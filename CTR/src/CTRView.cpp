@@ -65,6 +65,7 @@ BEGIN_MESSAGE_MAP(CCTRView, CFormView)
 	ON_EN_KILLFOCUS(IDC_EDIT1, &CCTRView::OnKillFocusInc)
 	ON_EN_KILLFOCUS(IDC_EDIT2, &CCTRView::OnKillFocusGain)
 	ON_EN_KILLFOCUS(IDC_EDIT3, &CCTRView::OnKillFocusContactRatio)
+	ON_EN_KILLFOCUS(IDC_EDIT14, &CCTRView::OnKillFocusUpdateFrequency)
 
 	ON_BN_CLICKED(IDC_BTN_MOVE3, &CCTRView::OnClickedBtnRecPoint)
 	ON_BN_CLICKED(IDC_BTN_MOVE4, &CCTRView::OnClickedBtnPopPoint)
@@ -701,4 +702,11 @@ void CCTRView::OnClickedBtnStopLog()
 
 	this->GetDocument()->ToggleLog();
 
+}
+
+void CCTRView::OnKillFocusUpdateFrequency()
+{
+	CString str;
+	this->GetDlgItemTextA(IDC_EDIT14, str);		
+	this->GetDocument()->SetFrequency(atof(str));
 }

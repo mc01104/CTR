@@ -79,6 +79,7 @@ public:
 	afx_msg void OnBnClickedRadioModes();
 	afx_msg void OnBnClickedRadioModesPlane();
 	afx_msg void OnClickedBtnUpdate();
+	afx_msg void OnKillFocusUpdateFrequency();
 
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 	
@@ -133,6 +134,8 @@ public:
 	void ToggleForceChkbox(bool flag);
 	void ToggleForceControl();
 	void ToggleCameraControl();
+
+	bool m_freqUpdated;
 
 	CComboBox m_traj_type;
 	CString IDC_CIRCLE;

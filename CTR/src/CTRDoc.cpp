@@ -380,10 +380,16 @@ void CCTRDoc::OnViewTeleop()
 	if(!m_ioRunning)	
 	{
 		if(m_motorConnected)	{												}
-		else					{	AfxMessageBox("Motor not ready!");	return;	}
+		else					
+		{	
+			AfxMessageBox("Motor not ready!");	
+			_beginthreadex(NULL, 0, CCTRDoc::NetworkCommunication, this, 0, NULL);
+
+			return;	
+		}
 		m_ioRunning = true; 	
 		m_hMtrCtrl = (HANDLE) _beginthreadex(NULL, 0, CCTRDoc::MotorLoop, this, 0, NULL);
-		_beginthreadex(NULL, 0, CCTRDoc::NetworkCommunication, this, 0, NULL);
+	//	_beginthreadex(NULL, 0, CCTRDoc::NetworkCommunication, this, 0, NULL);
 	}
 }
 
@@ -513,17 +519,17 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 		ss << teleopOn;
 		if (mySelf->m_frequency_changed)
 		{
-			ss << " " << 0 << " "  << mySelf->m_frequency;
+			ss << " "  << mySelf->m_frequency << " " << 0;
 			mySelf->m_frequency_changed = false;
 		}
-
-		if (mySelf->m_plane_changed)
-		{
-			ss << " " << 1 << " ";
-			for (int j = 0; j < 3; ++j)
-				ss << mySelf->m_contact_control_normal[j] << " ";
-			mySelf->m_frequency_changed = false;
-		}
+		//::std::cout << ss.str() << ::std::endl;
+		//if (mySelf->m_plane_changed)
+		//{
+		//	ss << " " << 1 << " ";
+		//	for (int j = 0; j < 3; ++j)
+		//		ss << mySelf->m_contact_control_normal[j] << " ";
+		//	mySelf->m_plane_changed = false;
+		//}
 
         // send data
         iSendResult = send( ClientSocket, ss.str().c_str(),  ss.str().size() + 1, 0 );

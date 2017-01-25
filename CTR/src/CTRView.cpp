@@ -709,4 +709,6 @@ void CCTRView::OnKillFocusUpdateFrequency()
 	CString str;
 	this->GetDlgItemTextA(IDC_EDIT14, str);		
 	this->GetDocument()->SetFrequency(atof(str));
+	//::std::cout << "in callback" << ::std::endl;
+	//::std::cout << str << ::std::endl;
 }

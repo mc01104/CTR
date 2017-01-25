@@ -54,7 +54,7 @@
 #define new DEBUG_NEW
 #endif
 
-
+//#define OMNI_PLUGGED 
 // CCTRDoc
 
 IMPLEMENT_DYNCREATE(CCTRDoc, CDocument)
@@ -104,8 +104,10 @@ CCTRDoc::CCTRDoc()
 	InitializeCriticalSectionAndSpinCount(&m_cSection,16);
 
 	// CKim - Initialize Haptic device
+#ifdef OMNI_PLUGGED
 	ChunHaptic::InitDevice();		m_Omni = new ChunHaptic();		m_Omni->StartLoop();
-	
+#endif
+
 	// CKim - Initialize motor controller	
 	m_motionCtrl = new ChunMotion();		m_motorConnected = false;
 	m_motorConnected = m_motionCtrl->Initialize();
@@ -775,8 +777,9 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 
 		// CKim - Synch with haptic device by executing function in haptic device scheduler
 		// Exchange state with the device
+#ifdef OMNI_PLUGGED		
 		mySelf->m_Omni->SynchState(localStat);
-
+#endif
 		// CKim - Haptic device error handling		
 		if (localStat.hapticState.err.errorCode != 0)
 		{
@@ -1099,7 +1102,7 @@ unsigned int WINAPI	CCTRDoc::StaticPlaybackLoop(void* para)
 		//}
 
 		// CKim - Synch with haptic device. This is for spending 1 ms. 
-		mySelf->m_Omni->SynchState(localStat);
+		//mySelf->m_Omni->SynchState(localStat);
 		
 		// CKim - Read the shared variable (current cnt, jAng, .. ) that is used in this loop. 
 		EnterCriticalSection(&m_cSection);
@@ -1458,7 +1461,7 @@ unsigned int WINAPI	CCTRDoc::SettlingTestLoop(void* para)
 	while(1)
 	{
 		// CKim - Synch with haptic device. This is for spending 1 ms. 
-		mySelf->m_Omni->SynchState(localStat);
+		//mySelf->m_Omni->SynchState(localStat);
 		
 		// CKim - Read the shared variable (current cnt, jAng, .. ) that is used in this loop. 
 		EnterCriticalSection(&m_cSection);
@@ -1592,7 +1595,7 @@ unsigned int WINAPI	CCTRDoc::ClosedLoopControlLoop(void* para)
 		}
 
 		// CKim - Synch with haptic device. This is for spending 1 ms. 
-		mySelf->m_Omni->SynchState(localStat);
+		//mySelf->m_Omni->SynchState(localStat);
 		
 		// CKim - Read the shared variable (current cnt, jAng, .. ) that is used in this loop. 
 		EnterCriticalSection(&m_cSection);
@@ -1721,7 +1724,7 @@ unsigned int WINAPI	CCTRDoc::JointSpacePlayback(void* para)
 	{
 	
 		// CKim - Synch with haptic device. This is for spending 1 ms. 
-		mySelf->m_Omni->SynchState(localStat);
+		//mySelf->m_Omni->SynchState(localStat);
 		
 		// CKim - Read the shared variable (current cnt, jAng, .. ) that is used in this loop. 
 		EnterCriticalSection(&m_cSection);

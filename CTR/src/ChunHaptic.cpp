@@ -167,7 +167,7 @@ HDCallbackCode HDCALLBACK ChunHaptic::synchCallback(void *pData)
 	memcpy(state->hapticState.position, &state->hapticState.tfMat[12], 3 * sizeof(double));
 
 	for(int i=0; i<16; i++)	{		state->hapticState.tfMat[i] = m_currentState.tfMat[i];			}
-
+	//::std::cout << "Events in queue: " << m_currentState.eventQueue.empty() << ::std::endl;
 	while(!m_currentState.eventQueue.empty())
 	{
 		ev = m_currentState.eventQueue.front();

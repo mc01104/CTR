@@ -202,7 +202,11 @@ bool CTRKin::TipFwdKin(const double* jAng, double* posOrt)
 	posOrt[0] = cos(a1)*p[0] - sin(a1)*p[1];		posOrt[3] = cos(a1)*v[0] - sin(a1)*v[1];
 	posOrt[1] = sin(a1)*p[0] + cos(a1)*p[1];		posOrt[4] = sin(a1)*v[0] + cos(a1)*v[1];
 	posOrt[2] = p[2] + L1;							posOrt[5] = v[2];
-		
+
+	for (int i = 0; i < 3; ++i)
+	{
+		posOrt[i] += 20 * posOrt[i+3];
+	}
 	return true;
 }
 
@@ -249,6 +253,11 @@ void CTRKin::TipFwdKinEx(const double* jAng, const Eigen::MatrixXd& Coeff, doubl
 	posOrt[0] = cos(a1)*p[0] - sin(a1)*p[1];		posOrt[3] = cos(a1)*v[0] - sin(a1)*v[1];
 	posOrt[1] = sin(a1)*p[0] + cos(a1)*p[1];		posOrt[4] = sin(a1)*v[0] + cos(a1)*v[1];
 	posOrt[2] = p[2] + L1;							posOrt[5] = v[2];
+
+	for (int i = 0; i < 3; ++i)
+	{
+		posOrt[i] += 20 * posOrt[i+3];
+	}
 }
 
 
@@ -1049,25 +1058,25 @@ void CTRKin::ApplyKinematicControlNullspace(const Eigen::MatrixXd& J, const Eige
 	//dotq *= 1;
 	//dotq *= 3;
 	//::std::cout << dotq.transpose() << ::std::endl;
-	dotq *= 0.2; 
+	dotq *= 0.08; 
 
 
 	// Joint limit avoidance using potential-field method
 	double upperSoft = L31_MAX - 10;
 	double lowerSoft = L31_MIN + 5;
-	double jointLimitGain = 0.002;
+	double jointLimitGain = 0.2;
 
 	if (q[2] >= upperSoft)
-		dotq[2] += max(-1.0, -jointLimitGain/::std::pow(q[2] - L31_MAX, 2) + jointLimitGain/::std::pow(upperSoft - L31_MAX, 2));
+		dotq[2] += max(-5.0, -jointLimitGain/::std::pow(q[2] - L31_MAX, 2) + jointLimitGain/::std::pow(upperSoft - L31_MAX, 2));
 
 	if (q[2] <= lowerSoft )
-		dotq[2] += min(1.0, jointLimitGain/::std::pow(q[2] - L31_MIN, 2) - jointLimitGain/::std::pow(lowerSoft - L31_MIN, 2));
+		dotq[2] += min(5.0, jointLimitGain/::std::pow(q[2] - L31_MIN, 2) - jointLimitGain/::std::pow(lowerSoft - L31_MIN, 2));
 
 
 	if (q[2] >= L31_MAX && dotq[2] > 0) 
-		dotq[2] = 0.0;
+		dotq[2] = -5.0;
 	else if (q[2] <= L31_MIN && dotq[2] < 0)
-		dotq[2] = 0.0;
+		dotq[2] = 5.0;
 
 	for(int i=0; i<5; i++)	{	dq[i] = dotq(i,0);	}
 

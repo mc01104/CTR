@@ -8,7 +8,7 @@
 #include "stdafx.h"
 #include "LieGroup.h"
 #include <Eigen/Geometry> 
-
+#include <time.h>
 #include <windows.h>
 #include <winsock2.h>
 #include <ws2tcpip.h>
@@ -54,7 +54,7 @@
 #define new DEBUG_NEW
 #endif
 
-//#define OMNI_PLUGGED 
+#define OMNI_PLUGGED 
 // CCTRDoc
 
 IMPLEMENT_DYNCREATE(CCTRDoc, CDocument)
@@ -383,13 +383,13 @@ void CCTRDoc::OnViewTeleop()
 		else					
 		{	
 			AfxMessageBox("Motor not ready!");	
-			_beginthreadex(NULL, 0, CCTRDoc::NetworkCommunication, this, 0, NULL);
+			//_beginthreadex(NULL, 0, CCTRDoc::NetworkCommunication, this, 0, NULL);
 
 			return;	
 		}
 		m_ioRunning = true; 	
 		m_hMtrCtrl = (HANDLE) _beginthreadex(NULL, 0, CCTRDoc::MotorLoop, this, 0, NULL);
-	//	_beginthreadex(NULL, 0, CCTRDoc::NetworkCommunication, this, 0, NULL);
+	_beginthreadex(NULL, 0, CCTRDoc::NetworkCommunication, this, 0, NULL);
 	}
 }
 
@@ -1234,6 +1234,7 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 	timer.ResetTime();		
 	long endTime = 0;		
 
+
 	double	desiredPosition[6];
 
 	while(mySelf->m_motorConnected)
@@ -1425,7 +1426,10 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 		}
 		mySelf->m_Status.loopTime =  endTime / navg;
 		LeaveCriticalSection(&m_cSection);
-
+		//::std::cout << 1000000.0/(timer.GetTime()) << ::std::endl;
+		timer.ResetTime();
+		//if (timer.GetTime() < 2500)
+		//	Sleep(1);
 		// CKim - Measure loop speed
 		if(perfcnt==navg)	{		endTime = timer.GetTime();		perfcnt = 0;		timer.ResetTime();		}
 		else				{		perfcnt++;																	}

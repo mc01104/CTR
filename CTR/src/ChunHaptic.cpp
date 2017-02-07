@@ -96,6 +96,9 @@ HDCallbackCode HDCALLBACK ChunHaptic::updateCallback(void *pData)
 	
     // CKim - Update the position, transformation, force, and time stamp
     hdGetDoublev(HD_CURRENT_TRANSFORM, mySelf->m_currentState.tfMat);
+	hdGetDoublev(HD_LAST_VELOCITY, mySelf->m_currentState.velocity);
+	//hdGetDoublev(HD_LAST_ANGULAR_VELOCITY, mySelf->m_currentState.ang_velocity);
+
 	//hdGetDoublev(HD_CURRENT_FORCE,mySelf->m_currentState.Force);
 	
 	// CKim - Render force feedback

@@ -28,6 +28,8 @@ typedef struct HapticDeviceState
 	double		tfMat[16];	
 	double		Force[3];
 	HDErrorInfo err;
+	double		velocity[3];
+	double		ang_velocity[3];
 
 	// George - for camera frame velocity control
 	double	position[3];

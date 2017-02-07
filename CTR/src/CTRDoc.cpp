@@ -1222,7 +1222,7 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 	//double K[6] = {10.0, 10.0, 10.0, 1.0, 1.0, 1.0 };		// working
 	
 	double K_image[6] = {1000.0, 1000.0, 1000.0, 10.0, 10.0, 10.0 };		// for image frame control
-	double K[6] = {10.0, 10.0, 10.0, 10.0, 10.0, 10.0 };		// working
+	double K[6] = {0.10, };		// working
 	//double K[6] = { 5.0, 5.0, 5.0, 5.0, 5.0, 5.0 };				// For sensor feedback + estimator
 	//double K[6] = { 1.5, 1.5, 1.5, 0.1, 0.1, 0.1 };				// For sensor feedback + estimator
 	//double K[6] = {1.0, 1.0, 1.0, 0.5, 0.5, 0.5 };	// working	
@@ -1341,7 +1341,7 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 				for(int i=0; i<3; i++)	
 				{	
 					if (!mySelf->m_camera_control)
-						err(i,0) = K[i]*(localStat.tgtTipPosDir[i] - localStat.currTipPosDir[i]);
+						err(i,0) = K[i]*(localStat.tgtTipPosDir[i] - localStat.currTipPosDir[i]) + localStat.tgtWorkspaceVelocity[i];
 					else
 						err(i, 0) = K_image[i] * localStat.tgtWorkspaceVelocity[i];   // this is to control the robot at the image-frame of the cardioscope
 					//sum += (localStat.tgtTipPosDir[i+3]*localStat.currTipPosDir[i+3]);				
@@ -2212,9 +2212,6 @@ void CCTRDoc::MasterToSlave(CTR_status& stat, double scl, bool absolute)
 	memcpy(stat.hapticState.previousPosition , stat.hapticState.position, 3  * sizeof(double));
 	memcpy(stat.hapticState.position, t.data(), 3  * sizeof(double));
 
-	::Eigen::Matrix<double, 3, 3> MtipToBase;
-	//this->GetTipTransformation(MtipToBase);
-	MtipToBase.setIdentity();
 
 	MtoS(0,0) =	0;		MtoS(0,1) =	1;		MtoS(0,2) = 0;
 	MtoS(1,0) =	1;		MtoS(1,1) =	0;		MtoS(1,2) =	0;
@@ -2225,7 +2222,9 @@ void CCTRDoc::MasterToSlave(CTR_status& stat, double scl, bool absolute)
 	MtoSOr(2,0) =	-1;		MtoSOr(2,1) = 0;		MtoSOr(2,2) = 0;
 
 	MtoS = MtoSOr;
-	tipPos = MtipToBase*MtoS*scl*(t-to) + p;
+	tipPos = MtoS*scl*(t-to) + p;
+
+	::Eigen::Vector3d velocityRobotFrame = MtoS * scl * ::Eigen::Map<::Eigen::Vector3d>(stat.hapticState.velocity,3);
 
 	// CKim - Relative tip orientation - Rotation of the stylus R from its reference orientation Ro
 	// (location when the button was pressed, w.r.t reference stylus csys, Ro'*R.
@@ -2251,6 +2250,7 @@ void CCTRDoc::MasterToSlave(CTR_status& stat, double scl, bool absolute)
 	}
 
 	for(int i=0; i<3; i++)	{	stat.tgtTipPosDir[i] = tipPos(i);		stat.tgtTipPosDir[i+3] = tipDir(i);		}
+	memcpy(stat.tgtWorkspaceVelocity, velocityRobotFrame.data(), 3  * sizeof(double));
 
 }
 

@@ -57,7 +57,7 @@ public:
 
 
 	// CKim - Control law for closed loop inverse kinematics control. 'tgtMotorVel'
-	void ApplyKinematicControl(const Eigen::MatrixXd& J, const Eigen::MatrixXd& err, double* dotq);
+	void ApplyKinematicControl(const Eigen::MatrixXd& J, const Eigen::MatrixXd& err, double* dotq,double* q);
 	void ApplyKinematicControl_NEW(const Eigen::MatrixXd& J, const Eigen::MatrixXd& err, double* dotq);
 	void ApplyKinematicControlNullspace(const Eigen::MatrixXd& J, const Eigen::MatrixXd& err, double* dotq, double* q);
 	void ApplyHybridPositionForceControl(const ::Eigen::MatrixXd& J, const ::Eigen::MatrixXd& err, const ::Eigen::MatrixXd& desiredForce, const ::Eigen::MatrixXd& actualForce, double* dq, double* q);

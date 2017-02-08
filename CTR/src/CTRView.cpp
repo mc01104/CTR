@@ -174,7 +174,7 @@ void CCTRView::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_EDIT4, tmp);
 	
 	DDX_Radio(pDX, IDC_RADIO_JA2, m_PlaneEstimationMode);
-
+	DDX_Radio(pDX, IDC_RADIO_JA3, m_controlMode);
 	m_ctrlMode != 1 ? GetDlgItem(IDC_CHECK1)->EnableWindow(false) : GetDlgItem(IDC_CHECK1)->EnableWindow(true);
 	m_ctrlMode != 1 ? GetDlgItem(IDC_CHECK3)->EnableWindow(false) : GetDlgItem(IDC_CHECK3)->EnableWindow(true);
 
@@ -739,7 +739,7 @@ void CCTRView::OnBnClickedRadioModesController()
 	{
 		::std::cout << "Nullspace Controller" << ::std::endl;
 	}
-	else if (m_PlaneEstimationMode == 1)
+	else if (m_controlMode == 1)
 	{
 		::std::cout << "Weighted Cotnroller" << ::std::endl;
 	}

@@ -1374,7 +1374,7 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 			if (mySelf->m_control_mode == 0)
 				mySelf->m_kinLib->ApplyKinematicControlNullspace(J,err,dq, localStat.currJang);
 			else if (mySelf->m_control_mode ==1)
-				mySelf->m_kinLib->ApplyKinematicControl(J,err,dq);
+				mySelf->m_kinLib->ApplyKinematicControl(J,err,dq, localStat.currJang);
 
 			// CKim - Convert dotq into motor velocity
 			mySelf->dJangTodCnt(dq, dCnt);

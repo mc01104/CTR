@@ -1029,14 +1029,15 @@ void CTRKin::ApplyKinematicControlNullspace(const Eigen::MatrixXd& J, const Eige
 	// condition matrix for pseudo inverse
 	::Eigen::Matrix<double, 3, 3> tmpMat (Jp * Jp.transpose());
 
-	double lambda_position = 0.1;
-	//double epsilon = 0.1;
-	//double lambda_position_max = 0.01;
-	//::Eigen::JacobiSVD<::Eigen::MatrixXd> svd(tmpMat, ::Eigen::ComputeThinU | ::Eigen::ComputeThinV);
-	//::Eigen::VectorXd singVal = svd.singularValues();
+	double lambda_position = 0.0;
+	double epsilon = 0.01;
+	double lambda_position_max = 0.01;
+	::Eigen::JacobiSVD<::Eigen::MatrixXd> svd(tmpMat, ::Eigen::ComputeThinU | ::Eigen::ComputeThinV);
+	::Eigen::VectorXd singVal = svd.singularValues();
 
-	//if (singVal[singVal.size() - 1] <= epsilon)
-	//	lambda_position = (1.0 - ::std::pow(singVal[singVal.size() - 1]/epsilon, 2)) * lambda_position_max;
+	//::std::cout << singVal[singVal.size() - 1] << ::std::endl;
+	if (singVal[singVal.size() - 1] <= epsilon)
+		lambda_position = (1.0 - ::std::pow(singVal[singVal.size() - 1]/epsilon, 2)) * lambda_position_max;
 
 	for (int i = 0; i < 3; ++i)
 		tmpMat(i, i) += lambda_position;
@@ -1057,12 +1058,12 @@ void CTRKin::ApplyKinematicControlNullspace(const Eigen::MatrixXd& J, const Eige
 	tmpOrientPseudo = tmpOrient * tmpOrient.transpose();
 
 	double lambda_orientation = 0.01;
-	//double lambda_orientation_max = 0.00001;
-	//epsilon = 0.001;
+	//double lambda_orientation_max = 1.0e-04;
+	//epsilon = 1.0e-04;
 	//::Eigen::JacobiSVD<::Eigen::MatrixXd> svd_orient(tmpOrientPseudo, ::Eigen::ComputeThinU | ::Eigen::ComputeThinV);
 	//::Eigen::VectorXd singValOrient = svd_orient.singularValues();
-
-	//if (singValOrient[singValOrient.size() - 1] <= epsilon)
+	//::std::cout << "orientation singular value" << singValOrient[singValOrient.size() - 3] << ::std::endl;
+	//if (singValOrient[singValOrient.size() - 2] <= epsilon)
 	//	lambda_orientation = (1.0 - ::std::pow(singValOrient[singValOrient.size() - 1]/epsilon, 2)) * lambda_orientation_max;
 
 	for (int i = 0; i < 3; ++i)
@@ -1081,8 +1082,8 @@ void CTRKin::ApplyKinematicControlNullspace(const Eigen::MatrixXd& J, const Eige
 	//dotq *= 0.3; 
 
 	// Joint limit avoidance using potential-field method
-	double upperSoft = L31_MAX - 10;
-	double lowerSoft = L31_MIN + 5;
+	double upperSoft = L31_MAX - 5;
+	double lowerSoft = L31_MIN + 2;
 	double jointLimitGain = 0.2;
 
 	if (q[2] >= upperSoft)
@@ -1163,7 +1164,7 @@ void CTRKin::ApplyHybridPositionForceControl(const ::Eigen::MatrixXd& J, const :
 
 }
 
-void CTRKin::ApplyKinematicControl(const Eigen::MatrixXd& J, const Eigen::MatrixXd& err, double* dq)
+void CTRKin::ApplyKinematicControl(const Eigen::MatrixXd& J, const Eigen::MatrixXd& err, double* dq, double* q)
 {
 
 	// George - ignoring small errors
@@ -1247,9 +1248,9 @@ void CTRKin::ApplyKinematicControl(const Eigen::MatrixXd& J, const Eigen::Matrix
 		//::std::cout << " after" << ::std::endl;
 		//::std::cout << sv(0, 0)/sv(4, 0) << ::std::endl;
 
-		dotq = 0.0005*b;
-		dotq(2) *= 1000;
-		dotq(4) *= 1000;
+		dotq = 0.005*b;
+		dotq(2) *= 100;
+		dotq(4) *= 100;
 
 		for(int i=0; i<5; i++)	{	dq[i] = dotq(i,0);	}
 
@@ -1280,6 +1281,25 @@ void CTRKin::ApplyKinematicControl(const Eigen::MatrixXd& J, const Eigen::Matrix
 	::std::cout << "INVERSE" << ::std::endl;
 	dotq = Jsvd.solve(b);
 	//::std::cout << dotq << ::std::endl;
+
+	// Joint limit avoidance using potential-field method
+	double upperSoft = L31_MAX - 10;
+	double lowerSoft = L31_MIN + 5;
+	double jointLimitGain = 0.2;
+
+	if (q[2] >= upperSoft)
+		dotq[2] += max(-5.0, -jointLimitGain/::std::pow(q[2] - L31_MAX, 2) + jointLimitGain/::std::pow(upperSoft - L31_MAX, 2));
+
+	if (q[2] <= lowerSoft )
+		dotq[2] += min(5.0, jointLimitGain/::std::pow(q[2] - L31_MIN, 2) - jointLimitGain/::std::pow(lowerSoft - L31_MIN, 2));
+
+
+	if (q[2] >= L31_MAX && dotq[2] > 0) 
+		dotq[2] = -5.0;
+	else if (q[2] <= L31_MIN && dotq[2] < 0)
+		dotq[2] = 5.0;
+
+	for(int i=0; i<5; i++)	{	dq[i] = dotq(i,0);	}
 	for(int i=0; i<5; i++)	{	dq[i] = dotq(i,0);	}
 	//PrintCArray(dq, 5);
 }

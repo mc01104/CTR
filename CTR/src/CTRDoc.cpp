@@ -90,8 +90,11 @@ CCTRDoc::CCTRDoc()
 	m_ioRunning = false;		m_teleOpMode = false;
 	m_frequency_changed = false;
 	m_control_mode = 0;
+
 	m_position_gain = 1.0;
 	m_orientation_gain = 1.0;
+	m_position_gain_feedforward = 1.0;
+	m_orientation_gain_feedforward = 1.0;
 
 	for (int i = 0; i < 3; ++i)
 		this->m_Status.tgtWorkspaceVelocity[i] = 0;
@@ -1319,6 +1322,8 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 
 			for (int i = 0; i < 3; i++)
 				localStat.tgtWorkspaceVelocity[i] = mySelf->m_Status.tgtWorkspaceVelocity[i];
+			for (int i = 0; i < 3; i++)
+				localStat.tgtWorkspaceAngVelocity[i] = mySelf->m_Status.tgtWorkspaceAngVelocity[i];
 
 			actualForce[2] = mySelf->m_force;
 			safeToTeleOp = mySelf->m_Status.isTeleOpMoving;
@@ -1326,6 +1331,9 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 				planeNormal(i) = mySelf->m_contact_control_normal(i);
 
 			LeaveCriticalSection(&m_cSection);
+
+			::Eigen::Vector3d currentTangent = ::Eigen::Map<::Eigen::Vector3d> (&localStat.currTipPosDir[3], 3);
+			::Eigen::Vector3d tangentVelocity = ::Eigen::Map<::Eigen::Vector3d> (localStat.tgtWorkspaceAngVelocity, 3).cross(currentTangent);
 
 			//mySelf->m_kinLWPR->TipFwdKinJac(localStat.currJang, localStat.currTipPosDir, J,true);
 			mySelf->m_kinLib->EvalCurrentKinematicsModelNumeric(localStat.currJang, localStat.currTipPosDir, J, mySelf->m_bCLIK);
@@ -1350,14 +1358,14 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 				for(int i=0; i<3; i++)	
 				{	
 					if (!mySelf->m_camera_control)
-						err(i,0) = mySelf->m_position_gain * K[i]*(localStat.tgtTipPosDir[i] - localStat.currTipPosDir[i]) + 0 * localStat.tgtWorkspaceVelocity[i];
+						err(i,0) = mySelf->m_position_gain * K[i]*(localStat.tgtTipPosDir[i] - localStat.currTipPosDir[i]) + mySelf->m_position_gain_feedforward * localStat.tgtWorkspaceVelocity[i];
 					else
 						err(i, 0) = K_image[i] * localStat.tgtWorkspaceVelocity[i];   // this is to control the robot at the image-frame of the cardioscope
 					//sum += (localStat.tgtTipPosDir[i+3]*localStat.currTipPosDir[i+3]);				
 				}
 				for(int i=3; i<6; i++)
 				{
-					err(i,0) = mySelf->m_orientation_gain * K[i]*(localStat.tgtTipPosDir[i] - localStat.currTipPosDir[i]);		
+					err(i,0) = mySelf->m_orientation_gain * K[i]*(localStat.tgtTipPosDir[i] - localStat.currTipPosDir[i]) + mySelf->m_orientation_gain_feedforward * tangentVelocity[i];		
 				}
 			}
 
@@ -2239,6 +2247,7 @@ void CCTRDoc::MasterToSlave(CTR_status& stat, double scl, bool absolute)
 	tipPos = MtoS*scl*(t-to) + p;
 
 	::Eigen::Vector3d velocityRobotFrame = MtoS * scl * ::Eigen::Map<::Eigen::Vector3d>(stat.hapticState.velocity,3);
+	::Eigen::Vector3d ang_velocityRobotFrame = MtoS * ::Eigen::Map<::Eigen::Vector3d>(stat.hapticState.ang_velocity,3);
 
 	// CKim - Relative tip orientation - Rotation of the stylus R from its reference orientation Ro
 	// (location when the button was pressed, w.r.t reference stylus csys, Ro'*R.
@@ -2264,7 +2273,9 @@ void CCTRDoc::MasterToSlave(CTR_status& stat, double scl, bool absolute)
 	}
 	//::std::cout << velocityRobotFrame.transpose() << ::std::endl; 
 	for(int i=0; i<3; i++)	{	stat.tgtTipPosDir[i] = tipPos(i);		stat.tgtTipPosDir[i+3] = tipDir(i);		}
+
 	memcpy(stat.tgtWorkspaceVelocity, velocityRobotFrame.data(), 3  * sizeof(double));
+	memcpy(stat.tgtWorkspaceAngVelocity, ang_velocityRobotFrame.data(), 3  * sizeof(double));
 
 }
 
@@ -2485,7 +2496,7 @@ CCTRDoc::ToggleLog()
 }
 
 
-void CCTRDoc::UpdateGains(double position, double orientation)
+void CCTRDoc::UpdateGains(double position, double orientation, double position_forward, double orientation_forward)
 {
 	this->m_position_gain = position;
 	this->m_orientation_gain = orientation;

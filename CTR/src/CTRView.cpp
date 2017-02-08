@@ -83,6 +83,8 @@ BEGIN_MESSAGE_MAP(CCTRView, CFormView)
 
 	ON_EN_KILLFOCUS(IDC_EDIT15, &CCTRView::UpdateGains)
 	ON_EN_KILLFOCUS(IDC_EDIT16, &CCTRView::UpdateGains)
+	ON_EN_KILLFOCUS(IDC_EDIT17, &CCTRView::UpdateGains)
+	ON_EN_KILLFOCUS(IDC_EDIT18, &CCTRView::UpdateGains)
 
 	ON_BN_CLICKED(IDC_RADIO_JA3, &CCTRView::OnBnClickedRadioModesController)	
 	ON_BN_CLICKED(IDC_RADIO_TELE4, &CCTRView::OnBnClickedRadioModesController)
@@ -728,7 +730,14 @@ void CCTRView::UpdateGains()
 	this->GetDlgItemTextA(IDC_EDIT16, str);		
 	double orientation_gain = atof(str);
 
-	this->GetDocument()->UpdateGains(position_gain, orientation_gain);
+	this->GetDlgItemTextA(IDC_EDIT17, str);		
+	double position_gain_feedforward = atof(str);
+	
+	this->GetDlgItemTextA(IDC_EDIT18, str);		
+	double orientation_gain_feedforward = atof(str);
+
+
+	this->GetDocument()->UpdateGains(position_gain, orientation_gain, position_gain_feedforward, orientation_gain_feedforward);
 }
 
 void CCTRView::OnBnClickedRadioModesController()

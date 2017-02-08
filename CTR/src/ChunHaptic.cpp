@@ -15,7 +15,7 @@ hduVector3Dd ChunHaptic::m_refPt;
 
 ChunHaptic::ChunHaptic(void)
 {
-	m_filters = new ::RecursiveFilter::MovingAverageFilter[3];
+	m_filters = new ::RecursiveFilter::MovingAverageFilter[6];
 }
 
 
@@ -99,13 +99,17 @@ HDCallbackCode HDCALLBACK ChunHaptic::updateCallback(void *pData)
 	
     // CKim - Update the position, transformation, force, and time stamp
     hdGetDoublev(HD_CURRENT_TRANSFORM, mySelf->m_currentState.tfMat);
-	//hdGetFloatv(HD_CURRENT_VELOCITY, mySelf->m_currentState.velocity);
+	
 	double velocity[3] = {0};
 	hdGetDoublev(HD_CURRENT_VELOCITY, velocity);
 	for(int i = 0 ; i < 3; ++i)
 		mySelf->m_currentState.velocity[i] = mySelf->m_filters[i].step(velocity[i]);
-	//hdGetDoublev(HD_LAST_ANGULAR_VELOCITY, mySelf->m_currentState.ang_velocity);
-	//PrintCArray(mySelf->m_currentState.velocity, 3);
+	
+	double ang_velocity[3] = {0};
+	hdGetDoublev(HD_LAST_ANGULAR_VELOCITY, ang_velocity);
+	for(int i = 0 ; i < 3; ++i)
+		mySelf->m_currentState.ang_velocity[i] = mySelf->m_filters[i + 3].step(ang_velocity[i]);
+
 	//hdGetDoublev(HD_CURRENT_FORCE,mySelf->m_currentState.Force);
 	
 	// CKim - Render force feedback
@@ -177,6 +181,8 @@ HDCallbackCode HDCALLBACK ChunHaptic::synchCallback(void *pData)
 	memcpy(state->hapticState.position, &state->hapticState.tfMat[12], 3 * sizeof(double));
 	
 	memcpy(state->hapticState.velocity, &m_currentState.velocity, 3 * sizeof(double));
+	memcpy(state->hapticState.ang_velocity, &m_currentState.ang_velocity, 3 * sizeof(double));
+
 	for(int i=0; i<16; i++)	{		state->hapticState.tfMat[i] = m_currentState.tfMat[i];			}
 	//::std::cout << "Events in queue: " << m_currentState.eventQueue.empty() << ::std::endl;
 	while(!m_currentState.eventQueue.empty())

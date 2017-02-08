@@ -65,7 +65,9 @@ typedef struct CTR_status
 
 	// CKim - current / commanded tip configuration ( = position and direction)
 	double	currTipPosDir[6];		double	tgtTipPosDir[6];
+
 	double  tgtWorkspaceVelocity[3];
+	double  tgtWorkspaceAngVelocity[3];
 
 	// CKim - current balanced pair tip configuration ( = position and direction)
 	double	bpTipPosDir[6];	

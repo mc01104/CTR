@@ -150,7 +150,7 @@ public:
 	virtual ~CCTRDoc();
 	void StartUIupdate();
 
-	void	UpdateGains(double position, double orientation);
+	void	UpdateGains(double position, double orientation, double position_forward, double orientation_forward);
 	void	SwitchControlMode(int mode);
 
 	void SwitchAllControlFlagsOff();
@@ -266,6 +266,8 @@ protected:
 	double	m_position_gain;
 	double	m_orientation_gain;
 
+	double	m_position_gain_feedforward;
+	double	m_orientation_gain_feedforward;
 
 	int		m_control_mode;
 

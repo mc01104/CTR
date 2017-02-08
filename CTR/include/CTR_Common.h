@@ -28,6 +28,7 @@ typedef struct HapticDeviceState
 	double		tfMat[16];	
 	double		Force[3];
 	HDErrorInfo err;
+	//float		velocity[3];
 	double		velocity[3];
 	double		ang_velocity[3];
 
@@ -46,6 +47,8 @@ typedef struct HapticDeviceState
 		for(int i=0; i<3; i++)	{	Force[i] = slavePos[i] = 0;		}
 		for(int i=0; i<16; i++)	{	tfMat[i] = 0;		}
 		forceFlag = false;		forceMag = 0.0;
+		//for (int i = 0; i < 3; ++i) 
+		//	velocity[i] = 0.0;
 	}
 
 } HapticDeviceState;

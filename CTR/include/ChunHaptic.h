@@ -12,6 +12,7 @@
 #include <HDU/hduHapticDevice.h>
 #include <queue>
 #include <sstream>
+#include "FilterLibrary.h"
 
 #include "CTR_Common.h"
 
@@ -46,6 +47,8 @@ private:
 
 	static hduVector3Dd m_refPt;
 	static bool teleOpOn;
+
+	::RecursiveFilter::Filter* m_filters;
 
     enum EventType
     {

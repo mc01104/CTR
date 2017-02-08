@@ -778,6 +778,7 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 		for(int i=0; i<7; i++)	{	localStat.currMotorCnt[i] = mySelf->m_Status.currMotorCnt[i];	}
 		for(int i=0; i<5; i++)	{	localStat.currJang[i] = mySelf->m_Status.currJang[i];	}
 		for(int i=0; i<6; i++)	{	localStat.currTipPosDir[i] = mySelf->m_Status.currTipPosDir[i];	}
+		for(int i = 0; i < 3; ++i) { localStat.hapticState.velocity[i] = mySelf->m_Status.hapticState.velocity[i];}
 		currentControl = mySelf->m_forceControlActivated;
 		LeaveCriticalSection(&m_cSection);
 
@@ -1222,7 +1223,9 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 	//double K[6] = {10.0, 10.0, 10.0, 1.0, 1.0, 1.0 };		// working
 	
 	double K_image[6] = {1000.0, 1000.0, 1000.0, 10.0, 10.0, 10.0 };		// for image frame control
-	double K[6] = {0.10, };		// working
+	double K[6] = {2.0, 2.0, 2.0, 5.0, 5.0, 5.0};		// working
+	//double K[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};		// working
+	//double K[6] = { 5.0, 5.0, 5.0, 50.0, 50.0, 50.0 };	
 	//double K[6] = { 5.0, 5.0, 5.0, 5.0, 5.0, 5.0 };				// For sensor feedback + estimator
 	//double K[6] = { 1.5, 1.5, 1.5, 0.1, 0.1, 0.1 };				// For sensor feedback + estimator
 	//double K[6] = {1.0, 1.0, 1.0, 0.5, 0.5, 0.5 };	// working	
@@ -1336,12 +1339,12 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 					localStat.tgtTipPosDir[4] = planeNormal(1);
 					localStat.tgtTipPosDir[5] = planeNormal(2);
 				}
-
+				//PrintCArray(localStat.tgtWorkspaceVelocity, 3);
 				double sum = 0;
 				for(int i=0; i<3; i++)	
 				{	
 					if (!mySelf->m_camera_control)
-						err(i,0) = K[i]*(localStat.tgtTipPosDir[i] - localStat.currTipPosDir[i]) + localStat.tgtWorkspaceVelocity[i];
+						err(i,0) = K[i]*(localStat.tgtTipPosDir[i] - localStat.currTipPosDir[i]) + 0 * localStat.tgtWorkspaceVelocity[i];
 					else
 						err(i, 0) = K_image[i] * localStat.tgtWorkspaceVelocity[i];   // this is to control the robot at the image-frame of the cardioscope
 					//sum += (localStat.tgtTipPosDir[i+3]*localStat.currTipPosDir[i+3]);				
@@ -2197,6 +2200,8 @@ void CCTRDoc::GetImageToCameraTransformation(::Eigen::Matrix<double, 3, 3>& tran
 
 void CCTRDoc::MasterToSlave(CTR_status& stat, double scl, bool absolute)
 {
+
+	//::std::cout << stat.hapticState.velocity[0] << " " << stat.hapticState.velocity[1] << " " << stat.hapticState.velocity[2] << ::std::endl;
 	// CKim - Relative tip position - displacement of the stylus T from its reference point T0
 	// (location when the button was pressed, w.r.t master csys, stored in M_T and M_T0)
 	// is scaled and mapped to position of the slave end-effector
@@ -2248,7 +2253,7 @@ void CCTRDoc::MasterToSlave(CTR_status& stat, double scl, bool absolute)
 	{
 		tipDir = MtoS*Ro.transpose()*R*MtoS.transpose()*v;
 	}
-
+	//::std::cout << velocityRobotFrame.transpose() << ::std::endl; 
 	for(int i=0; i<3; i++)	{	stat.tgtTipPosDir[i] = tipPos(i);		stat.tgtTipPosDir[i+3] = tipDir(i);		}
 	memcpy(stat.tgtWorkspaceVelocity, velocityRobotFrame.data(), 3  * sizeof(double));
 

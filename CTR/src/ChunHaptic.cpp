@@ -15,6 +15,7 @@ hduVector3Dd ChunHaptic::m_refPt;
 
 ChunHaptic::ChunHaptic(void)
 {
+	m_filters = new ::RecursiveFilter::MovingAverageFilter[3];
 }
 
 
@@ -27,6 +28,8 @@ ChunHaptic::~ChunHaptic(void)
 		hdUnschedule(hSchedule);
 		hdDisableDevice(m_hHD);
 	}
+
+	delete[] m_filters;
 }
 
 void ChunHaptic::InitDevice()
@@ -96,9 +99,13 @@ HDCallbackCode HDCALLBACK ChunHaptic::updateCallback(void *pData)
 	
     // CKim - Update the position, transformation, force, and time stamp
     hdGetDoublev(HD_CURRENT_TRANSFORM, mySelf->m_currentState.tfMat);
-	hdGetDoublev(HD_LAST_VELOCITY, mySelf->m_currentState.velocity);
+	//hdGetFloatv(HD_CURRENT_VELOCITY, mySelf->m_currentState.velocity);
+	double velocity[3] = {0};
+	hdGetDoublev(HD_CURRENT_VELOCITY, velocity);
+	for(int i = 0 ; i < 3; ++i)
+		mySelf->m_currentState.velocity[i] = mySelf->m_filters[i].step(velocity[i]);
 	//hdGetDoublev(HD_LAST_ANGULAR_VELOCITY, mySelf->m_currentState.ang_velocity);
-
+	//PrintCArray(mySelf->m_currentState.velocity, 3);
 	//hdGetDoublev(HD_CURRENT_FORCE,mySelf->m_currentState.Force);
 	
 	// CKim - Render force feedback
@@ -168,7 +175,8 @@ HDCallbackCode HDCALLBACK ChunHaptic::synchCallback(void *pData)
 
 	// update current position
 	memcpy(state->hapticState.position, &state->hapticState.tfMat[12], 3 * sizeof(double));
-
+	
+	memcpy(state->hapticState.velocity, &m_currentState.velocity, 3 * sizeof(double));
 	for(int i=0; i<16; i++)	{		state->hapticState.tfMat[i] = m_currentState.tfMat[i];			}
 	//::std::cout << "Events in queue: " << m_currentState.eventQueue.empty() << ::std::endl;
 	while(!m_currentState.eventQueue.empty())
@@ -186,7 +194,12 @@ HDCallbackCode HDCALLBACK ChunHaptic::synchCallback(void *pData)
 	m_currentState.forceFlag = state->hapticState.forceFlag;
 	m_currentState.forceMag = state->hapticState.forceMag;	
 
-	
+	////double velocity[12] = {0};
+	//////hdGetFloatv(HD_CURRENT_VELOCITY, velocity);
+	////hdGetDoublev(HD_CURRENT_POSITION,velocity);
+	//for(int i = 0; i < 3; ++i)
+	//	::std::cout << velocity[i] << " ";
+	//::std::cout << ::std::endl;
 	//// CKim - Error check
  //   if (HD_DEVICE_ERROR(m_currentState.err))
  //   {

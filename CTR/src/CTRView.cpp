@@ -81,6 +81,12 @@ BEGIN_MESSAGE_MAP(CCTRView, CFormView)
 	ON_BN_CLICKED(IDC_CHECK1, &CCTRView::ToggleForceControl)
 	ON_BN_CLICKED(IDC_CHECK3, &CCTRView::ToggleCameraControl)
 
+	ON_EN_KILLFOCUS(IDC_EDIT15, &CCTRView::UpdateGains)
+	ON_EN_KILLFOCUS(IDC_EDIT16, &CCTRView::UpdateGains)
+
+	ON_BN_CLICKED(IDC_RADIO_JA3, &CCTRView::OnBnClickedRadioModesController)	
+	ON_BN_CLICKED(IDC_RADIO_TELE4, &CCTRView::OnBnClickedRadioModesController)
+
 	ON_WM_CTLCOLOR()
 	ON_BN_CLICKED(IDC_BUTTON6, &CCTRView::OnClickedBtnHome)
 END_MESSAGE_MAP()
@@ -108,7 +114,7 @@ CCTRView::CCTRView()
 
 	points_for_plane_estimation.resize(0);
 	m_PlaneEstimationMode = 0;
-
+	m_controlMode = 0;
 }
 
 CCTRView::~CCTRView()
@@ -711,4 +717,33 @@ void CCTRView::OnKillFocusUpdateFrequency()
 	this->GetDocument()->SetFrequency(atof(str));
 	//::std::cout << "in callback" << ::std::endl;
 	//::std::cout << str << ::std::endl;
+}
+
+void CCTRView::UpdateGains()
+{
+	CString str;
+	this->GetDlgItemTextA(IDC_EDIT15, str);		
+	double position_gain = atof(str);
+	
+	this->GetDlgItemTextA(IDC_EDIT16, str);		
+	double orientation_gain = atof(str);
+
+	this->GetDocument()->UpdateGains(position_gain, orientation_gain);
+}
+
+void CCTRView::OnBnClickedRadioModesController()
+{
+	UpdateData(true);	
+	
+	if(m_controlMode == 0)	
+	{
+		::std::cout << "Nullspace Controller" << ::std::endl;
+	}
+	else if (m_PlaneEstimationMode == 1)
+	{
+		::std::cout << "Weighted Cotnroller" << ::std::endl;
+	}
+
+	this->GetDocument()->SwitchControlMode(m_controlMode);
+	return;		
 }

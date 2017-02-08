@@ -150,6 +150,9 @@ public:
 	virtual ~CCTRDoc();
 	void StartUIupdate();
 
+	void	UpdateGains(double position, double orientation);
+	void	SwitchControlMode(int mode);
+
 	void SwitchAllControlFlagsOff();
 	void				ToggleCameraControl();
 	// CKim - Get thread safe copy of the robot status
@@ -260,7 +263,11 @@ protected:
 	double	m_frequency;
 	bool	m_frequency_changed;
 	bool	m_plane_changed;
+	double	m_position_gain;
+	double	m_orientation_gain;
 
+
+	int		m_control_mode;
 
 // Generated message map functions
 protected:

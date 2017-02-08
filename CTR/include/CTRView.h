@@ -81,9 +81,13 @@ public:
 	afx_msg void OnClickedBtnUpdate();
 	afx_msg void OnKillFocusUpdateFrequency();
 
+	afx_msg void UpdateGains();
+	afx_msg void OnBnClickedRadioModesController();
+
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 	
 	int m_PlaneEstimationMode;
+	int m_controlMode;
 	bool logDataFlag;
 	::std::ofstream logStream;
 

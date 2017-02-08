@@ -69,6 +69,9 @@ BEGIN_MESSAGE_MAP(CCTRDoc, CDocument)
 
 	ON_BN_CLICKED(IDC_INIT_EM, &CCTRDoc::OnBnClickedInitEm)
 	ON_BN_CLICKED(IDC_REGST, &CCTRDoc::OnBnClickedRegst)
+
+
+
 END_MESSAGE_MAP()
 
 
@@ -86,6 +89,9 @@ CCTRDoc::CCTRDoc()
 	// TODO: add one-time construction code here
 	m_ioRunning = false;		m_teleOpMode = false;
 	m_frequency_changed = false;
+	m_control_mode = 0;
+	m_position_gain = 1.0;
+	m_orientation_gain = 1.0;
 
 	for (int i = 0; i < 3; ++i)
 		this->m_Status.tgtWorkspaceVelocity[i] = 0;
@@ -1344,14 +1350,14 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 				for(int i=0; i<3; i++)	
 				{	
 					if (!mySelf->m_camera_control)
-						err(i,0) = K[i]*(localStat.tgtTipPosDir[i] - localStat.currTipPosDir[i]) + 0 * localStat.tgtWorkspaceVelocity[i];
+						err(i,0) = mySelf->m_position_gain * K[i]*(localStat.tgtTipPosDir[i] - localStat.currTipPosDir[i]) + 0 * localStat.tgtWorkspaceVelocity[i];
 					else
 						err(i, 0) = K_image[i] * localStat.tgtWorkspaceVelocity[i];   // this is to control the robot at the image-frame of the cardioscope
 					//sum += (localStat.tgtTipPosDir[i+3]*localStat.currTipPosDir[i+3]);				
 				}
 				for(int i=3; i<6; i++)
 				{
-					err(i,0) = K[i]*(localStat.tgtTipPosDir[i] - localStat.currTipPosDir[i]);		
+					err(i,0) = mySelf->m_orientation_gain * K[i]*(localStat.tgtTipPosDir[i] - localStat.currTipPosDir[i]);		
 				}
 			}
 
@@ -1365,7 +1371,10 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 						err(i, 0) += desiredPosition[i];   
 			}
 
-			mySelf->m_kinLib->ApplyKinematicControlNullspace(J,err,dq, localStat.currJang);
+			if (mySelf->m_control_mode == 0)
+				mySelf->m_kinLib->ApplyKinematicControlNullspace(J,err,dq, localStat.currJang);
+			else if (mySelf->m_control_mode ==1)
+				mySelf->m_kinLib->ApplyKinematicControl(J,err,dq);
 
 			// CKim - Convert dotq into motor velocity
 			mySelf->dJangTodCnt(dq, dCnt);
@@ -2473,4 +2482,16 @@ CCTRDoc::ToggleLog()
 		this->m_fileStream = new ::std::ofstream(filename);
 		this->m_logData = true;
 	}
+}
+
+
+void CCTRDoc::UpdateGains(double position, double orientation)
+{
+	this->m_position_gain = position;
+	this->m_orientation_gain = orientation;
+}
+
+void CCTRDoc::SwitchControlMode(int mode)
+{
+	this->m_control_mode = mode;
 }

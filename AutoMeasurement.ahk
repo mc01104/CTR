@@ -52,32 +52,13 @@ Loop %loopNum%
 	Send, file^v.stl{Enter}
 	Sleep, 1000
 	Send, {Enter}
+	;MouseClick, left, 960, 600
 	Sleep, 1000
 	;winactivate, %Save%
 	;Send, {Enter}
 	;MouseClick, left, 960, 580 ; Save button
 	;Sleep, 10000
 
-	;=========== Save file as stl =====================
-	;winactivate, %david%
-	;WinWaitActive, %david%
-
-	;MouseClick, left, 1740, 160 ; + button in 'List of Scans'
-	;Sleep, 1000
-	;Send, file^v{Enter}
-	;Sleep, 10000
-
-	;MouseClick, left, 1660, 120 ; Check box in 'List of Scans'
-	;Sleep, 500
-	;MouseClick, left, 1850, 160 ; Save button in 'List of Scans'
-	;Sleep, 500
-	;Send, file^v.stl{Enter}
-	;Sleep, 1000
-	;Send, {Enter}	; Save as stl
-	;Sleep, 10000
-	;Send, {Enter}
-	;MouseClick, left, 1775, 160 ; - button in 'List of Scans'
-	;Sleep, 1000	
 
 	
 }

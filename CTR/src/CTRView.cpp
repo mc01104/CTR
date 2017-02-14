@@ -291,14 +291,16 @@ void CCTRView::OnClickedBtnMove()
 	CString str;	double p[10];
 	double angles[5];
 
-	int id  = 2.0 * 1331 - (int) this->GetDocument()->GetCommandQueueSize() + 1;	
+	//int id  = 2.0 * 1331 - (int) this->GetDocument()->GetCommandQueueSize() + 1;
+	static int initSize = this->GetDocument()->GetCommandQueueSize();
+	int id  = initSize - (int) this->GetDocument()->GetCommandQueueSize() + 1;
 
 	if(m_ctrlMode == 0)	//0: joint angle, 1: tip configuration, 2: tele op
 	{
 		CTR_cmd tmp =  this->GetDocument()->GetNextCommand();
 		memcpy(angles, tmp.para, 5 * sizeof(double));
-		this->GetDocument()->SendCommand(0,tmp.para);
-		//this->GetDocument()->SendDitheringCommand(0,tmp.para);
+		//this->GetDocument()->SendCommand(0,tmp.para);
+		this->GetDocument()->SendDitheringCommand(0,tmp.para);
 
 	}
 

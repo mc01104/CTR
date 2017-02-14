@@ -13,7 +13,7 @@ cc_address = "hjhdog1@gmail.com"
 subject = "progress report"
 passwd = getpass.getpass()
 s = sched.scheduler(time.time, time.sleep)
-delay = 60 * 60 * 3 #in seconds
+delay = 60 * 60 * 2 #in seconds
 addresses = [mail, cc_address]
 
 

@@ -143,9 +143,9 @@ CCTRDoc::CCTRDoc()
 
 	m_force = 0.0;
 
-	this->ReadJointSpaceTrajectory("joints_frictions.txt");
+	this->ReadJointSpaceTrajectory("joints_validation_continue.txt");
 }
-
+ 
 CCTRDoc::~CCTRDoc()
 {
 	m_ioRunning = false;		

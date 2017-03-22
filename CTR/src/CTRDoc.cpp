@@ -2500,6 +2500,8 @@ void CCTRDoc::UpdateGains(double position, double orientation, double position_f
 {
 	this->m_position_gain = position;
 	this->m_orientation_gain = orientation;
+	this->m_position_gain_feedforward = position_forward;
+	this->m_orientation_gain_feedforward = orientation_forward;
 }
 
 void CCTRDoc::SwitchControlMode(int mode)

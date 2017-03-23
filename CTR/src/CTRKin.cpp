@@ -10,7 +10,7 @@ CTRKin::CTRKin(void)
 
 	// CKim - Coefficient file for Tip
 	//fName = "CTR_TIP_FAC.txt";
-	fName = "fourier_order_3.txt";
+	fName = "model_FT_2017_3_23_12_44_48_3.txt";
 	os.open("conditionNumber.txt");
 	if (readCTR_FAC_file(fName, m_Tip_px, m_Tip_py, m_Tip_pz, m_Tip_ox, m_Tip_oy, m_Tip_oz) == false) //file read error
 	{
@@ -254,10 +254,10 @@ void CTRKin::TipFwdKinEx(const double* jAng, const Eigen::MatrixXd& Coeff, doubl
 	posOrt[1] = sin(a1)*p[0] + cos(a1)*p[1];		posOrt[4] = sin(a1)*v[0] + cos(a1)*v[1];
 	posOrt[2] = p[2] + L1;							posOrt[5] = v[2];
 
-	for (int i = 0; i < 3; ++i)
-	{
-		posOrt[i] += 20 * posOrt[i+3];
-	}
+	//for (int i = 0; i < 3; ++i)
+	//{
+	//	posOrt[i] += 20 * posOrt[i+3];
+	//}
 }
 
 
@@ -1072,9 +1072,9 @@ void CTRKin::ApplyKinematicControlNullspace(const Eigen::MatrixXd& J, const Eige
 	::Eigen::MatrixXd orientPseudo = tmpOrient.transpose() * tmpOrientPseudo.inverse();
 	dotq += orientationGain * orientPseudo * ( err.block(3, 0, 3, 1) - Jo * task1_pseudo * err.block(0, 0, 3, 1));
 
-	//dotq[0] *= scl_jacobian;
-	//dotq[1] *= scl_jacobian;
-	//dotq[3] *= scl_jacobian;
+	dotq[0] *= scl_jacobian;
+	dotq[1] *= scl_jacobian;
+	dotq[3] *= scl_jacobian;
 	
 	
 	//::std::cout << dotq.transpose() << ::std::endl;

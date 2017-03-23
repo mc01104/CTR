@@ -1417,7 +1417,7 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 		{
 			//mySelf->m_kinLWPR->TipFwdKin(localStat.currJang, localStat.currTipPosDir);
 			mySelf->m_kinLib->EvalCurrentKinematicsModel(localStat.currJang, localStat.currTipPosDir, J, mySelf->m_bCLIK);
-
+			PrintCArray(localStat.currTipPosDir, 3);
 			for(int i=0; i<7; i++)	
 				vel[i] = 0.0;		
 	

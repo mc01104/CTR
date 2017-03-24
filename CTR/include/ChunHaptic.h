@@ -13,6 +13,7 @@
 #include <queue>
 #include <sstream>
 #include "FilterLibrary.h"
+#include "ChunTimer.h"
 
 #include "CTR_Common.h"
 
@@ -47,6 +48,9 @@ private:
 
 	static hduVector3Dd m_refPt;
 	static bool teleOpOn;
+
+	static ChunTimer m_timer;
+	static long	m_lastTime; 
 
 	::RecursiveFilter::Filter* m_filters;
 

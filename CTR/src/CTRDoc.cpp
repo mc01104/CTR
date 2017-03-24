@@ -788,6 +788,7 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 		for(int i=0; i<5; i++)	{	localStat.currJang[i] = mySelf->m_Status.currJang[i];	}
 		for(int i=0; i<6; i++)	{	localStat.currTipPosDir[i] = mySelf->m_Status.currTipPosDir[i];	}
 		for(int i = 0; i < 3; ++i) { localStat.hapticState.velocity[i] = mySelf->m_Status.hapticState.velocity[i];}
+		for(int i = 0; i < 3; ++i) { localStat.hapticState.ang_velocity[i] = mySelf->m_Status.hapticState.ang_velocity[i];}
 		currentControl = mySelf->m_forceControlActivated;
 		LeaveCriticalSection(&m_cSection);
 
@@ -939,6 +940,8 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 			mySelf->m_Status.haptic_velocity[i] = localStat.haptic_velocity[i];		}
 		for(int i=0; i<3; i++)	{
 			mySelf->m_Status.tgtWorkspaceVelocity[i] = localStat.tgtWorkspaceVelocity[i];		}
+		for(int i=0; i<3; i++)	{
+			mySelf->m_Status.tgtWorkspaceAngVelocity[i] = localStat.tgtWorkspaceAngVelocity[i];		}
 
 		mySelf->m_Status.invKinOK = localStat.invKinOK;
 		mySelf->m_Status.limitOK = localStat.limitOK;
@@ -1331,9 +1334,11 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 				planeNormal(i) = mySelf->m_contact_control_normal(i);
 
 			LeaveCriticalSection(&m_cSection);
-
+			//PrintCArray(localStat.tgtWorkspaceVelocity, 3);
+			//PrintCArray(localStat.tgtWorkspaceAngVelocity, 3);
 			::Eigen::Vector3d currentTangent = ::Eigen::Map<::Eigen::Vector3d> (&localStat.currTipPosDir[3], 3);
 			::Eigen::Vector3d tangentVelocity = ::Eigen::Map<::Eigen::Vector3d> (localStat.tgtWorkspaceAngVelocity, 3).cross(currentTangent);
+			//PrintCArray(tangentVelocity.data(), 3);
 
 			//mySelf->m_kinLWPR->TipFwdKinJac(localStat.currJang, localStat.currTipPosDir, J,true);
 			mySelf->m_kinLib->EvalCurrentKinematicsModelNumeric(localStat.currJang, localStat.currTipPosDir, J, mySelf->m_bCLIK);
@@ -1365,7 +1370,7 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 				}
 				for(int i=3; i<6; i++)
 				{
-					err(i,0) = mySelf->m_orientation_gain * K[i]*(localStat.tgtTipPosDir[i] - localStat.currTipPosDir[i]) + mySelf->m_orientation_gain_feedforward * tangentVelocity[i];		
+					err(i,0) = mySelf->m_orientation_gain * K[i]*(localStat.tgtTipPosDir[i] - localStat.currTipPosDir[i]) + mySelf->m_orientation_gain_feedforward * tangentVelocity[i-3];
 				}
 			}
 
@@ -1417,7 +1422,7 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 		{
 			//mySelf->m_kinLWPR->TipFwdKin(localStat.currJang, localStat.currTipPosDir);
 			mySelf->m_kinLib->EvalCurrentKinematicsModel(localStat.currJang, localStat.currTipPosDir, J, mySelf->m_bCLIK);
-			PrintCArray(localStat.currTipPosDir, 3);
+			//PrintCArray(localStat.currTipPosDir, 3);
 			for(int i=0; i<7; i++)	
 				vel[i] = 0.0;		
 	
@@ -2276,7 +2281,7 @@ void CCTRDoc::MasterToSlave(CTR_status& stat, double scl, bool absolute)
 
 	memcpy(stat.tgtWorkspaceVelocity, velocityRobotFrame.data(), 3  * sizeof(double));
 	memcpy(stat.tgtWorkspaceAngVelocity, ang_velocityRobotFrame.data(), 3  * sizeof(double));
-
+	//PrintCArray(stat.tgtWorkspaceAngVelocity, 3);
 }
 
 

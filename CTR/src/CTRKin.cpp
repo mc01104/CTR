@@ -1013,10 +1013,11 @@ void CTRKin::EvalCurrentKinematicsModel_NEW(const double* jAng,  const double* t
 
 void CTRKin::ApplyKinematicControlNullspace(const Eigen::MatrixXd& J, const Eigen::MatrixXd& err, double* dq, double* q)
 {
+	//::std::cout << err.transpose() << ::std::endl;
 
 	::Eigen::VectorXd dotq(5);
 	::Eigen::Matrix<double, 6, 5> Jtemp = J;
-	double scl_jacobian = M_PI / 180.0;
+	double scl_jacobian = M_PI / 180.0 * 3;
 	//scl_jacobian *= 2;
 	Jtemp.col(0) *= scl_jacobian;
 	Jtemp.col(1) *= scl_jacobian;
@@ -1045,6 +1046,7 @@ void CTRKin::ApplyKinematicControlNullspace(const Eigen::MatrixXd& J, const Eige
 	// task 1: control position
 	::Eigen::MatrixXd task1_pseudo = Jp.transpose() * tmpMat.inverse();
 	dotq = task1_pseudo * err.block(0, 0, 3, 1);
+	//::std::cout << "1st: "<< dotq.transpose() << ::std::endl;
 
 	// task 2: control orientation
 	::Eigen::Matrix<double, 5, 5> IdMat;
@@ -1053,11 +1055,13 @@ void CTRKin::ApplyKinematicControlNullspace(const Eigen::MatrixXd& J, const Eige
 	::Eigen::Matrix<double, 3, 5> tmpOrient;
 	::Eigen::Matrix<double, 3, 3> tmpOrientPseudo;
 
-	double orientationGain = 10.0;
+	//double orientationGain = 10.0;
 	tmpOrient = Jo * (IdMat - task1_pseudo * Jp);
+	//tmpOrient = Jo;
 	tmpOrientPseudo = tmpOrient * tmpOrient.transpose();
 
-	double lambda_orientation = 0.01;
+	::std::cout << tmpOrientPseudo << ::std::endl;
+	double lambda_orientation = 0.00001;
 	//double lambda_orientation_max = 1.0e-04;
 	//epsilon = 1.0e-04;
 	//::Eigen::JacobiSVD<::Eigen::MatrixXd> svd_orient(tmpOrientPseudo, ::Eigen::ComputeThinU | ::Eigen::ComputeThinV);
@@ -1070,7 +1074,7 @@ void CTRKin::ApplyKinematicControlNullspace(const Eigen::MatrixXd& J, const Eige
 		tmpOrientPseudo(i, i) += lambda_orientation;
 	
 	::Eigen::MatrixXd orientPseudo = tmpOrient.transpose() * tmpOrientPseudo.inverse();
-	dotq += orientationGain * orientPseudo * ( err.block(3, 0, 3, 1) - Jo * task1_pseudo * err.block(0, 0, 3, 1));
+	dotq += orientPseudo * ( err.block(3, 0, 3, 1) - Jo * task1_pseudo * err.block(0, 0, 3, 1));
 
 	dotq[0] *= scl_jacobian;
 	dotq[1] *= scl_jacobian;

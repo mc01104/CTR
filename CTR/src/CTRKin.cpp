@@ -28,10 +28,10 @@ CTRKin::CTRKin(void)
 	// CKim  Coefficients for Balance Pair
 	fName = "C:\\01. ConcentricTubeRobots\\CTR\\CTR_BP_FAC.txt";
 	
-	if (readCTR_FAC_file(fName, m_BP_px, m_BP_py, m_BP_pz, m_BP_ox, m_BP_oy, m_BP_oz) == false) //file read error
-	{
-		AfxMessageBox("Sparta!!!!");
-	}
+	//if (readCTR_FAC_file(fName, m_BP_px, m_BP_py, m_BP_pz, m_BP_ox, m_BP_oy, m_BP_oz) == false) //file read error
+	//{
+	//	AfxMessageBox("Sparta!!!!");
+	//}
 
 	// CKim - Initialize matrices for recursive least square
 	for(int i=0; i<6; i++)	{
@@ -1086,7 +1086,7 @@ void CTRKin::ApplyKinematicControlNullspace(const Eigen::MatrixXd& J, const Eige
 	//dotq *= 0.3; 
 
 	// Joint limit avoidance using potential-field method
-	double upperSoft = L31_MAX - 5;
+	double upperSoft = L31_MAX - 2;
 	double lowerSoft = L31_MIN + 2;
 	double jointLimitGain = 0.2;
 

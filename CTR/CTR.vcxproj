@@ -90,7 +90,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SolutionDir)\MechanicsBasedKinematics;$(SolutionDir)\LieGroup;$(SolutionDir)\Lib;$(SolutionDir)\lwpr-1.2.6\include;$(SolutionDir)\Utilities;$(ProjectDir)\include;$(SolutionDir)\Lib\Ascension;$(SolutionDir)\Lib\vtk\include\vtk-5.8;$(SolutionDir)\Lib\CopleyMotion\ChunCML\include;$(SolutionDir)\Lib\CopleyMotion\ChunCML\include\can;$(SolutionDir)\Lib\OpenHaptics\include;$(SolutionDir)\Lib\OpenHaptics\utilities\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\MechanicsBasedKinematics;$(SolutionDir)\LieGroup;$(SolutionDir)\Lib;$(SolutionDir)\lwpr-1.2.6\include;$(SolutionDir)\Utilities;$(ProjectDir)\include;$(SolutionDir)\Lib\Ascension;$(SolutionDir)\Lib\vtk\include\vtk-5.8;$(SolutionDir)\Lib\CopleyMotion\ChunCML\include;$(SolutionDir)\Lib\CopleyMotion\ChunCML\include\can;$(SolutionDir)\Lib\OpenHaptics\include;$(SolutionDir)\Lib\OpenHaptics\utilities\include; $(WindowsSDK_IncludePath)</AdditionalIncludeDirectories>
       <PrecompiledHeaderOutputFile>$(IntDir)$(TargetName).pch</PrecompiledHeaderOutputFile>
       <UndefinePreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS</UndefinePreprocessorDefinitions>
     </ClCompile>

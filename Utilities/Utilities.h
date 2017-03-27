@@ -186,4 +186,6 @@ void find_all(Iterator it_start, Iterator it_end, T value, ::std::vector<int>& i
 
 }
 
+void binary_from_string(::std::string& sHex, ::std::string& sReturn);
 
+::std::vector<::std::string> splitStr(::std::string inputStr, char delim);

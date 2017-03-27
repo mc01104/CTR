@@ -24,6 +24,8 @@ class ChunTracker;
 class TrjGenerator;
 class MechanicsBasedKinematics;
 class CTR;
+class HeartRateMonitor;
+
 //class RecursiveFilter::Filter;
 
 class CCTRDoc : public CDocument
@@ -47,6 +49,9 @@ private:
 	CTR* robot;
 	MechanicsBasedKinematics* kinematics;
 	RecursiveFilter::Filter* filters;
+
+	// George - heart rate monitor
+	HeartRateMonitor*     m_heartRateMonitor;
 
 	// CKim - Robot state parameters - position of the haptic device, motor
 	bool	m_motorConnected;
@@ -124,6 +129,7 @@ private:
 	void				computeHapticDisplacement(CTR_status stat, double dP[3]);
 	void				computeCameraDesiredMotion(CTR_status stat, const double image_dir[3], double camera_dir[3]);
 	void				computeCameraJacobian(CTR_status stat);
+
 	void				computeMechanicsKinematics(CTR_status stat);
 	bool				cameraControlFlag;
 	bool				m_camera_control;
@@ -240,6 +246,9 @@ protected:
 
 	// George - joint space trajectory playback
 	static unsigned int WINAPI	NetworkCommunication(void* para);
+
+	// George - thread to read heart rate from surgivet monitor
+	static unsigned int WINAPI	HeartRateMonitorThread(void* para);
 
 	// CKim - Following functions encapsulates various caclulations performed inside the loop
 	// It takes reference to the CTR_status structure and updates it

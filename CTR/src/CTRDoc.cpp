@@ -45,6 +45,9 @@
 #include "MechanicsBasedKinematics.h"
 #include "CTRFactory.h"
 
+// Heart Rate Monitoring from surgivet
+#include "HeartRateMonitor.h"
+
 
 #define DEFAULT_BUFLEN 512
 #define DEFAULT_PORT "27015"
@@ -104,6 +107,7 @@ CCTRDoc::CCTRDoc()
 	m_contact_control_normal << 0, 0, 1;
 	m_logData = false;
 	filters = new RecursiveFilter::MovingAverageFilter[3];
+	m_heartRateMonitor = new HeartRateMonitor();
 
 	// CKim - Initialize critical section
 	// Initializes a critical section object and sets the spin count for the critical section.
@@ -413,6 +417,13 @@ void CCTRDoc::OnUpdateViewTeleop(CCmdUI *pCmdUI)
 void CCTRDoc::OnBnClickedInitEm()
 {
 	m_hEMTrck = (HANDLE) _beginthreadex(NULL, 0, CCTRDoc::EMLoop, this, 0, NULL);
+}
+
+unsigned int WINAPI	CCTRDoc::HeartRateMonitorThread(void* para)
+{
+	CCTRDoc* mySelf = (CCTRDoc*) para;
+
+	//mySelf->HeartRateMonitoThread
 }
 
 unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)

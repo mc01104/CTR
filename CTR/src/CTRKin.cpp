@@ -1085,7 +1085,8 @@ void CTRKin::ApplyKinematicControlNullspace(const Eigen::MatrixXd& J, const Eige
 	// overall gain
 	//dotq *= 0.3; 
 
-	// Joint limit avoidance using potential-field method
+	// Joint limit avoidance using potential-field method 
+	// why add this to the existing value and not just assign the velocity to the joint-limit avoidance potential field?
 	double upperSoft = L31_MAX - 2;
 	double lowerSoft = L31_MIN + 2;
 	double jointLimitGain = 0.2;
@@ -1105,6 +1106,26 @@ void CTRKin::ApplyKinematicControlNullspace(const Eigen::MatrixXd& J, const Eige
 	for(int i=0; i<5; i++)	{	dq[i] = dotq(i,0);	}
 
 }
+
+void CTRKin::conditionMatrix(::Eigen::Matrix2d& mat_original, double conditionNumberDes, ::Eigen::MatrixXd& mat_conditioned, double& condition_number_new)
+{
+	::Eigen::JacobiSVD<Eigen::MatrixXd> Jsvd(mat_original, Eigen::ComputeThinU | Eigen::ComputeThinV);
+	::Eigen::VectorXd sv = Jsvd.singularValues();	
+
+	double sigma_min = sv(sv.size() - 1, 0);
+	double sigma_max = sv(0, 0);
+	double conditionNumber = sigma_max/sigma_min;
+
+	double lambda_squared = (conditionNumberDes * sigma_min - sigma_max)/(1 - conditionNumberDes); //assume desired condition number is not 1
+
+	mat_conditioned = mat_original + ::Eigen::MatrixXd::Identity(sv.size(), sv.size()) * lambda_squared;
+
+	Jsvd.compute(mat_conditioned);
+	::Eigen::VectorXd sv_new = Jsvd.singularValues();
+
+	condition_number_new = sv(0, 0)/sv(sv.size() - 1, 0);
+}
+
 
 void CTRKin::ApplyHybridPositionForceControl(const ::Eigen::MatrixXd& J, const ::Eigen::MatrixXd& err, const ::Eigen::MatrixXd& desiredForce, const ::Eigen::MatrixXd& actualForce, double* dq, double* q)
 {

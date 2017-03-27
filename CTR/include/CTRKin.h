@@ -50,6 +50,7 @@ public:
 	// CKim - Update Initial matrix used in Adaptive Update
 	void UpdateInitM(const double jAng[5], bool invert = false);
 
+	void	conditionMatrix(::Eigen::Matrix2d& J_original, double conditionNumberDes, ::Eigen::MatrixXd& J_conditioned, double& condition_number_new);
 	// CKim - Evaluate Forward kinematics and Jacobian using current kinematics model
 	void EvalCurrentKinematicsModel(const double* jAng, double* predTipPosDir, Eigen::MatrixXd& J, bool evalJ);
 	void EvalCurrentKinematicsModel_NEW(const double* jAng, const double* tgtPosDir, double* predTipPosDir, Eigen::MatrixXd& J, bool evalJ);

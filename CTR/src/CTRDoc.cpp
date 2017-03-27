@@ -425,6 +425,8 @@ unsigned int WINAPI	CCTRDoc::HeartRateMonitorThread(void* para)
 	CCTRDoc* mySelf = (CCTRDoc*) para;
 
 	mySelf->m_heartRateMonitor->run();
+
+	return 0;
 }
 
 unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)

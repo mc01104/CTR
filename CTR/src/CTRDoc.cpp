@@ -402,7 +402,8 @@ void CCTRDoc::OnViewTeleop()
 		}
 		m_ioRunning = true; 	
 		m_hMtrCtrl = (HANDLE) _beginthreadex(NULL, 0, CCTRDoc::MotorLoop, this, 0, NULL);
-	_beginthreadex(NULL, 0, CCTRDoc::NetworkCommunication, this, 0, NULL);
+		_beginthreadex(NULL, 0, CCTRDoc::NetworkCommunication, this, 0, NULL);
+		_beginthreadex(NULL, 0, CCTRDoc::HeartRateMonitorThread, this, 0, NULL);
 	}
 }
 
@@ -423,7 +424,7 @@ unsigned int WINAPI	CCTRDoc::HeartRateMonitorThread(void* para)
 {
 	CCTRDoc* mySelf = (CCTRDoc*) para;
 
-	//mySelf->HeartRateMonitoThread
+	mySelf->m_heartRateMonitor->run();
 }
 
 unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
@@ -1265,6 +1266,12 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 
 	while(mySelf->m_motorConnected)
 	{
+
+		// george -> test heart rate monitor
+		double heart_rate = mySelf->m_heartRateMonitor->getHeartRate();
+		::std::cout << "Heart Rate [bpm]: " << heart_rate << ::std::endl;
+
+
 		// CKim - Read from the motors - blocking function
 		mySelf->m_motionCtrl->GetMotorPos(localStat.currMotorCnt);	
 		mySelf->m_motionCtrl->GetErrorFlag(localStat.errFlag);

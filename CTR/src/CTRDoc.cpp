@@ -554,7 +554,7 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 		ss << mySelf->m_heartRateMonitor->getHeartRate() << " ";
 
 		// target tip position/orientation
-		for (int i = 0; i < 3; ++i)
+		for (int i = 0; i < 6; ++i)
 			ss << localStat.tgtTipPosDir[i] << " ";
 
 		//// plane estimation

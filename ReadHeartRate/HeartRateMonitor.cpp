@@ -34,6 +34,9 @@ void HeartRateMonitor::run()
 	{
 		int bytesRead = sPort.getArray(m_testRead, 200);
 
+		if (bytesRead < 5)
+			continue;
+
 		::std::string str(m_testRead, m_testRead + bytesRead);
 		strings = splitStr(str, ',');
 

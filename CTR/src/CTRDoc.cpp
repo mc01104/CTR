@@ -457,7 +457,7 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
         printf("WSAStartup failed with error: %d\n", iResult);
         return 1;
     }
-
+	::std::cout << "in network" << ::std::endl;
     ZeroMemory(&hints, sizeof(hints));
     hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_STREAM;
@@ -1293,8 +1293,8 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 	{
 
 		// george -> test heart rate monitor
-		double heart_rate = mySelf->m_heartRateMonitor->getHeartRate();
-		::std::cout << "Heart Rate [bpm]: " << heart_rate << ::std::endl;
+		//double heart_rate = mySelf->m_heartRateMonitor->getHeartRate();
+		//::std::cout << "Heart Rate [bpm]: " << heart_rate << ::std::endl;
 
 
 		// CKim - Read from the motors - blocking function

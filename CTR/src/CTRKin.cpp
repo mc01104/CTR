@@ -1060,7 +1060,7 @@ void CTRKin::ApplyKinematicControlNullspace(const Eigen::MatrixXd& J, const Eige
 	//tmpOrient = Jo;
 	tmpOrientPseudo = tmpOrient * tmpOrient.transpose();
 
-	::std::cout << tmpOrientPseudo << ::std::endl;
+	//::std::cout << tmpOrientPseudo << ::std::endl;
 	double lambda_orientation = 0.00001;
 	//double lambda_orientation_max = 1.0e-04;
 	//epsilon = 1.0e-04;

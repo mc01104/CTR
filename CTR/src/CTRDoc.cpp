@@ -109,6 +109,9 @@ CCTRDoc::CCTRDoc()
 	filters = new RecursiveFilter::MovingAverageFilter[3];
 	m_heartRateMonitor = new HeartRateMonitor();
 
+	for (int i = 0; i < 3; ++i)
+		m_valve_center[i] = 0.0;
+
 	// CKim - Initialize critical section
 	// Initializes a critical section object and sets the spin count for the critical section.
 	// When a thread tries to acquire a critical section that is locked, the thread spins: 
@@ -533,18 +536,38 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 			localStat.currTipPosDir[i] = mySelf->m_Status.currTipPosDir[i];
 		teleopOn = mySelf->m_Status.isTeleOpMoving;
 		desiredContactRatio = mySelf->m_contactRatioDesired;
+
+		for(int i = 0; i < 6; i++)
+			localStat.tgtTipPosDir[i] = mySelf->m_Status.tgtTipPosDir[i];
+
 		LeaveCriticalSection(&m_cSection);
 		//::std::cout << desiredContactRatio << ::std::endl;
+
 		//update the buffer
+		// first send the joint angles to be used for the image rotation and logging
 		for(int i = 0; i < 5; ++i)
 			ss << localStat.currJang[i] << " ";
+		// send whether teleoperation is on/off
+		ss << teleopOn << " ";
 
-		ss << teleopOn;
-		if (mySelf->m_frequency_changed)
-		{
-			ss << " "  << mySelf->m_frequency << " " << 0;
-			mySelf->m_frequency_changed = false;
-		}
+		// send the frequency from the monitor
+		ss << mySelf->m_heartRateMonitor->getHeartRate() << " ";
+
+		// target tip position/orientation
+		for (int i = 0; i < 3; ++i)
+			ss << localStat.tgtTipPosDir[i] << " ";
+
+		//// plane estimation
+		//for (int i = 0; i < 3; ++i)
+		//	ss << mySelf->m_contact_control_normal[i] << " ";
+
+		//for (int i = 0;  i < 3; ++i)
+		//	ss << mySelf->m_valve_center[i] << " ";
+		//if (mySelf->m_frequency_changed)
+		//{
+		//	ss << " "  << mySelf->m_frequency << " " << 0;
+		//	mySelf->m_frequency_changed = false;
+		//}
 		//::std::cout << ss.str() << ::std::endl;
 		//if (mySelf->m_plane_changed)
 		//{

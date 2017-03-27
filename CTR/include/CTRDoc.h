@@ -51,7 +51,8 @@ private:
 	RecursiveFilter::Filter* filters;
 
 	// George - heart rate monitor
-	HeartRateMonitor*     m_heartRateMonitor;
+	HeartRateMonitor*   m_heartRateMonitor;
+	double			m_valve_center[3];
 
 	// CKim - Robot state parameters - position of the haptic device, motor
 	bool	m_motorConnected;

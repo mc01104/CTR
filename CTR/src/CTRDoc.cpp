@@ -94,6 +94,8 @@ CCTRDoc::CCTRDoc()
 	m_frequency_changed = false;
 	m_control_mode = 0;
 
+	m_timer = new ChunTimer();
+
 	m_position_gain = 1.0;
 	m_orientation_gain = 1.0;
 	m_position_gain_feedforward = 1.0;
@@ -631,6 +633,7 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 			//::std::cout << "received:" << receivedStr <<::std::endl;
 			if (receivedStr == "NOF")
 			{
+				//::std::cout << "NOF" << ::std::endl;
 				EnterCriticalSection(&m_cSection);
 				mySelf->m_ContactUpdateReceived = false;
 				LeaveCriticalSection(&m_cSection);

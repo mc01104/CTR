@@ -83,7 +83,7 @@ BEGIN_MESSAGE_MAP(CCTRView, CFormView)
 	ON_BN_CLICKED(IDC_BTN_MOVE11, &CCTRView::OnClickedBtnStopLog)
 
 	ON_BN_CLICKED(IDC_CHECK1, &CCTRView::ToggleForceControl)
-	ON_BN_CLICKED(IDC_CHECK3, &CCTRView::ToggleCameraControl)
+//	ON_BN_CLICKED(IDC_CHECK3, &CCTRView::ToggleCameraControl)
 
 	ON_EN_KILLFOCUS(IDC_EDIT15, &CCTRView::UpdateGains)
 	ON_EN_KILLFOCUS(IDC_EDIT16, &CCTRView::UpdateGains)
@@ -192,7 +192,7 @@ void CCTRView::DoDataExchange(CDataExchange* pDX)
 	DDX_Radio(pDX, IDC_RADIO_JA2, m_PlaneEstimationMode);
 	DDX_Radio(pDX, IDC_RADIO_JA3, m_controlMode);
 	m_ctrlMode != 1 ? GetDlgItem(IDC_CHECK1)->EnableWindow(false) : GetDlgItem(IDC_CHECK1)->EnableWindow(true);
-	m_ctrlMode != 1 ? GetDlgItem(IDC_CHECK3)->EnableWindow(false) : GetDlgItem(IDC_CHECK3)->EnableWindow(true);
+//	m_ctrlMode != 1 ? GetDlgItem(IDC_CHECK3)->EnableWindow(false) : GetDlgItem(IDC_CHECK3)->EnableWindow(true);
 
 }
 
@@ -225,22 +225,21 @@ void CCTRView::OnInitialUpdate()
 	this->SetTimer(100,30,NULL);
 	QueryPerformanceFrequency(&m_Freq);
 
-	tmp;
-	tmp.Format("%d",1.0);
+	tmp.Format("%f",1.0);
 	this->SetDlgItemTextA(IDC_EDIT15,tmp);
 	this->SetDlgItemTextA(IDC_EDIT16,tmp);
 
-	tmp.Format("%d",0.7);
+	tmp.Format("%0.2f",0.7);
 	this->SetDlgItemTextA(IDC_EDIT17,tmp);
-	tmp.Format("%d",0.0);
+	tmp.Format("%0.2f",0.0);
 	this->SetDlgItemTextA(IDC_EDIT18,tmp);
 
-	tmp.Format("%d",10.0);
+	tmp.Format("%0.2f",10.0);
 	this->SetDlgItemTextA(IDC_EDIT2,tmp);
-	tmp.Format("%d",0.0);
+	tmp.Format("%0.2f",0.0);
 	this->SetDlgItemTextA(IDC_EDIT19,tmp);
 
-	tmp.Format("%d",0.5);
+	tmp.Format("%0.2f",0.5);
 	this->SetDlgItemTextA(IDC_EDIT3,tmp);
 
 }

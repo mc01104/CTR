@@ -110,8 +110,13 @@ private:
 	bool				m_ContactUpdateReceived;
 	double				m_deltaT;
 	double				m_contactError;
+
+	// PID gains for CR
 	double				m_contactGain;
 	double				m_contactDGain;
+	double				m_contactIGain;
+	double				m_contact_error_integral;
+
 	double				m_contactRatio;
 	double				m_contactRatioDesired;
 	double				m_contactError_prev;
@@ -138,7 +143,7 @@ private:
 	bool				cameraControlFlag;
 	bool				m_camera_control;
 	
-	
+	void				resetIntegral(){m_contact_error_integral = 0.0;};
 
 
 
@@ -186,7 +191,7 @@ public:
 	void	SetFrequency(double frequency) {this->m_frequency = frequency; this->m_frequency_changed = true;};
 
 	void	ChangeForceForTuning(double force);
-	void	SetForceGain(double forceGain, double forceGainD = 0);
+	void	SetForceGain(double forceGain, double forceGainD = 0, double forceGainI = 0);
 	void	SetContactRatio(double ratio);
 
 	void	SaveModel();
@@ -196,6 +201,7 @@ public:
 	/////////////// CONTACT ////////////
 	void	UpdateDesiredPosition();
 	void	ComputeDesiredPosition(double tmpPosition[6]);
+	void	ComputeDesiredVelocity();
 
 	Eigen::Vector3d GetTipPosition();
 	void setContactControlNormal(const ::Eigen::Vector3d& computedNormal);

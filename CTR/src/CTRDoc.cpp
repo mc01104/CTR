@@ -170,6 +170,10 @@ CCTRDoc::CCTRDoc()
 	m_ContactUpdateReceived = false;
 	m_contactGain = 0.0;
 	m_contactDGain = 0.0;
+	m_contactIGain = 0.0;
+
+	m_contact_error_integral = 0.0;
+
 	m_contactRatio = 0.0;
 	m_contactRatioDesired = 0.0;
 
@@ -206,35 +210,51 @@ void CCTRDoc::ChangeForceForTuning(double force)
 	//m_force = force;
 }
 
-void CCTRDoc::SetForceGain(double forceGain, double forceGainD)
+void CCTRDoc::SetForceGain(double forceGain, double forceGainD, double forceGainI)
 {
 	//this->m_kinLib->SetForceGain(forceGain);
 	m_contactGain = forceGain;
 	m_contactDGain = forceGainD;
+	m_contactIGain = forceGainI;
 }
 
 void CCTRDoc::SetContactRatio(double ratio)
 {
 	m_contactRatioDesired = ratio;
+	this->resetIntegral();
 	::std::cout << "Contact Ratio was set to:" << m_contactRatioDesired << ::std::endl;
 }
 
 void CCTRDoc::UpdateDesiredPosition()
 {
 	double targetTmp[6];
-	EnterCriticalSection(&m_cSection);
-	memcpy(targetTmp, this->m_Status.tgtTipPosDir, 6 * sizeof(double));
-	LeaveCriticalSection(&m_cSection);
+	//EnterCriticalSection(&m_cSection);
+	//memcpy(targetTmp, this->m_Status.tgtTipPosDir, 6 * sizeof(double));
+	//LeaveCriticalSection(&m_cSection);
 
 	//::std::cout << "initial target:" << targetTmp[2] << ::std::endl;
 
-	if (m_forceControlActivated)
-		this->ComputeDesiredPosition(targetTmp);
+	//if (m_forceControlActivated)
+	this->ComputeDesiredPosition(targetTmp);
 
 	//::std::cout << "updated target:" << targetTmp[2] << ::std::endl;
 
 	memcpy(m_desiredPosition, targetTmp, 6 * sizeof(double));
 	//PrintCArray(m_desiredPosition, 6);
+}
+
+void CCTRDoc::ComputeDesiredVelocity()
+{
+	double contact_error_deriv = 0;
+	if (m_deltaT > 0)
+		contact_error_deriv = (m_contactError - m_contactError_prev)/m_deltaT;
+
+	// this is the PD controller -> need to correctly propagate this goal to the position controller
+	::Eigen::Vector3d local_vel = this->m_contact_control_normal *  (m_contactGain * m_contactError + m_contactDGain * contact_error_deriv + m_contactIGain * m_contact_error_integral);
+	
+	memcpy(m_desiredPosition, local_vel.data(), 3 * sizeof(double));
+
+	m_ContactUpdateReceived = !m_ContactUpdateReceived;
 }
 
 void CCTRDoc::ComputeDesiredPosition(double tmpPosition[6])
@@ -626,6 +646,7 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 				mySelf->m_contactError_prev = contactRatioError;
 				mySelf->m_contactError = contactRatioError;
 				mySelf->m_contactRatio = contactRatio;
+				mySelf->m_contact_error_integral += contactRatioError * delta_t;
 				LeaveCriticalSection(&m_cSection);
 				::std::cout << "Ratio:" << contactRatio << ::std::endl;
 				end_loop = clock();
@@ -930,7 +951,8 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 			{
 				mySelf->MasterToSlave(localStat, scl);		// Updates robotStat.tgtTipPosDir
 			
-				mySelf->UpdateDesiredPosition();
+				//mySelf->UpdateDesiredPosition();
+				mySelf->ComputeDesiredVelocity();
 
 				// TODO
 				//if (mySelf->m_compute_plane)
@@ -1384,6 +1406,7 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 			for(int i=0; i<6; i++)	
 				localStat.tgtMotorVel[i] = mySelf->m_Status.tgtMotorVel[i];	
 
+			// feedforward velocities
 			for (int i = 0; i < 3; i++)
 				localStat.tgtWorkspaceVelocity[i] = mySelf->m_Status.tgtWorkspaceVelocity[i];
 			for (int i = 0; i < 3; i++)
@@ -1413,12 +1436,15 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 			// Use fwd kin output
 			else
 			{
+
 				if (mySelf->m_forceControlActivated)
 				{
 					localStat.tgtTipPosDir[3] = planeNormal(0);
 					localStat.tgtTipPosDir[4] = planeNormal(1);
 					localStat.tgtTipPosDir[5] = planeNormal(2);
+					tangentVelocity.setZero();
 				}
+
 				//PrintCArray(localStat.tgtWorkspaceVelocity, 3);
 				double sum = 0;
 				for(int i=0; i<3; i++)	
@@ -1435,14 +1461,16 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 				}
 			}
 
+
 			//project the error on the plane
 			if (mySelf->m_forceControlActivated)
 			{
 				::Eigen::Matrix3d PlaneNullProjection = ::Eigen::Matrix3d::Identity() - planeNormal * planeNormal.transpose();
 				err.block(0,0, 3, 1) = PlaneNullProjection * err.block(0,0, 3, 1);
 			
-					for (int i = 0; i < 3; i++)
-						err(i, 0) += desiredPosition[i];   
+				for (int i = 0; i < 3; i++)
+					err(i, 0) += desiredPosition[i];   
+	
 			}
 
 			if (mySelf->m_control_mode == 0)

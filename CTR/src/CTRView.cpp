@@ -63,8 +63,11 @@ BEGIN_MESSAGE_MAP(CCTRView, CFormView)
 	ON_BN_CLICKED(IDC_BUTTON1, &CCTRView::OnClickCopy)
 	
 	ON_EN_KILLFOCUS(IDC_EDIT1, &CCTRView::OnKillFocusInc)
+
 	ON_EN_KILLFOCUS(IDC_EDIT2, &CCTRView::OnKillFocusGain)
 	ON_EN_KILLFOCUS(IDC_EDIT19, &CCTRView::OnKillFocusGain)
+	ON_EN_KILLFOCUS(IDC_EDIT20, &CCTRView::OnKillFocusGain)
+
 	ON_EN_KILLFOCUS(IDC_EDIT3, &CCTRView::OnKillFocusContactRatio)
 	ON_EN_KILLFOCUS(IDC_EDIT14, &CCTRView::OnKillFocusUpdateFrequency)
 
@@ -129,15 +132,18 @@ void CCTRView::OnKillFocusGain()
 	CString str;
 	this->GetDlgItemTextA(IDC_EDIT2, str);		
 	double forceGain = atof(str);
-	
-	
+		
 	this->GetDlgItemTextA(IDC_EDIT19, str);		
 	double forceGainD = atof(str);
-	
+
+	this->GetDlgItemTextA(IDC_EDIT20, str);		
+	double forceGainI = atof(str);
+
 	::std::cout << "requested P-gain: " << forceGain << ::std::endl;
 	::std::cout << "requested D-gain: " << forceGainD << ::std::endl;
+	::std::cout << "requested I-gain: " << forceGainI << ::std::endl;
 
-	this->GetDocument()->SetForceGain(forceGain, forceGainD);
+	this->GetDocument()->SetForceGain(forceGain, forceGainD, forceGainI);
 
 }
 

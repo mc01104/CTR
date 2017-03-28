@@ -108,7 +108,8 @@ CCTRDoc::CCTRDoc()
 	m_logData = false;
 	filters = new RecursiveFilter::MovingAverageFilter[3];
 	m_heartRateMonitor = new HeartRateMonitor();
-
+	m_contactError = 0;
+	m_contactError_prev = 0;
 	for (int i = 0; i < 3; ++i)
 		m_valve_center[i] = 0.0;
 
@@ -168,6 +169,7 @@ CCTRDoc::CCTRDoc()
 	m_plotData = false;
 	m_ContactUpdateReceived = false;
 	m_contactGain = 0.0;
+	m_contactDGain = 0.0;
 	m_contactRatio = 0.0;
 	m_contactRatioDesired = 0.0;
 
@@ -204,10 +206,11 @@ void CCTRDoc::ChangeForceForTuning(double force)
 	//m_force = force;
 }
 
-void CCTRDoc::SetForceGain(double forceGain)
+void CCTRDoc::SetForceGain(double forceGain, double forceGainD)
 {
 	//this->m_kinLib->SetForceGain(forceGain);
 	m_contactGain = forceGain;
+	m_contactDGain = forceGainD;
 }
 
 void CCTRDoc::SetContactRatio(double ratio)
@@ -254,8 +257,16 @@ void CCTRDoc::ComputeDesiredPosition(double tmpPosition[6])
 	}
 
 	
-	m_deltaT = 1.0/40.0; // CHANGE to be computed by the network thread
+	//m_deltaT = 1.0/40.0; // CHANGE to be computed by the network thread
 	// Implement in a more general way
+	
+	double contact_error_deriv = 0;
+	if (m_deltaT > 0)
+		contact_error_deriv = (m_contactError - m_contactError_prev)/m_deltaT;
+
+	// this is the PD controller -> need to correctly propagate this goal to the position controller
+	::Eigen::Vector3d local_vel = this->m_contact_control_normal *  (m_contactGain * m_contactError - m_contactDGain * contact_error_deriv);
+	
 	::Eigen::Vector3d tmp = 100 * this->m_contact_control_normal *  m_contactGain * m_contactError * m_deltaT /*+ ::Eigen::Map<::Eigen::Vector3d> (m_desiredPosition,3)*/;
 	memcpy(tmpPosition, tmp.data(), 3 * sizeof(double));
 
@@ -437,6 +448,7 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 	CCTRDoc* mySelf = (CCTRDoc*) para;	
 	CTR_status	localStat;
 
+	mySelf->m_timer->ResetTime();
 	WSADATA wsaData;
     int iResult;
 
@@ -525,7 +537,7 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 	//EnterCriticalSection(&m_cSection);
 	::std::ofstream* os;
 	//LeaveCriticalSection(&m_cSection);
-
+	double delta_t = 0;
     do {
 		::std::ostringstream ss;
 		// update the local joint variables
@@ -589,6 +601,10 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
             printf("Connection closing...\n");
  
 		iResult = recv(ClientSocket, recvbuf, DEFAULT_BUFLEN, 0);
+
+		delta_t = (double) mySelf->m_timer->GetTime()/1000000.0;
+		mySelf->m_timer->ResetTime();
+
 		if (iResult > 0)
 		{
 			::std::string receivedStr = string(recvbuf);
@@ -607,6 +623,7 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 				contactRatioError = desiredContactRatio - contactRatio;
 				EnterCriticalSection(&m_cSection);
 				mySelf->m_ContactUpdateReceived = true;
+				mySelf->m_contactError_prev = contactRatioError;
 				mySelf->m_contactError = contactRatioError;
 				mySelf->m_contactRatio = contactRatio;
 				LeaveCriticalSection(&m_cSection);
@@ -636,10 +653,11 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 		}
 		//force *= 0.5;
 		//force = 0.3;
-		//EnterCriticalSection(&m_cSection);
+		EnterCriticalSection(&m_cSection);
 		//mySelf->m_Omni->SetForce(force);
 		//mySelf->m_force = force;
-		//LeaveCriticalSection(&m_cSection);
+		mySelf->m_deltaT = delta_t;
+		LeaveCriticalSection(&m_cSection);
 
     } while (iResult > 0);
 

@@ -64,6 +64,7 @@ BEGIN_MESSAGE_MAP(CCTRView, CFormView)
 	
 	ON_EN_KILLFOCUS(IDC_EDIT1, &CCTRView::OnKillFocusInc)
 	ON_EN_KILLFOCUS(IDC_EDIT2, &CCTRView::OnKillFocusGain)
+	ON_EN_KILLFOCUS(IDC_EDIT19, &CCTRView::OnKillFocusGain)
 	ON_EN_KILLFOCUS(IDC_EDIT3, &CCTRView::OnKillFocusContactRatio)
 	ON_EN_KILLFOCUS(IDC_EDIT14, &CCTRView::OnKillFocusUpdateFrequency)
 
@@ -128,8 +129,15 @@ void CCTRView::OnKillFocusGain()
 	CString str;
 	this->GetDlgItemTextA(IDC_EDIT2, str);		
 	double forceGain = atof(str);
-	::std::cout << "requested gain: " << forceGain << ::std::endl;
-	this->GetDocument()->SetForceGain(forceGain);
+	
+	
+	this->GetDlgItemTextA(IDC_EDIT19, str);		
+	double forceGainD = atof(str);
+	
+	::std::cout << "requested P-gain: " << forceGain << ::std::endl;
+	::std::cout << "requested D-gain: " << forceGainD << ::std::endl;
+
+	this->GetDocument()->SetForceGain(forceGain, forceGainD);
 
 }
 
@@ -211,6 +219,23 @@ void CCTRView::OnInitialUpdate()
 	this->SetTimer(100,30,NULL);
 	QueryPerformanceFrequency(&m_Freq);
 
+	tmp;
+	tmp.Format("%d",1.0);
+	this->SetDlgItemTextA(IDC_EDIT15,tmp);
+	this->SetDlgItemTextA(IDC_EDIT16,tmp);
+
+	tmp.Format("%d",0.7);
+	this->SetDlgItemTextA(IDC_EDIT17,tmp);
+	tmp.Format("%d",0.0);
+	this->SetDlgItemTextA(IDC_EDIT18,tmp);
+
+	tmp.Format("%d",10.0);
+	this->SetDlgItemTextA(IDC_EDIT2,tmp);
+	tmp.Format("%d",0.0);
+	this->SetDlgItemTextA(IDC_EDIT19,tmp);
+
+	tmp.Format("%d",0.5);
+	this->SetDlgItemTextA(IDC_EDIT3,tmp);
 
 }
 

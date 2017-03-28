@@ -11,7 +11,7 @@
 #include <Eigen/Dense>
 #include "time.h"
 #include "FilterLibrary.h"
-
+#include "ChunTimer.h"
 #include "VtkOnLinePlot.h"
 
 // CKim - Declare the classes that will be maintained inside the 'Doc' class
@@ -69,6 +69,7 @@ private:
 	bool				m_ref_set;
 	ChunTracker*		m_Tracker;
 	TrjGenerator*		m_TrjGen;
+	ChunTimer*			m_timer;
 
 	// CKim - Variables for threads
 	bool				m_ioRunning;
@@ -110,8 +111,10 @@ private:
 	double				m_deltaT;
 	double				m_contactError;
 	double				m_contactGain;
+	double				m_contactDGain;
 	double				m_contactRatio;
 	double				m_contactRatioDesired;
+	double				m_contactError_prev;
 	::std::ofstream*	m_fileStream;
 	bool				m_logData;
 
@@ -183,7 +186,7 @@ public:
 	void	SetFrequency(double frequency) {this->m_frequency = frequency; this->m_frequency_changed = true;};
 
 	void	ChangeForceForTuning(double force);
-	void	SetForceGain(double forceGain);
+	void	SetForceGain(double forceGain, double forceGainD = 0);
 	void	SetContactRatio(double ratio);
 
 	void	SaveModel();

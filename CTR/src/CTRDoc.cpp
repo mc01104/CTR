@@ -73,8 +73,6 @@ BEGIN_MESSAGE_MAP(CCTRDoc, CDocument)
 	ON_BN_CLICKED(IDC_INIT_EM, &CCTRDoc::OnBnClickedInitEm)
 	ON_BN_CLICKED(IDC_REGST, &CCTRDoc::OnBnClickedRegst)
 
-
-
 END_MESSAGE_MAP()
 
 
@@ -93,6 +91,7 @@ CCTRDoc::CCTRDoc()
 	m_ioRunning = false;		m_teleOpMode = false;
 	m_frequency_changed = false;
 	m_control_mode = 0;
+	m_freq_mode = 1;
 
 	m_timer = new ChunTimer();
 
@@ -109,6 +108,9 @@ CCTRDoc::CCTRDoc()
 	m_contact_control_normal << 0, 0, 1;
 	m_logData = false;
 	filters = new RecursiveFilter::MovingAverageFilter[3];
+
+	this->cr_dot_filter = new RecursiveFilter::MovingAverageFilter(11);
+
 	m_heartRateMonitor = new HeartRateMonitor();
 	m_contactError = 0;
 	m_contactError_prev = 0;
@@ -249,7 +251,7 @@ void CCTRDoc::ComputeDesiredVelocity()
 {
 	double contact_error_deriv = 0;
 	if (m_deltaT > 0)
-		contact_error_deriv = (m_contactError - m_contactError_prev)/m_deltaT;
+		contact_error_deriv = this->cr_dot_filter->step((m_contactError - m_contactError_prev)/m_deltaT);
 
 	// this is the PD controller -> need to correctly propagate this goal to the position controller
 	::Eigen::Vector3d local_vel = this->m_contact_control_normal *  (m_contactGain * m_contactError + m_contactDGain * contact_error_deriv + m_contactIGain * m_contact_error_integral);
@@ -585,7 +587,10 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 		ss << teleopOn << " ";
 
 		// send the frequency from the monitor
-		ss << mySelf->m_heartRateMonitor->getHeartRate() << " ";
+		if (mySelf->m_freq_mode == 1)
+			ss << mySelf->m_heartRateMonitor->getHeartRate() << " ";
+		else
+			ss << mySelf->m_frequency;
 
 		// target tip position/orientation
 		for (int i = 0; i < 6; ++i)
@@ -856,6 +861,8 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 	//LeaveCriticalSection(&m_cSection);
 	//ofstream os("debug_control_no_scaling.txt");
 	RecursiveFilter::Filter* filters = new RecursiveFilter::MovingAverageFilter[3];
+
+
 	// CKim - The Loop
 	bool prevControl=false;
 	bool currentControl = false;
@@ -2491,6 +2498,13 @@ bool CCTRDoc::TeleOpSafetyCheck()
 void CCTRDoc::ToggleForceControl()
 {
 	this->m_forceControlActivated = !this->m_forceControlActivated;
+	
+	EnterCriticalSection(&m_cSection);
+	memcpy(this->m_Status.tgtTipPosDir, this->m_Status.currTipPosDir, 6 * sizeof(double));
+	memcpy(this->m_Status.refTipPosDir, this->m_Status.currTipPosDir, 6 * sizeof(double));
+	LeaveCriticalSection(&m_cSection);
+
+	this->SlaveToMaster(this->m_Status, 1);		// Updates robotStat.hapticState.slavePos}
 }
 
 void CCTRDoc::TogglePlaneEstimation()
@@ -2604,4 +2618,14 @@ void CCTRDoc::UpdateGains(double position, double orientation, double position_f
 void CCTRDoc::SwitchControlMode(int mode)
 {
 	this->m_control_mode = mode;
+}
+
+void CCTRDoc::SwitchFreqMode(int mode)
+{
+	this->m_freq_mode = mode;
+}
+
+double CCTRDoc::GetMonitorFreq()
+{
+	return this->m_heartRateMonitor->getHeartRate();
 }

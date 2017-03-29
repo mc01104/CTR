@@ -50,6 +50,7 @@ private:
 	MechanicsBasedKinematics* kinematics;
 	RecursiveFilter::Filter* filters;
 
+	RecursiveFilter::Filter*		cr_dot_filter;
 	// George - heart rate monitor
 	HeartRateMonitor*   m_heartRateMonitor;
 	double			m_valve_center[3];
@@ -165,8 +166,10 @@ public:
 	virtual ~CCTRDoc();
 	void StartUIupdate();
 
+	double GetMonitorFreq();
 	void	UpdateGains(double position, double orientation, double position_forward, double orientation_forward);
 	void	SwitchControlMode(int mode);
+	void	SwitchFreqMode(int mode);
 
 	void SwitchAllControlFlagsOff();
 	void				ToggleCameraControl();
@@ -289,6 +292,7 @@ protected:
 	double	m_orientation_gain_feedforward;
 
 	int		m_control_mode;
+	int		m_freq_mode;
 
 // Generated message map functions
 protected:

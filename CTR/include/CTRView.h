@@ -83,11 +83,14 @@ public:
 
 	afx_msg void UpdateGains();
 	afx_msg void OnBnClickedRadioModesController();
+	afx_msg void OnBnClickedRadioModesFreq();
 
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 	
 	int m_PlaneEstimationMode;
 	int m_controlMode;
+	int m_frequencyMode;
+
 	bool logDataFlag;
 	::std::ofstream logStream;
 
@@ -106,6 +109,8 @@ public:
 	static int		m_idErrFlag[7];			int			m_errFlag[7];
 	static int		m_idEMMat[12];			CString		m_emMat[12];
 	static int		m_idSensConfig[6];		CString		m_sensConfig[6];
+
+	static int		m_id_monitor_freq;		CString		m_monitor_freq;
 
 	static int		manual_point_ENABLE[15];
 	static int		manual_point_DISABLE[15];

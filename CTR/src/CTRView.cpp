@@ -32,6 +32,8 @@ int CCTRView::manual_DISABLE[15] = {IDC_BTN_MOVE7, IDC_BTN_MOVE3, IDC_BTN_MOVE4,
 int CCTRView::online_ENABLE[15] = {IDC_EDIT11, IDC_EDIT12, IDC_EDIT13, IDC_BTN_MOVE9, -1};
 int CCTRView::online_DISABLE[15] = {IDC_EDIT8, IDC_EDIT9, IDC_EDIT10, IDC_BTN_MOVE8, -1};
 
+int CCTRView::m_id_monitor_freq = IDC_A12_ACT2;
+
 IMPLEMENT_DYNCREATE(CCTRView, CFormView)
 
 BEGIN_MESSAGE_MAP(CCTRView, CFormView)
@@ -93,6 +95,9 @@ BEGIN_MESSAGE_MAP(CCTRView, CFormView)
 	ON_BN_CLICKED(IDC_RADIO_JA3, &CCTRView::OnBnClickedRadioModesController)	
 	ON_BN_CLICKED(IDC_RADIO_TELE4, &CCTRView::OnBnClickedRadioModesController)
 
+	ON_BN_CLICKED(IDC_RADIO_JA4, &CCTRView::OnBnClickedRadioModesFreq)	
+	ON_BN_CLICKED(IDC_RADIO_TELE5, &CCTRView::OnBnClickedRadioModesFreq)
+
 	ON_WM_CTLCOLOR()
 	ON_BN_CLICKED(IDC_BUTTON6, &CCTRView::OnClickedBtnHome)
 END_MESSAGE_MAP()
@@ -121,6 +126,7 @@ CCTRView::CCTRView()
 	points_for_plane_estimation.resize(0);
 	m_PlaneEstimationMode = 0;
 	m_controlMode = 0;
+	m_frequencyMode = 1;
 }
 
 CCTRView::~CCTRView()
@@ -174,6 +180,8 @@ void CCTRView::DoDataExchange(CDataExchange* pDX)
 
 	for(int i=0; i<5; i++)	{	DDX_Text(pDX, m_idActJang[i], m_actJang[i]);	}
 
+	DDX_Text(pDX, m_id_monitor_freq, m_monitor_freq);
+
 	if(m_ctrlMode!= 0)	// CKim - 0: joint angle, 1: tip orientation, 2: teleoperation
 	{
 		for(int i=0; i<5; i++)	{	DDX_Text(pDX, m_idCmdJang[i], m_cmdJang[i]);	}
@@ -191,6 +199,8 @@ void CCTRView::DoDataExchange(CDataExchange* pDX)
 	
 	DDX_Radio(pDX, IDC_RADIO_JA2, m_PlaneEstimationMode);
 	DDX_Radio(pDX, IDC_RADIO_JA3, m_controlMode);
+	DDX_Radio(pDX, IDC_RADIO_JA4, m_frequencyMode);
+
 	m_ctrlMode != 1 ? GetDlgItem(IDC_CHECK1)->EnableWindow(false) : GetDlgItem(IDC_CHECK1)->EnableWindow(true);
 //	m_ctrlMode != 1 ? GetDlgItem(IDC_CHECK3)->EnableWindow(false) : GetDlgItem(IDC_CHECK3)->EnableWindow(true);
 
@@ -292,6 +302,7 @@ void CCTRView::OnTimer(UINT_PTR nIDEvent)
 		for (int i = 0; i < 5; ++i)
 			m_cmdJang[i].Format("%.3f",jAngCmd[i]);
 	}
+	m_monitor_freq.Format("%d", this->GetDocument()->GetMonitorFreq());
 
 	UpdateData(false);
 
@@ -617,6 +628,7 @@ void CCTRView::ToggleForceControl()
 {
 	if (m_ctrlMode == 1)
 		this->GetDocument()->ToggleForceControl();
+
 }
 
 void CCTRView::ToggleCameraControl()
@@ -785,4 +797,22 @@ void CCTRView::OnBnClickedRadioModesController()
 
 	this->GetDocument()->SwitchControlMode(m_controlMode);
 	return;		
+}
+
+void CCTRView::OnBnClickedRadioModesFreq()
+{
+	UpdateData(true);	
+	
+	if(m_frequencyMode == 0)	
+	{
+		::std::cout << "Manual Frequency input activated" << ::std::endl;
+	}
+	else if (m_frequencyMode == 1)
+	{
+		::std::cout << "Heart rate frequency is streamed from SurgiVet" << ::std::endl;
+	}
+
+	this->GetDocument()->SwitchFreqMode(m_frequencyMode);
+	return;		
+
 }

@@ -1087,8 +1087,8 @@ void CTRKin::ApplyKinematicControlNullspace(const Eigen::MatrixXd& J, const Eige
 
 	// Joint limit avoidance using potential-field method 
 	// why add this to the existing value and not just assign the velocity to the joint-limit avoidance potential field?
-	double upperSoft = L31_MAX - 2;
-	double lowerSoft = L31_MIN + 2;
+	double upperSoft = L31_MAX - 5;
+	double lowerSoft = L31_MIN + 5;
 	double jointLimitGain = 0.2;
 
 	if (q[2] >= upperSoft)

@@ -249,7 +249,7 @@ void CCTRView::OnInitialUpdate()
 	tmp.Format("%0.2f",0.0);
 	this->SetDlgItemTextA(IDC_EDIT19,tmp);
 
-	tmp.Format("%0.2f",0.5);
+	tmp.Format("%0.2f",0.0);
 	this->SetDlgItemTextA(IDC_EDIT3,tmp);
 
 }
@@ -302,7 +302,7 @@ void CCTRView::OnTimer(UINT_PTR nIDEvent)
 		for (int i = 0; i < 5; ++i)
 			m_cmdJang[i].Format("%.3f",jAngCmd[i]);
 	}
-	m_monitor_freq.Format("%d", this->GetDocument()->GetMonitorFreq());
+	m_monitor_freq.Format("%3.1f", this->GetDocument()->GetMonitorFreq());
 
 	UpdateData(false);
 
@@ -759,8 +759,8 @@ void CCTRView::OnKillFocusUpdateFrequency()
 	CString str;
 	this->GetDlgItemTextA(IDC_EDIT14, str);		
 	this->GetDocument()->SetFrequency(atof(str));
-	//::std::cout << "in callback" << ::std::endl;
-	//::std::cout << str << ::std::endl;
+	::std::cout << "in callback" << ::std::endl;
+	::std::cout << str << ::std::endl;
 }
 
 void CCTRView::UpdateGains()

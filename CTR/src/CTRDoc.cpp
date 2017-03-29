@@ -188,6 +188,7 @@ CCTRDoc::CCTRDoc()
 
 	m_plane_covar = 0.01 * ::Eigen::Matrix<double, 2, 2>::Identity();
 	m_plane_changed =false;
+	m_Status.isTeleOpMoving = false;
 }
 
 CCTRDoc::~CCTRDoc()
@@ -255,7 +256,7 @@ void CCTRDoc::ComputeDesiredVelocity()
 
 	// this is the PD controller -> need to correctly propagate this goal to the position controller
 	::Eigen::Vector3d local_vel = this->m_contact_control_normal *  (m_contactGain * m_contactError + m_contactDGain * contact_error_deriv + m_contactIGain * m_contact_error_integral);
-	
+	::std::cout << local_vel.transpose() << ::std::endl;
 	memcpy(m_desiredPosition, local_vel.data(), 3 * sizeof(double));
 
 	m_ContactUpdateReceived = !m_ContactUpdateReceived;
@@ -471,7 +472,7 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 {
 	CCTRDoc* mySelf = (CCTRDoc*) para;	
 	CTR_status	localStat;
-
+	localStat.isTeleOpMoving = false;
 	mySelf->m_timer->ResetTime();
 	WSADATA wsaData;
     int iResult;
@@ -559,7 +560,7 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 	start_loop = clock();
 
 	//EnterCriticalSection(&m_cSection);
-	::std::ofstream* os;
+	//::std::ofstream* os;
 	//LeaveCriticalSection(&m_cSection);
 	double delta_t = 0;
     do {
@@ -590,12 +591,15 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 		if (mySelf->m_freq_mode == 1)
 			ss << mySelf->m_heartRateMonitor->getHeartRate() << " ";
 		else
-			ss << mySelf->m_frequency;
+		{
+			ss << mySelf->m_frequency << " ";
+			//::std::cout << mySelf->m_frequency << ::std::endl;
+		}
 
 		// target tip position/orientation
 		for (int i = 0; i < 6; ++i)
 			ss << localStat.tgtTipPosDir[i] << " ";
-
+		//::std::cout << ss.str() << ::std::endl;
 		//// plane estimation
 		//for (int i = 0; i < 3; ++i)
 		//	ss << mySelf->m_contact_control_normal[i] << " ";
@@ -656,22 +660,22 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 				mySelf->m_contactRatio = contactRatio;
 				mySelf->m_contact_error_integral += contactRatioError * delta_t;
 				LeaveCriticalSection(&m_cSection);
-				::std::cout << "Ratio:" << contactRatio << ::std::endl;
+				::std::cout << "Ratio:" << contactRatio << ", error:" << contactRatioError << ::std::endl;
 				end_loop = clock();
 
-				EnterCriticalSection(&m_cSection);
-				bool logData = mySelf->m_logData;
-				os = mySelf->m_fileStream;
-				LeaveCriticalSection(&m_cSection);
+				//EnterCriticalSection(&m_cSection);
+				//bool logData = mySelf->m_logData;
+				//os = mySelf->m_fileStream;
+				//LeaveCriticalSection(&m_cSection);
 
-				if (logData)
-				{
-					for (int i = 0; i < 6; i++)
-						*os << localStat.currTipPosDir[i] << "\t";
+				//if (logData)
+				//{
+				//	for (int i = 0; i < 6; i++)
+				//		*os << localStat.currTipPosDir[i] << "\t";
 
-					*os << contactRatio << "\t";
-					*os << ((float) (end_loop - start_loop))/CLOCKS_PER_SEC << ::std::endl;
-				}
+				//	*os << contactRatio << "\t";
+				//	*os << ((float) (end_loop - start_loop))/CLOCKS_PER_SEC << ::std::endl;
+				//}
 
 				//::std::cout << "Desired Ratio:" << desiredContactRatio << ::std::endl;
 				//::std::cout << ::std::endl;
@@ -2130,7 +2134,7 @@ void CCTRDoc::SwitchTeleOpMode(bool onoff)
 	else
 	{
 		// switch by default force control
-		this->m_forceControlActivated = false;
+		//this->m_forceControlActivated = false;
 
 		if( WaitForSingleObject(m_hTeleOpThread,1000) )	// CKim - Did not return 0
 		{
@@ -2498,13 +2502,14 @@ bool CCTRDoc::TeleOpSafetyCheck()
 void CCTRDoc::ToggleForceControl()
 {
 	this->m_forceControlActivated = !this->m_forceControlActivated;
-	
-	EnterCriticalSection(&m_cSection);
-	memcpy(this->m_Status.tgtTipPosDir, this->m_Status.currTipPosDir, 6 * sizeof(double));
-	memcpy(this->m_Status.refTipPosDir, this->m_Status.currTipPosDir, 6 * sizeof(double));
-	LeaveCriticalSection(&m_cSection);
-
-	this->SlaveToMaster(this->m_Status, 1);		// Updates robotStat.hapticState.slavePos}
+	::std::cout << this->m_forceControlActivated << ::std::endl;
+	//EnterCriticalSection(&m_cSection);
+	//memcpy(this->m_Status.tgtTipPosDir, this->m_Status.currTipPosDir, 6 * sizeof(double));
+	////memcpy(this->m_Status.refTipPosDir, this->m_Status.currTipPosDir, 6 * sizeof(double));
+	//LeaveCriticalSection(&m_cSection);
+//
+//	this->SlaveToMaster(this->m_Status, 1);		// Updates robotStat.hapticState.slavePos}
+//}
 }
 
 void CCTRDoc::TogglePlaneEstimation()
@@ -2593,16 +2598,20 @@ CCTRDoc::setContactControlNormal(const ::Eigen::Vector3d& computedNormal)
 void 
 CCTRDoc::ToggleLog()
 {
+	
+
 	if (this->m_logData)
 	{
-		this->m_fileStream->close();
+		//this->m_fileStream->close();
+		this->m_heartRateMonitor->toggleLog(false);
 		this->m_logData = false;
 	}
 	else
 	{
-		::std::string filename = GetDateString() + ".txt";
-		this->m_fileStream = new ::std::ofstream(filename);
+		//::std::string filename = GetDateString() + "1"+ ".txt";
+		//this->m_fileStream = new ::std::ofstream(filename);
 		this->m_logData = true;
+		this->m_heartRateMonitor->toggleLog(true);
 	}
 }
 
@@ -2618,6 +2627,7 @@ void CCTRDoc::UpdateGains(double position, double orientation, double position_f
 void CCTRDoc::SwitchControlMode(int mode)
 {
 	this->m_control_mode = mode;
+
 }
 
 void CCTRDoc::SwitchFreqMode(int mode)

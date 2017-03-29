@@ -1,9 +1,12 @@
 //#include "stdafx.h"
 #include "HeartRateMonitor.h"
-#include "Utilities.h"
+
 
 HeartRateMonitor::HeartRateMonitor():
-	heartRate(0)
+	heartRate(0),
+	logData(false),
+	prevLog(false),
+	newFile(false)
 {
 }
 
@@ -14,7 +17,7 @@ HeartRateMonitor::~HeartRateMonitor()
 void HeartRateMonitor::run()
 {
 	sPort.connect();
-
+	::std::string date;
 	unsigned char m_testRead[200];
 	::std::vector<::std::string> strings;
 	::std::string bitFlags = "";
@@ -25,11 +28,16 @@ void HeartRateMonitor::run()
 	index.push_back(5);
 	index.push_back(8);
 
+	//::std::cout << "log:" << logData << "prev:" << prevLog;
+	//::std::string filename = GetDateString() + ".txt";
+	//::std::ofstream os(filename);
+	newFile = false;
 	::std::vector< ::std::string> sensorNames;
 	sensorNames.push_back("ECG");
 	sensorNames.push_back("Oximetry");
 	sensorNames.push_back("IBP");
 
+	int counter = 0;
 	while (true)
 	{
 		int bytesRead = sPort.getArray(m_testRead, 200);
@@ -51,9 +59,17 @@ void HeartRateMonitor::run()
 		else
 		{
 			heartRate = atof(strings[index[1]].c_str());
-			::std::cout << sensorNames[1] << "-> Heart rate [bpm]:" << heartRate << ", ";
+			::std::cout << sensorNames[1] << "-> Heart rate [bpm]:" << heartRate << ::std::endl;
 		}
 
+
+		counter++;
+	
+		if (logData)
+		{
+			date = GetDateString();
+			os << strings << "," << date <<::std::endl;
+		}
 	}
 
 	sPort.clear();
@@ -80,7 +96,7 @@ bool HeartRateMonitor::checkForConsistency(::std::string& value)
 	binary_from_string(flags, bitMapFlags);
 
 	std::string strTmp = bitMapFlags.substr(bitMapFlags.size() - 1 - 9,3);  
-	::std::cout << "sensor flag bitmap: "  << strTmp.c_str() << ::std::endl;
+	//::std::cout << "sensor flag bitmap: "  << strTmp.c_str() << ::std::endl;
 	::std::vector<bool> sensorsActivated(strTmp.size());
 	int ind = 0;
 	for (int i = strTmp.size() - 1; i >= 0 ; --i)

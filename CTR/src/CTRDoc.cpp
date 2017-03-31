@@ -45,6 +45,9 @@
 #include "MechanicsBasedKinematics.h"
 #include "CTRFactory.h"
 
+// Heart Rate Monitoring from surgivet
+#include "HeartRateMonitor.h"
+
 
 #define DEFAULT_BUFLEN 512
 #define DEFAULT_PORT "27015"
@@ -70,8 +73,6 @@ BEGIN_MESSAGE_MAP(CCTRDoc, CDocument)
 	ON_BN_CLICKED(IDC_INIT_EM, &CCTRDoc::OnBnClickedInitEm)
 	ON_BN_CLICKED(IDC_REGST, &CCTRDoc::OnBnClickedRegst)
 
-
-
 END_MESSAGE_MAP()
 
 
@@ -90,6 +91,9 @@ CCTRDoc::CCTRDoc()
 	m_ioRunning = false;		m_teleOpMode = false;
 	m_frequency_changed = false;
 	m_control_mode = 0;
+	m_freq_mode = 1;
+
+	m_timer = new ChunTimer();
 
 	m_position_gain = 1.0;
 	m_orientation_gain = 1.0;
@@ -104,6 +108,14 @@ CCTRDoc::CCTRDoc()
 	m_contact_control_normal << 0, 0, 1;
 	m_logData = false;
 	filters = new RecursiveFilter::MovingAverageFilter[3];
+
+	this->cr_dot_filter = new RecursiveFilter::MovingAverageFilter(11);
+
+	m_heartRateMonitor = new HeartRateMonitor();
+	m_contactError = 0;
+	m_contactError_prev = 0;
+	for (int i = 0; i < 3; ++i)
+		m_valve_center[i] = 0.0;
 
 	// CKim - Initialize critical section
 	// Initializes a critical section object and sets the spin count for the critical section.
@@ -161,6 +173,11 @@ CCTRDoc::CCTRDoc()
 	m_plotData = false;
 	m_ContactUpdateReceived = false;
 	m_contactGain = 0.0;
+	m_contactDGain = 0.0;
+	m_contactIGain = 0.0;
+
+	m_contact_error_integral = 0.0;
+
 	m_contactRatio = 0.0;
 	m_contactRatioDesired = 0.0;
 
@@ -171,6 +188,7 @@ CCTRDoc::CCTRDoc()
 
 	m_plane_covar = 0.01 * ::Eigen::Matrix<double, 2, 2>::Identity();
 	m_plane_changed =false;
+	m_Status.isTeleOpMoving = false;
 }
 
 CCTRDoc::~CCTRDoc()
@@ -197,34 +215,51 @@ void CCTRDoc::ChangeForceForTuning(double force)
 	//m_force = force;
 }
 
-void CCTRDoc::SetForceGain(double forceGain)
+void CCTRDoc::SetForceGain(double forceGain, double forceGainD, double forceGainI)
 {
 	//this->m_kinLib->SetForceGain(forceGain);
 	m_contactGain = forceGain;
+	m_contactDGain = forceGainD;
+	m_contactIGain = forceGainI;
 }
 
 void CCTRDoc::SetContactRatio(double ratio)
 {
 	m_contactRatioDesired = ratio;
+	this->resetIntegral();
 	::std::cout << "Contact Ratio was set to:" << m_contactRatioDesired << ::std::endl;
 }
 
 void CCTRDoc::UpdateDesiredPosition()
 {
 	double targetTmp[6];
-	EnterCriticalSection(&m_cSection);
-	memcpy(targetTmp, this->m_Status.tgtTipPosDir, 6 * sizeof(double));
-	LeaveCriticalSection(&m_cSection);
+	//EnterCriticalSection(&m_cSection);
+	//memcpy(targetTmp, this->m_Status.tgtTipPosDir, 6 * sizeof(double));
+	//LeaveCriticalSection(&m_cSection);
 
 	//::std::cout << "initial target:" << targetTmp[2] << ::std::endl;
 
-	if (m_forceControlActivated)
-		this->ComputeDesiredPosition(targetTmp);
+	//if (m_forceControlActivated)
+	this->ComputeDesiredPosition(targetTmp);
 
 	//::std::cout << "updated target:" << targetTmp[2] << ::std::endl;
 
 	memcpy(m_desiredPosition, targetTmp, 6 * sizeof(double));
 	//PrintCArray(m_desiredPosition, 6);
+}
+
+void CCTRDoc::ComputeDesiredVelocity()
+{
+	double contact_error_deriv = 0;
+	if (m_deltaT > 0)
+		contact_error_deriv = this->cr_dot_filter->step((m_contactError - m_contactError_prev)/m_deltaT);
+
+	// this is the PD controller -> need to correctly propagate this goal to the position controller
+	::Eigen::Vector3d local_vel = this->m_contact_control_normal *  (m_contactGain * m_contactError + m_contactDGain * contact_error_deriv + m_contactIGain * m_contact_error_integral);
+	::std::cout << local_vel.transpose() << ::std::endl;
+	memcpy(m_desiredPosition, local_vel.data(), 3 * sizeof(double));
+
+	m_ContactUpdateReceived = !m_ContactUpdateReceived;
 }
 
 void CCTRDoc::ComputeDesiredPosition(double tmpPosition[6])
@@ -247,8 +282,16 @@ void CCTRDoc::ComputeDesiredPosition(double tmpPosition[6])
 	}
 
 	
-	m_deltaT = 1.0/40.0; // CHANGE to be computed by the network thread
+	//m_deltaT = 1.0/40.0; // CHANGE to be computed by the network thread
 	// Implement in a more general way
+	
+	double contact_error_deriv = 0;
+	if (m_deltaT > 0)
+		contact_error_deriv = (m_contactError - m_contactError_prev)/m_deltaT;
+
+	// this is the PD controller -> need to correctly propagate this goal to the position controller
+	::Eigen::Vector3d local_vel = this->m_contact_control_normal *  (m_contactGain * m_contactError - m_contactDGain * contact_error_deriv);
+	
 	::Eigen::Vector3d tmp = 100 * this->m_contact_control_normal *  m_contactGain * m_contactError * m_deltaT /*+ ::Eigen::Map<::Eigen::Vector3d> (m_desiredPosition,3)*/;
 	memcpy(tmpPosition, tmp.data(), 3 * sizeof(double));
 
@@ -398,7 +441,8 @@ void CCTRDoc::OnViewTeleop()
 		}
 		m_ioRunning = true; 	
 		m_hMtrCtrl = (HANDLE) _beginthreadex(NULL, 0, CCTRDoc::MotorLoop, this, 0, NULL);
-	_beginthreadex(NULL, 0, CCTRDoc::NetworkCommunication, this, 0, NULL);
+		_beginthreadex(NULL, 0, CCTRDoc::NetworkCommunication, this, 0, NULL);
+		_beginthreadex(NULL, 0, CCTRDoc::HeartRateMonitorThread, this, 0, NULL);
 	}
 }
 
@@ -415,11 +459,21 @@ void CCTRDoc::OnBnClickedInitEm()
 	m_hEMTrck = (HANDLE) _beginthreadex(NULL, 0, CCTRDoc::EMLoop, this, 0, NULL);
 }
 
+unsigned int WINAPI	CCTRDoc::HeartRateMonitorThread(void* para)
+{
+	CCTRDoc* mySelf = (CCTRDoc*) para;
+
+	mySelf->m_heartRateMonitor->run();
+
+	return 0;
+}
+
 unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 {
 	CCTRDoc* mySelf = (CCTRDoc*) para;	
 	CTR_status	localStat;
-
+	localStat.isTeleOpMoving = false;
+	mySelf->m_timer->ResetTime();
 	WSADATA wsaData;
     int iResult;
 
@@ -440,7 +494,7 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
         printf("WSAStartup failed with error: %d\n", iResult);
         return 1;
     }
-
+	::std::cout << "in network" << ::std::endl;
     ZeroMemory(&hints, sizeof(hints));
     hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_STREAM;
@@ -506,9 +560,9 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 	start_loop = clock();
 
 	//EnterCriticalSection(&m_cSection);
-	::std::ofstream* os;
+	//::std::ofstream* os;
 	//LeaveCriticalSection(&m_cSection);
-
+	double delta_t = 0;
     do {
 		::std::ostringstream ss;
 		// update the local joint variables
@@ -519,18 +573,44 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 			localStat.currTipPosDir[i] = mySelf->m_Status.currTipPosDir[i];
 		teleopOn = mySelf->m_Status.isTeleOpMoving;
 		desiredContactRatio = mySelf->m_contactRatioDesired;
+
+		for(int i = 0; i < 6; i++)
+			localStat.tgtTipPosDir[i] = mySelf->m_Status.tgtTipPosDir[i];
+
 		LeaveCriticalSection(&m_cSection);
 		//::std::cout << desiredContactRatio << ::std::endl;
+
 		//update the buffer
+		// first send the joint angles to be used for the image rotation and logging
 		for(int i = 0; i < 5; ++i)
 			ss << localStat.currJang[i] << " ";
+		// send whether teleoperation is on/off
+		ss << teleopOn << " ";
 
-		ss << teleopOn;
-		if (mySelf->m_frequency_changed)
+		// send the frequency from the monitor
+		if (mySelf->m_freq_mode == 1)
+			ss << mySelf->m_heartRateMonitor->getHeartRate() << " ";
+		else
 		{
-			ss << " "  << mySelf->m_frequency << " " << 0;
-			mySelf->m_frequency_changed = false;
+			ss << mySelf->m_frequency << " ";
+			//::std::cout << mySelf->m_frequency << ::std::endl;
 		}
+
+		// target tip position/orientation
+		for (int i = 0; i < 6; ++i)
+			ss << localStat.tgtTipPosDir[i] << " ";
+		//::std::cout << ss.str() << ::std::endl;
+		//// plane estimation
+		//for (int i = 0; i < 3; ++i)
+		//	ss << mySelf->m_contact_control_normal[i] << " ";
+
+		//for (int i = 0;  i < 3; ++i)
+		//	ss << mySelf->m_valve_center[i] << " ";
+		//if (mySelf->m_frequency_changed)
+		//{
+		//	ss << " "  << mySelf->m_frequency << " " << 0;
+		//	mySelf->m_frequency_changed = false;
+		//}
 		//::std::cout << ss.str() << ::std::endl;
 		//if (mySelf->m_plane_changed)
 		//{
@@ -552,12 +632,17 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
             printf("Connection closing...\n");
  
 		iResult = recv(ClientSocket, recvbuf, DEFAULT_BUFLEN, 0);
+
+		delta_t = (double) mySelf->m_timer->GetTime()/1000000.0;
+		mySelf->m_timer->ResetTime();
+
 		if (iResult > 0)
 		{
 			::std::string receivedStr = string(recvbuf);
 			//::std::cout << "received:" << receivedStr <<::std::endl;
 			if (receivedStr == "NOF")
 			{
+				//::std::cout << "NOF" << ::std::endl;
 				EnterCriticalSection(&m_cSection);
 				mySelf->m_ContactUpdateReceived = false;
 				LeaveCriticalSection(&m_cSection);
@@ -570,25 +655,27 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 				contactRatioError = desiredContactRatio - contactRatio;
 				EnterCriticalSection(&m_cSection);
 				mySelf->m_ContactUpdateReceived = true;
+				mySelf->m_contactError_prev = contactRatioError;
 				mySelf->m_contactError = contactRatioError;
 				mySelf->m_contactRatio = contactRatio;
+				mySelf->m_contact_error_integral += contactRatioError * delta_t;
 				LeaveCriticalSection(&m_cSection);
-				::std::cout << "Ratio:" << contactRatio << ::std::endl;
+				::std::cout << "Ratio:" << contactRatio << ", error:" << contactRatioError << ::std::endl;
 				end_loop = clock();
 
-				EnterCriticalSection(&m_cSection);
-				bool logData = mySelf->m_logData;
-				os = mySelf->m_fileStream;
-				LeaveCriticalSection(&m_cSection);
+				//EnterCriticalSection(&m_cSection);
+				//bool logData = mySelf->m_logData;
+				//os = mySelf->m_fileStream;
+				//LeaveCriticalSection(&m_cSection);
 
-				if (logData)
-				{
-					for (int i = 0; i < 6; i++)
-						*os << localStat.currTipPosDir[i] << "\t";
+				//if (logData)
+				//{
+				//	for (int i = 0; i < 6; i++)
+				//		*os << localStat.currTipPosDir[i] << "\t";
 
-					*os << contactRatio << "\t";
-					*os << ((float) (end_loop - start_loop))/CLOCKS_PER_SEC << ::std::endl;
-				}
+				//	*os << contactRatio << "\t";
+				//	*os << ((float) (end_loop - start_loop))/CLOCKS_PER_SEC << ::std::endl;
+				//}
 
 				//::std::cout << "Desired Ratio:" << desiredContactRatio << ::std::endl;
 				//::std::cout << ::std::endl;
@@ -599,10 +686,11 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 		}
 		//force *= 0.5;
 		//force = 0.3;
-		//EnterCriticalSection(&m_cSection);
+		EnterCriticalSection(&m_cSection);
 		//mySelf->m_Omni->SetForce(force);
 		//mySelf->m_force = force;
-		//LeaveCriticalSection(&m_cSection);
+		mySelf->m_deltaT = delta_t;
+		LeaveCriticalSection(&m_cSection);
 
     } while (iResult > 0);
 
@@ -777,6 +865,8 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 	//LeaveCriticalSection(&m_cSection);
 	//ofstream os("debug_control_no_scaling.txt");
 	RecursiveFilter::Filter* filters = new RecursiveFilter::MovingAverageFilter[3];
+
+
 	// CKim - The Loop
 	bool prevControl=false;
 	bool currentControl = false;
@@ -875,7 +965,8 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 			{
 				mySelf->MasterToSlave(localStat, scl);		// Updates robotStat.tgtTipPosDir
 			
-				mySelf->UpdateDesiredPosition();
+				//mySelf->UpdateDesiredPosition();
+				mySelf->ComputeDesiredVelocity();
 
 				// TODO
 				//if (mySelf->m_compute_plane)
@@ -1254,6 +1345,12 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 
 	while(mySelf->m_motorConnected)
 	{
+
+		// george -> test heart rate monitor
+		//double heart_rate = mySelf->m_heartRateMonitor->getHeartRate();
+		//::std::cout << "Heart Rate [bpm]: " << heart_rate << ::std::endl;
+
+
 		// CKim - Read from the motors - blocking function
 		mySelf->m_motionCtrl->GetMotorPos(localStat.currMotorCnt);	
 		mySelf->m_motionCtrl->GetErrorFlag(localStat.errFlag);
@@ -1323,6 +1420,7 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 			for(int i=0; i<6; i++)	
 				localStat.tgtMotorVel[i] = mySelf->m_Status.tgtMotorVel[i];	
 
+			// feedforward velocities
 			for (int i = 0; i < 3; i++)
 				localStat.tgtWorkspaceVelocity[i] = mySelf->m_Status.tgtWorkspaceVelocity[i];
 			for (int i = 0; i < 3; i++)
@@ -1352,12 +1450,15 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 			// Use fwd kin output
 			else
 			{
+
 				if (mySelf->m_forceControlActivated)
 				{
 					localStat.tgtTipPosDir[3] = planeNormal(0);
 					localStat.tgtTipPosDir[4] = planeNormal(1);
 					localStat.tgtTipPosDir[5] = planeNormal(2);
+					tangentVelocity.setZero();
 				}
+
 				//PrintCArray(localStat.tgtWorkspaceVelocity, 3);
 				double sum = 0;
 				for(int i=0; i<3; i++)	
@@ -1374,14 +1475,16 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 				}
 			}
 
+
 			//project the error on the plane
 			if (mySelf->m_forceControlActivated)
 			{
 				::Eigen::Matrix3d PlaneNullProjection = ::Eigen::Matrix3d::Identity() - planeNormal * planeNormal.transpose();
 				err.block(0,0, 3, 1) = PlaneNullProjection * err.block(0,0, 3, 1);
 			
-					for (int i = 0; i < 3; i++)
-						err(i, 0) += desiredPosition[i];   
+				for (int i = 0; i < 3; i++)
+					err(i, 0) += desiredPosition[i];   
+	
 			}
 
 			if (mySelf->m_control_mode == 0)
@@ -2031,7 +2134,7 @@ void CCTRDoc::SwitchTeleOpMode(bool onoff)
 	else
 	{
 		// switch by default force control
-		this->m_forceControlActivated = false;
+		//this->m_forceControlActivated = false;
 
 		if( WaitForSingleObject(m_hTeleOpThread,1000) )	// CKim - Did not return 0
 		{
@@ -2399,6 +2502,14 @@ bool CCTRDoc::TeleOpSafetyCheck()
 void CCTRDoc::ToggleForceControl()
 {
 	this->m_forceControlActivated = !this->m_forceControlActivated;
+	::std::cout << this->m_forceControlActivated << ::std::endl;
+	//EnterCriticalSection(&m_cSection);
+	//memcpy(this->m_Status.tgtTipPosDir, this->m_Status.currTipPosDir, 6 * sizeof(double));
+	////memcpy(this->m_Status.refTipPosDir, this->m_Status.currTipPosDir, 6 * sizeof(double));
+	//LeaveCriticalSection(&m_cSection);
+//
+//	this->SlaveToMaster(this->m_Status, 1);		// Updates robotStat.hapticState.slavePos}
+//}
 }
 
 void CCTRDoc::TogglePlaneEstimation()
@@ -2487,16 +2598,20 @@ CCTRDoc::setContactControlNormal(const ::Eigen::Vector3d& computedNormal)
 void 
 CCTRDoc::ToggleLog()
 {
+	
+
 	if (this->m_logData)
 	{
-		this->m_fileStream->close();
+		//this->m_fileStream->close();
+		this->m_heartRateMonitor->toggleLog(false);
 		this->m_logData = false;
 	}
 	else
 	{
-		::std::string filename = GetDateString() + ".txt";
-		this->m_fileStream = new ::std::ofstream(filename);
+		//::std::string filename = GetDateString() + "1"+ ".txt";
+		//this->m_fileStream = new ::std::ofstream(filename);
 		this->m_logData = true;
+		this->m_heartRateMonitor->toggleLog(true);
 	}
 }
 
@@ -2512,4 +2627,15 @@ void CCTRDoc::UpdateGains(double position, double orientation, double position_f
 void CCTRDoc::SwitchControlMode(int mode)
 {
 	this->m_control_mode = mode;
+
+}
+
+void CCTRDoc::SwitchFreqMode(int mode)
+{
+	this->m_freq_mode = mode;
+}
+
+double CCTRDoc::GetMonitorFreq()
+{
+	return this->m_heartRateMonitor->getHeartRate();
 }

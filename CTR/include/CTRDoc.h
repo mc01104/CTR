@@ -11,7 +11,7 @@
 #include <Eigen/Dense>
 #include "time.h"
 #include "FilterLibrary.h"
-
+#include "ChunTimer.h"
 #include "VtkOnLinePlot.h"
 
 // CKim - Declare the classes that will be maintained inside the 'Doc' class
@@ -24,6 +24,8 @@ class ChunTracker;
 class TrjGenerator;
 class MechanicsBasedKinematics;
 class CTR;
+class HeartRateMonitor;
+
 //class RecursiveFilter::Filter;
 
 class CCTRDoc : public CDocument
@@ -48,6 +50,11 @@ private:
 	MechanicsBasedKinematics* kinematics;
 	RecursiveFilter::Filter* filters;
 
+	RecursiveFilter::Filter*		cr_dot_filter;
+	// George - heart rate monitor
+	HeartRateMonitor*   m_heartRateMonitor;
+	double			m_valve_center[3];
+
 	// CKim - Robot state parameters - position of the haptic device, motor
 	bool	m_motorConnected;
 
@@ -63,6 +70,7 @@ private:
 	bool				m_ref_set;
 	ChunTracker*		m_Tracker;
 	TrjGenerator*		m_TrjGen;
+	ChunTimer*			m_timer;
 
 	// CKim - Variables for threads
 	bool				m_ioRunning;
@@ -103,9 +111,16 @@ private:
 	bool				m_ContactUpdateReceived;
 	double				m_deltaT;
 	double				m_contactError;
+
+	// PID gains for CR
 	double				m_contactGain;
+	double				m_contactDGain;
+	double				m_contactIGain;
+	double				m_contact_error_integral;
+
 	double				m_contactRatio;
 	double				m_contactRatioDesired;
+	double				m_contactError_prev;
 	::std::ofstream*	m_fileStream;
 	bool				m_logData;
 
@@ -124,11 +139,12 @@ private:
 	void				computeHapticDisplacement(CTR_status stat, double dP[3]);
 	void				computeCameraDesiredMotion(CTR_status stat, const double image_dir[3], double camera_dir[3]);
 	void				computeCameraJacobian(CTR_status stat);
+
 	void				computeMechanicsKinematics(CTR_status stat);
 	bool				cameraControlFlag;
 	bool				m_camera_control;
 	
-	
+	void				resetIntegral(){m_contact_error_integral = 0.0;};
 
 
 
@@ -150,8 +166,10 @@ public:
 	virtual ~CCTRDoc();
 	void StartUIupdate();
 
+	double GetMonitorFreq();
 	void	UpdateGains(double position, double orientation, double position_forward, double orientation_forward);
 	void	SwitchControlMode(int mode);
+	void	SwitchFreqMode(int mode);
 
 	void SwitchAllControlFlagsOff();
 	void				ToggleCameraControl();
@@ -176,7 +194,7 @@ public:
 	void	SetFrequency(double frequency) {this->m_frequency = frequency; this->m_frequency_changed = true;};
 
 	void	ChangeForceForTuning(double force);
-	void	SetForceGain(double forceGain);
+	void	SetForceGain(double forceGain, double forceGainD = 0, double forceGainI = 0);
 	void	SetContactRatio(double ratio);
 
 	void	SaveModel();
@@ -186,6 +204,7 @@ public:
 	/////////////// CONTACT ////////////
 	void	UpdateDesiredPosition();
 	void	ComputeDesiredPosition(double tmpPosition[6]);
+	void	ComputeDesiredVelocity();
 
 	Eigen::Vector3d GetTipPosition();
 	void setContactControlNormal(const ::Eigen::Vector3d& computedNormal);
@@ -241,6 +260,9 @@ protected:
 	// George - joint space trajectory playback
 	static unsigned int WINAPI	NetworkCommunication(void* para);
 
+	// George - thread to read heart rate from surgivet monitor
+	static unsigned int WINAPI	HeartRateMonitorThread(void* para);
+
 	// CKim - Following functions encapsulates various caclulations performed inside the loop
 	// It takes reference to the CTR_status structure and updates it
 
@@ -270,6 +292,7 @@ protected:
 	double	m_orientation_gain_feedforward;
 
 	int		m_control_mode;
+	int		m_freq_mode;
 
 // Generated message map functions
 protected:

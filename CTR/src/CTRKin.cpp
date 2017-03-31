@@ -28,10 +28,10 @@ CTRKin::CTRKin(void)
 	// CKim  Coefficients for Balance Pair
 	fName = "C:\\01. ConcentricTubeRobots\\CTR\\CTR_BP_FAC.txt";
 	
-	if (readCTR_FAC_file(fName, m_BP_px, m_BP_py, m_BP_pz, m_BP_ox, m_BP_oy, m_BP_oz) == false) //file read error
-	{
-		AfxMessageBox("Sparta!!!!");
-	}
+	//if (readCTR_FAC_file(fName, m_BP_px, m_BP_py, m_BP_pz, m_BP_ox, m_BP_oy, m_BP_oz) == false) //file read error
+	//{
+	//	AfxMessageBox("Sparta!!!!");
+	//}
 
 	// CKim - Initialize matrices for recursive least square
 	for(int i=0; i<6; i++)	{
@@ -1060,7 +1060,7 @@ void CTRKin::ApplyKinematicControlNullspace(const Eigen::MatrixXd& J, const Eige
 	//tmpOrient = Jo;
 	tmpOrientPseudo = tmpOrient * tmpOrient.transpose();
 
-	::std::cout << tmpOrientPseudo << ::std::endl;
+	//::std::cout << tmpOrientPseudo << ::std::endl;
 	double lambda_orientation = 0.00001;
 	//double lambda_orientation_max = 1.0e-04;
 	//epsilon = 1.0e-04;
@@ -1085,9 +1085,10 @@ void CTRKin::ApplyKinematicControlNullspace(const Eigen::MatrixXd& J, const Eige
 	// overall gain
 	//dotq *= 0.3; 
 
-	// Joint limit avoidance using potential-field method
+	// Joint limit avoidance using potential-field method 
+	// why add this to the existing value and not just assign the velocity to the joint-limit avoidance potential field?
 	double upperSoft = L31_MAX - 5;
-	double lowerSoft = L31_MIN + 2;
+	double lowerSoft = L31_MIN + 5;
 	double jointLimitGain = 0.2;
 
 	if (q[2] >= upperSoft)
@@ -1105,6 +1106,26 @@ void CTRKin::ApplyKinematicControlNullspace(const Eigen::MatrixXd& J, const Eige
 	for(int i=0; i<5; i++)	{	dq[i] = dotq(i,0);	}
 
 }
+
+void CTRKin::conditionMatrix(::Eigen::Matrix2d& mat_original, double conditionNumberDes, ::Eigen::MatrixXd& mat_conditioned, double& condition_number_new)
+{
+	::Eigen::JacobiSVD<Eigen::MatrixXd> Jsvd(mat_original, Eigen::ComputeThinU | Eigen::ComputeThinV);
+	::Eigen::VectorXd sv = Jsvd.singularValues();	
+
+	double sigma_min = sv(sv.size() - 1, 0);
+	double sigma_max = sv(0, 0);
+	double conditionNumber = sigma_max/sigma_min;
+
+	double lambda_squared = (conditionNumberDes * sigma_min - sigma_max)/(1 - conditionNumberDes); //assume desired condition number is not 1
+
+	mat_conditioned = mat_original + ::Eigen::MatrixXd::Identity(sv.size(), sv.size()) * lambda_squared;
+
+	Jsvd.compute(mat_conditioned);
+	::Eigen::VectorXd sv_new = Jsvd.singularValues();
+
+	condition_number_new = sv(0, 0)/sv(sv.size() - 1, 0);
+}
+
 
 void CTRKin::ApplyHybridPositionForceControl(const ::Eigen::MatrixXd& J, const ::Eigen::MatrixXd& err, const ::Eigen::MatrixXd& desiredForce, const ::Eigen::MatrixXd& actualForce, double* dq, double* q)
 {

@@ -192,7 +192,7 @@ bool ChunMotion::DoCoordMotion(double* p)
 	for(int i=0; i<7; i++)	{	pos[i] = p[i];	}
 	
 	err = m_LinkedAmps.MoveTo(pos);
-
+	this->WaitMotionDone();
 	if(err)	{	PrintMotionError("Linkage start move",err);	return false;	}
 	else	{	return true;	}
 }

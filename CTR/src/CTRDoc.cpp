@@ -144,7 +144,7 @@ CCTRDoc::CCTRDoc()
 	m_force = 0.0;
 
 	//this->ReadJointSpaceTrajectory("joints_add.txt");
-	this->ReadJointSpaceTrajectory("joints_validation.txt");
+	this->ReadJointSpaceTrajectory("shape_dithering_undithering_comparison.txt");
 }
  
 CCTRDoc::~CCTRDoc()
@@ -169,9 +169,12 @@ void CCTRDoc::ReadJointSpaceTrajectory(const ::std::string& filename)
 	::std::vector<::std::string> commandsStr = ReadLinesFromFile(filename);
 	for (::std::vector<::std::string>::const_iterator it = commandsStr.begin(); it != commandsStr.end(); ++it)
 	{
+		::std::vector< double> currentLine = DoubleVectorFromString(*it);
+
 		CTR_cmd tmp;
 		tmp.cmdType = 0;
-		memcpy( &tmp.para[0], DoubleVectorFromString(*it).data(), 5  * sizeof(double));
+		tmp.size = currentLine.size();
+		memcpy( tmp.para, currentLine.data(), tmp.size  * sizeof(double));
 		tmp.para[0] *= M_PI/180;
 		tmp.para[1] *= M_PI/180;
 		tmp.para[3] *= M_PI/180;
@@ -1613,107 +1616,6 @@ void CCTRDoc::MtrCntToAng(const double* cnt, double* jA)
 
 void CCTRDoc::InvKinJangToMtr(const double* jA, const double* currCnt, double* tgtJang, double* tgtCnt, bool& isInLimFlag)
 {
-	double a1, a21, a31, L1, L31, L3;		double tmp;		double delta;
-
-	// CKim - Joint angle solution from the inverse kinemtatics can be any of the periodic solution of the truncated fouriere series. 
-	// So first, normalize the solution in their range. 
-
-	// a1 : Rotation of tube 1 (outer tube of the balanced pair), Joint Angle [3], Motor Count [3]
-	// This is in range of 0 to 2pi, so normalize. sin(th) = sin(th + 2npi), cos(th) = cos(th + 2npi)
-	tgtJang[3] = a1 = jA[3] - 2.0*c_PI*floor(jA[3]/(2.0*c_PI));
-	
-	// a21 : Rotation of tube 2 (inner tube of the balanced pair) w.r.t. tube 1, Joint Angle [0], Motor Count [4-3]
-	// This is in range of -pi to pi, so normalize using atan2, sin(th) = atan2(sin(th),cos(th)), cos(th) = atan2(sin(th),cos(th))
-	tgtJang[0] = a21 = atan2(sin(jA[0]),cos(jA[0]));
-	
-	// a31 : Rotation of tube 3 w.r.t. tube 1, Joint Angle [1], Motor Count [5-3]
-	// This is in range of -pi to pi, so normalize using atan2, sin(th) = atan2(sin(th),cos(th)), cos(th) = atan2(sin(th),cos(th))
-	tgtJang[1] = a31 = atan2(sin(jA[1]),cos(jA[1]));
-	
-	// CKim - Calculating the motor count based on the normalized joint angle needs to consider current motor position. 
-	// If current angular position is -539 degree (= -179 degree) and next position is 899 degree (= 179 degree), motor should turn 2 degree clockwise
-	// instead of turning 358 degree counter clockwise. This is accomplished by using atan2 on difference.
-	
-	// Motor Count [3] : Rotation of tube 1 (outer tube of the balanced pair), a1 = jA[3]
-	// Since a1 is in [0, 2pi], motor should move either clockwise or counter clockwise which ever is close from current location. 
-	// Calculate the difference between current and new joint angle, normalize in [-pi, pi] using atan2, convert to counts, and add
-	//tmp = a1 - currCnt[3]*c_CntToRad;
-	//delta = atan2(sin(tmp),cos(tmp));
-	//tgtCnt[3] = currCnt[3] + delta/c_CntToRad;
-
-	//// Motor Count [4] : Rotation of tube 2 (inner tube of the balanced pair), a21 + a1 = jA[3+0]
-	//tmp = a21 + a1 - currCnt[4]*c_CntToRad;
-	//delta = atan2(sin(tmp),cos(tmp));
-	//tgtCnt[4] = currCnt[4] + delta/c_CntToRad;
-
-	//// Motor Count [5] : Rotation of tube 3, a31 + a1 = jA[3+1]
-	//tmp = a31 + a1 - currCnt[5]*c_CntToRad;
-	//delta = atan2(sin(tmp),cos(tmp));
-	//tgtCnt[5] = currCnt[5] + delta/c_CntToRad;
-		/////////////////////////////// after //////////////////////////////////
-	double da1, da21, da31;
-
-	tmp = a1 - currCnt[3]*c_CntToRad;
-	da1 = atan2(sin(tmp),cos(tmp));
-
-	tmp = a21 - (currCnt[4] - currCnt[3])*c_CntToRad;
-	da21 = atan2(sin(tmp),cos(tmp));
-
-	tmp = a31 - (currCnt[5] - currCnt[3])*c_CntToRad;
-	da31 = atan2(sin(tmp),cos(tmp));
-
-	tgtCnt[3] = currCnt[3] + da1/c_CntToRad;
-
-	// Motor Count [4] : Rotation of tube 2 (inner tube of the balanced pair), a21 + a1 = jA[3+0]
-	tgtCnt[4] = currCnt[4] + (da21+da1)/c_CntToRad;
-
-	// Motor Count [5] : Rotation of tube 3, a31 + a1 = jA[3+1]
-	tgtCnt[5] = currCnt[5] + (da31+da1)/c_CntToRad;
-	////////////////////////////////////////////////////////////////////////
-
-
-	// L1 : Translation of balanced pair, Joint Angle [4], Motor Count [0], No normalizatio needed for this. 
-	L1 = jA[4];
-
-	// L31 : Relative protrusion length of the tube 3 w.r.t. tube 1, Joint Angle [2] = Initial protrusion 'L31_MAX' -  Motor Count [0-1] 
-	// This is normalized L31/L31_MAX*0.5*pi and passed to Fourier series. Therefore it could be possible that L31 we get from
-	// inverse kinematics solution can be L31' such that L31'/L31_MAX*0.5*pi = L31/L31_MAX*0.5*pi + 2pi
-
-	// POSSIBLE BUG!!!!
-	tmp = jA[2]/L31_MAX*0.5*c_PI;
-	L31 = atan2(sin(tmp),cos(tmp)) / (0.5*c_PI) * L31_MAX;
-	//L31 = jA[2];
-
-	// Motor Count [0] : Translation of balanced pair, L1 = jA[4].
-	// Motor Count [1] : translation of tube 3, L3. L31 = L31_MAX - (L1 - L3). 
-	// L3 should be determined from L1 and L31. But first, we apply joint angle limits	L31_MIN < L31 < L31_MAX
-	if(L31 > L31_MAX)		{	L31 = L31_MAX;	isInLimFlag = false;		::std::cout << "L31 >"  <<std::endl;			}
-	if(L31 < L31_MIN)		{	L31 = L31_MIN;	isInLimFlag = false;		::std::cout << "L31 <"  <<std::endl;			}
-	
-	// Second, since L1 and L3  is controlled by translation stage 0 and 1, both are limited to +-100 mm.
-	// We limit L1 such that -100 < L1, L3 < 100.0
-	// L3 < L1 = L31_MAX - L31 + L3 < 100.0
-	// -100 < L3 = L31 - L31_MAX + L1 < L1, this leads to -100 + L31_MAX - L31 < L1
-	if(L1 > 100.0)						{	L1 = 100.0;						isInLimFlag = false;	::std::cout << "L1 >"  <<std::endl;}
-	if(L1 < (-100.0 + L31_MAX - L31))	{	L1 = (-100.0 + L31_MAX - L31);	isInLimFlag = false;	::std::cout << "L1 <"  <<std::endl;}
-	
-	// Calculate L3. Update joint angles and motor counts 
-	L3 = L31 - L31_MAX + L1;
-	tgtJang[2] = L31;			tgtJang[4] = L1;
-	tgtCnt[0] = L1/c_CntToMM;	tgtCnt[1] = L3/c_CntToMM;
-
-	// Motor 2,6 are not used
-	tgtCnt[2] = tgtCnt[6] = 0;
-	
-
-
-
-
-
-
-
-
-
 	//double a1, a21, a31, L1, L31, L3;		double tmp;		double delta;
 
 	//// CKim - Joint angle solution from the inverse kinemtatics can be any of the periodic solution of the truncated fouriere series. 
@@ -1721,19 +1623,15 @@ void CCTRDoc::InvKinJangToMtr(const double* jA, const double* currCnt, double* t
 
 	//// a1 : Rotation of tube 1 (outer tube of the balanced pair), Joint Angle [3], Motor Count [3]
 	//// This is in range of 0 to 2pi, so normalize. sin(th) = sin(th + 2npi), cos(th) = cos(th + 2npi)
-	////tgtJang[3] = a1 = jA[3] - 2.0*c_PI*floor(jA[3]/(2.0*c_PI));
-	////tgtJang[3] = a1 = atan2(sin(jA[3]),cos(jA[3]));
-	//tgtJang[3] = a1 = jA[3];
+	//tgtJang[3] = a1 = jA[3] - 2.0*c_PI*floor(jA[3]/(2.0*c_PI));
 	//
 	//// a21 : Rotation of tube 2 (inner tube of the balanced pair) w.r.t. tube 1, Joint Angle [0], Motor Count [4-3]
 	//// This is in range of -pi to pi, so normalize using atan2, sin(th) = atan2(sin(th),cos(th)), cos(th) = atan2(sin(th),cos(th))
-	////tgtJang[0] = a21 = atan2(sin(jA[0]),cos(jA[0]));
-	//tgtJang[0] = a21 = jA[0];
+	//tgtJang[0] = a21 = atan2(sin(jA[0]),cos(jA[0]));
 	//
 	//// a31 : Rotation of tube 3 w.r.t. tube 1, Joint Angle [1], Motor Count [5-3]
 	//// This is in range of -pi to pi, so normalize using atan2, sin(th) = atan2(sin(th),cos(th)), cos(th) = atan2(sin(th),cos(th))
-	////tgtJang[1] = a31 = atan2(sin(jA[1]),cos(jA[1]));
-	//tgtJang[1] = a31 = jA[1];
+	//tgtJang[1] = a31 = atan2(sin(jA[1]),cos(jA[1]));
 	//
 	//// CKim - Calculating the motor count based on the normalized joint angle needs to consider current motor position. 
 	//// If current angular position is -539 degree (= -179 degree) and next position is 899 degree (= 179 degree), motor should turn 2 degree clockwise
@@ -1742,7 +1640,6 @@ void CCTRDoc::InvKinJangToMtr(const double* jA, const double* currCnt, double* t
 	//// Motor Count [3] : Rotation of tube 1 (outer tube of the balanced pair), a1 = jA[3]
 	//// Since a1 is in [0, 2pi], motor should move either clockwise or counter clockwise which ever is close from current location. 
 	//// Calculate the difference between current and new joint angle, normalize in [-pi, pi] using atan2, convert to counts, and add
-	/////////////////////////// before ///////////////////////////////////
 	////tmp = a1 - currCnt[3]*c_CntToRad;
 	////delta = atan2(sin(tmp),cos(tmp));
 	////tgtCnt[3] = currCnt[3] + delta/c_CntToRad;
@@ -1756,20 +1653,17 @@ void CCTRDoc::InvKinJangToMtr(const double* jA, const double* currCnt, double* t
 	////tmp = a31 + a1 - currCnt[5]*c_CntToRad;
 	////delta = atan2(sin(tmp),cos(tmp));
 	////tgtCnt[5] = currCnt[5] + delta/c_CntToRad;
-	///////////////////////////////// after //////////////////////////////////
+	//	/////////////////////////////// after //////////////////////////////////
 	//double da1, da21, da31;
 
 	//tmp = a1 - currCnt[3]*c_CntToRad;
-	////da1 = atan2(sin(tmp),cos(tmp));
-	//da1 = tmp;
+	//da1 = atan2(sin(tmp),cos(tmp));
 
 	//tmp = a21 - (currCnt[4] - currCnt[3])*c_CntToRad;
-	////da21 = atan2(sin(tmp),cos(tmp));
-	//da21 = tmp;
+	//da21 = atan2(sin(tmp),cos(tmp));
 
 	//tmp = a31 - (currCnt[5] - currCnt[3])*c_CntToRad;
-	////da31 = atan2(sin(tmp),cos(tmp));
-	//da31 = tmp;
+	//da31 = atan2(sin(tmp),cos(tmp));
 
 	//tgtCnt[3] = currCnt[3] + da1/c_CntToRad;
 
@@ -1787,6 +1681,8 @@ void CCTRDoc::InvKinJangToMtr(const double* jA, const double* currCnt, double* t
 	//// L31 : Relative protrusion length of the tube 3 w.r.t. tube 1, Joint Angle [2] = Initial protrusion 'L31_MAX' -  Motor Count [0-1] 
 	//// This is normalized L31/L31_MAX*0.5*pi and passed to Fourier series. Therefore it could be possible that L31 we get from
 	//// inverse kinematics solution can be L31' such that L31'/L31_MAX*0.5*pi = L31/L31_MAX*0.5*pi + 2pi
+
+	//// POSSIBLE BUG!!!!
 	//tmp = jA[2]/L31_MAX*0.5*c_PI;
 	//L31 = atan2(sin(tmp),cos(tmp)) / (0.5*c_PI) * L31_MAX;
 	////L31 = jA[2];
@@ -1812,7 +1708,114 @@ void CCTRDoc::InvKinJangToMtr(const double* jA, const double* currCnt, double* t
 	//// Motor 2,6 are not used
 	//tgtCnt[2] = tgtCnt[6] = 0;
 	//
-	////::std::cout << isInLimFlag << ::std::endl;
+
+
+
+
+
+
+
+
+
+	double a1, a21, a31, L1, L31, L3;		double tmp;		double delta;
+
+	// CKim - Joint angle solution from the inverse kinemtatics can be any of the periodic solution of the truncated fouriere series. 
+	// So first, normalize the solution in their range. 
+
+	// a1 : Rotation of tube 1 (outer tube of the balanced pair), Joint Angle [3], Motor Count [3]
+	// This is in range of 0 to 2pi, so normalize. sin(th) = sin(th + 2npi), cos(th) = cos(th + 2npi)
+	//tgtJang[3] = a1 = jA[3] - 2.0*c_PI*floor(jA[3]/(2.0*c_PI));
+	//tgtJang[3] = a1 = atan2(sin(jA[3]),cos(jA[3]));
+	tgtJang[3] = a1 = jA[3];
+	
+	// a21 : Rotation of tube 2 (inner tube of the balanced pair) w.r.t. tube 1, Joint Angle [0], Motor Count [4-3]
+	// This is in range of -pi to pi, so normalize using atan2, sin(th) = atan2(sin(th),cos(th)), cos(th) = atan2(sin(th),cos(th))
+	//tgtJang[0] = a21 = atan2(sin(jA[0]),cos(jA[0]));
+	tgtJang[0] = a21 = jA[0];
+	
+	// a31 : Rotation of tube 3 w.r.t. tube 1, Joint Angle [1], Motor Count [5-3]
+	// This is in range of -pi to pi, so normalize using atan2, sin(th) = atan2(sin(th),cos(th)), cos(th) = atan2(sin(th),cos(th))
+	//tgtJang[1] = a31 = atan2(sin(jA[1]),cos(jA[1]));
+	tgtJang[1] = a31 = jA[1];
+	
+	// CKim - Calculating the motor count based on the normalized joint angle needs to consider current motor position. 
+	// If current angular position is -539 degree (= -179 degree) and next position is 899 degree (= 179 degree), motor should turn 2 degree clockwise
+	// instead of turning 358 degree counter clockwise. This is accomplished by using atan2 on difference.
+	
+	// Motor Count [3] : Rotation of tube 1 (outer tube of the balanced pair), a1 = jA[3]
+	// Since a1 is in [0, 2pi], motor should move either clockwise or counter clockwise which ever is close from current location. 
+	// Calculate the difference between current and new joint angle, normalize in [-pi, pi] using atan2, convert to counts, and add
+	///////////////////////// before ///////////////////////////////////
+	//tmp = a1 - currCnt[3]*c_CntToRad;
+	//delta = atan2(sin(tmp),cos(tmp));
+	//tgtCnt[3] = currCnt[3] + delta/c_CntToRad;
+
+	//// Motor Count [4] : Rotation of tube 2 (inner tube of the balanced pair), a21 + a1 = jA[3+0]
+	//tmp = a21 + a1 - currCnt[4]*c_CntToRad;
+	//delta = atan2(sin(tmp),cos(tmp));
+	//tgtCnt[4] = currCnt[4] + delta/c_CntToRad;
+
+	//// Motor Count [5] : Rotation of tube 3, a31 + a1 = jA[3+1]
+	//tmp = a31 + a1 - currCnt[5]*c_CntToRad;
+	//delta = atan2(sin(tmp),cos(tmp));
+	//tgtCnt[5] = currCnt[5] + delta/c_CntToRad;
+	/////////////////////////////// after //////////////////////////////////
+	double da1, da21, da31;
+
+	tmp = a1 - currCnt[3]*c_CntToRad;
+	//da1 = atan2(sin(tmp),cos(tmp));
+	da1 = tmp;
+
+	tmp = a21 - (currCnt[4] - currCnt[3])*c_CntToRad;
+	//da21 = atan2(sin(tmp),cos(tmp));
+	da21 = tmp;
+
+	tmp = a31 - (currCnt[5] - currCnt[3])*c_CntToRad;
+	//da31 = atan2(sin(tmp),cos(tmp));
+	da31 = tmp;
+
+	tgtCnt[3] = currCnt[3] + da1/c_CntToRad;
+
+	// Motor Count [4] : Rotation of tube 2 (inner tube of the balanced pair), a21 + a1 = jA[3+0]
+	tgtCnt[4] = currCnt[4] + (da21+da1)/c_CntToRad;
+
+	// Motor Count [5] : Rotation of tube 3, a31 + a1 = jA[3+1]
+	tgtCnt[5] = currCnt[5] + (da31+da1)/c_CntToRad;
+	////////////////////////////////////////////////////////////////////////
+
+
+	// L1 : Translation of balanced pair, Joint Angle [4], Motor Count [0], No normalizatio needed for this. 
+	L1 = jA[4];
+
+	// L31 : Relative protrusion length of the tube 3 w.r.t. tube 1, Joint Angle [2] = Initial protrusion 'L31_MAX' -  Motor Count [0-1] 
+	// This is normalized L31/L31_MAX*0.5*pi and passed to Fourier series. Therefore it could be possible that L31 we get from
+	// inverse kinematics solution can be L31' such that L31'/L31_MAX*0.5*pi = L31/L31_MAX*0.5*pi + 2pi
+	tmp = jA[2]/L31_MAX*0.5*c_PI;
+	L31 = atan2(sin(tmp),cos(tmp)) / (0.5*c_PI) * L31_MAX;
+	//L31 = jA[2];
+
+	// Motor Count [0] : Translation of balanced pair, L1 = jA[4].
+	// Motor Count [1] : translation of tube 3, L3. L31 = L31_MAX - (L1 - L3). 
+	// L3 should be determined from L1 and L31. But first, we apply joint angle limits	L31_MIN < L31 < L31_MAX
+	if(L31 > L31_MAX)		{	L31 = L31_MAX;	isInLimFlag = false;		::std::cout << "L31 >"  <<std::endl;			}
+	if(L31 < L31_MIN)		{	L31 = L31_MIN;	isInLimFlag = false;		::std::cout << "L31 <"  <<std::endl;			}
+	
+	// Second, since L1 and L3  is controlled by translation stage 0 and 1, both are limited to +-100 mm.
+	// We limit L1 such that -100 < L1, L3 < 100.0
+	// L3 < L1 = L31_MAX - L31 + L3 < 100.0
+	// -100 < L3 = L31 - L31_MAX + L1 < L1, this leads to -100 + L31_MAX - L31 < L1
+	if(L1 > 100.0)						{	L1 = 100.0;						isInLimFlag = false;	::std::cout << "L1 >"  <<std::endl;}
+	if(L1 < (-100.0 + L31_MAX - L31))	{	L1 = (-100.0 + L31_MAX - L31);	isInLimFlag = false;	::std::cout << "L1 <"  <<std::endl;}
+	
+	// Calculate L3. Update joint angles and motor counts 
+	L3 = L31 - L31_MAX + L1;
+	tgtJang[2] = L31;			tgtJang[4] = L1;
+	tgtCnt[0] = L1/c_CntToMM;	tgtCnt[1] = L3/c_CntToMM;
+
+	// Motor 2,6 are not used
+	tgtCnt[2] = tgtCnt[6] = 0;
+	
+	//::std::cout << isInLimFlag << ::std::endl;
 }
 
 

@@ -120,7 +120,7 @@ typedef struct CTR_status
 typedef struct CTR_cmd
 {
 	// CKim - current / commanded motor position
-	int cmdType;	double para[10];
+	int cmdType;	double para[10];	int size;
 
 } CTR_cmd;
 

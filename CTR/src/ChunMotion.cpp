@@ -191,7 +191,11 @@ bool ChunMotion::DoCoordMotion(double* p)
 	const CML::Error* err;		Point<7> pos;
 	for(int i=0; i<7; i++)	{	pos[i] = p[i];	}
 	
-	err = m_LinkedAmps.MoveTo(pos);
+	
+	//err = m_LinkedAmps.MoveTo(pos);
+	double vel = 120 * 10.9244/3.0;
+	err = m_LinkedAmps.MoveTo(pos, vel, 10 * vel, 10 * vel, 100 * vel);
+
 	this->WaitMotionDone();
 	if(err)	{	PrintMotionError("Linkage start move",err);	return false;	}
 	else	{	return true;	}

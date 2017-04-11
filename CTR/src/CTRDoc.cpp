@@ -143,8 +143,9 @@ CCTRDoc::CCTRDoc()
 
 	m_force = 0.0;
 
-	//this->ReadJointSpaceTrajectory("joints_add.txt");
-	this->ReadJointSpaceTrajectory("shape_dithering_undithering_comparison.txt");
+	this->ReadJointSpaceTrajectory("joints_validation_dithering.txt");
+	//this->ReadJointSpaceTrajectory("max_error_configurations.txt");
+	//this->ReadJointSpaceTrajectory("joints1.txt");
 }
  
 CCTRDoc::~CCTRDoc()
@@ -1913,20 +1914,21 @@ void CCTRDoc::SendDitheringCommand(int type, const double* para)
 	memcpy(perturbedAngles, para, 5 * sizeof(double));
 	memcpy(angles, para, 5 * sizeof(double));
 
-	double ditherAmplitude = 40.0 * M_PI/180.0;
 	this->SendCommand(0, angles);
-
-	for (int i = 0; i < 20; i++)
+	
+	int nSteps = 20;
+	double ditherAmplitude = 20.0 * M_PI/180.0;
+	for (int i = 0; i < nSteps; i++)
 	{
 		::std::cout << perturbedAngles[0] * 180/M_PI << ::std::endl;
-		perturbedAngles[0] = angles[0] + ::std::pow(-1, i+1) * ditherAmplitude * (1 - i/20.0);
+		perturbedAngles[0] = angles[0] + ::std::pow(-1, i+1) * ditherAmplitude * (1 - i/(double)nSteps);
 		this->SendCommand(0, perturbedAngles);
 	}
 	this->SendCommand(0, angles);
 
-	for (int i = 0; i < 20; i++)
+	for (int i = 0; i < nSteps; i++)
 	{
-		perturbedAngles[1] = angles[1] + ::std::pow(-1, i+1) * ditherAmplitude * (1 - i/20.0);
+		perturbedAngles[1] = angles[1] + ::std::pow(-1, i+1) * ditherAmplitude * (1 - i/(double)nSteps);
 		this->SendCommand(0, perturbedAngles);
 	}
 	this->SendCommand(0, angles);

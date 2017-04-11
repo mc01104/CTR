@@ -193,7 +193,7 @@ bool ChunMotion::DoCoordMotion(double* p)
 	
 	
 	//err = m_LinkedAmps.MoveTo(pos);
-	double vel = 120 * 10.9244/3.0;
+	double vel = 180 * 10.9244/360.0;
 	err = m_LinkedAmps.MoveTo(pos, vel, 10 * vel, 10 * vel, 100 * vel);
 
 	this->WaitMotionDone();

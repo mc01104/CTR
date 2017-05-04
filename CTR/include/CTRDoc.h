@@ -54,7 +54,7 @@ private:
 	// George - heart rate monitor
 	HeartRateMonitor*   m_heartRateMonitor;
 	double			m_valve_center[3];
-
+	double			m_radius;
 	// CKim - Robot state parameters - position of the haptic device, motor
 	bool	m_motorConnected;
 
@@ -207,7 +207,7 @@ public:
 	void	ComputeDesiredVelocity();
 
 	Eigen::Vector3d GetTipPosition();
-	void setContactControlNormal(const ::Eigen::Vector3d& computedNormal);
+	void setContactControlNormal(const ::Eigen::Vector3d& computedNormal, const ::Eigen::Vector3d& center, double radius);
 
 #ifdef _DEBUG
 	virtual void AssertValid() const;

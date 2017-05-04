@@ -188,3 +188,26 @@ binary_from_string(::std::string& sHex, ::std::string& sReturn)
 
 	return result;
 }
+
+
+void fitCircle(::std::vector<::Eigen::Vector3d>& points, ::Eigen::Vector3d& center, double& radius)
+{
+	::Eigen::MatrixXd A_fit(points.size(), 3);
+	::Eigen::VectorXd b_fit(points.size(), 1);
+	for (int i = 0; i < points.size(); ++i)
+	{
+		A_fit(i, 0) = points[i][0];
+		A_fit(i, 1) = points[i][1];
+		A_fit(i, 2) = 1.0;
+
+		b_fit(i) = - ::std::pow(points[i][0],2) - ::std::pow(points[i][1],2);
+	}
+
+	::Eigen::VectorXd x = (A_fit.transpose() * A_fit).inverse() * A_fit.transpose() * b_fit;
+	center[0] = -x(0)/2.0;
+	center[1] = -x(1)/2.0;
+	center[2] = 0;
+
+	radius = ::std::sqrt((::std::pow(x(0), 2) + ::std::pow(x(1), 2))/4.0 - x(2));
+}
+

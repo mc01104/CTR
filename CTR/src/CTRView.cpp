@@ -672,11 +672,18 @@ void CCTRView::OnClickedBtnComputePlane()
 
 void CCTRView::computeCircle(::Eigen::Matrix3d rot, ::Eigen::Vector3d& center, double& radius)
 {
+	::Eigen::MatrixXd data(3, this->points_for_plane_estimation.size());
+	for (int i = 0; i < this->points_for_plane_estimation.size(); ++i)
+		data.col(i) = this->points_for_plane_estimation[i];
+	
+	// not sure if this is correct
+	::Eigen::Vector3d mu = data.rowwise().mean();
+	::Eigen::Matrix3Xd points_centered = data.colwise() - mu;
 
 	::std::vector<::Eigen::Vector3d> rotated_points;
-	::std::vector<::Eigen::Vector3d>::iterator it = this->points_for_plane_estimation.begin();
-	for(it; it != this->points_for_plane_estimation.end(); ++it)
-		rotated_points.push_back(rot*(*it));
+	
+	for(int i = 0; i < points_for_plane_estimation.size(); ++i)
+		rotated_points.push_back(rot*points_centered.col(i));
 
 	fitCircle(rotated_points, center, radius);
 

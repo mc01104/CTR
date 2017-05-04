@@ -94,7 +94,7 @@ CCTRDoc::CCTRDoc()
 	m_freq_mode = 1;
 
 	m_timer = new ChunTimer();
-
+	m_radius = 10;
 	m_position_gain = 1.0;
 	m_orientation_gain = 1.0;
 	m_position_gain_feedforward = 1.0;
@@ -256,7 +256,7 @@ void CCTRDoc::ComputeDesiredVelocity()
 
 	// this is the PD controller -> need to correctly propagate this goal to the position controller
 	::Eigen::Vector3d local_vel = this->m_contact_control_normal *  (m_contactGain * m_contactError + m_contactDGain * contact_error_deriv + m_contactIGain * m_contact_error_integral);
-	::std::cout << local_vel.transpose() << ::std::endl;
+	//::std::cout << local_vel.transpose() << ::std::endl;
 	memcpy(m_desiredPosition, local_vel.data(), 3 * sizeof(double));
 
 	m_ContactUpdateReceived = !m_ContactUpdateReceived;
@@ -597,28 +597,22 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 		}
 
 		// target tip position/orientation
-		for (int i = 0; i < 6; ++i)
+		for (int i = 0; i < 3; ++i)
 			ss << localStat.tgtTipPosDir[i] << " ";
-		//::std::cout << ss.str() << ::std::endl;
-		//// plane estimation
-		//for (int i = 0; i < 3; ++i)
-		//	ss << mySelf->m_contact_control_normal[i] << " ";
 
-		//for (int i = 0;  i < 3; ++i)
-		//	ss << mySelf->m_valve_center[i] << " ";
-		//if (mySelf->m_frequency_changed)
-		//{
-		//	ss << " "  << mySelf->m_frequency << " " << 0;
-		//	mySelf->m_frequency_changed = false;
-		//}
-		//::std::cout << ss.str() << ::std::endl;
-		//if (mySelf->m_plane_changed)
-		//{
-		//	ss << " " << 1 << " ";
-		//	for (int j = 0; j < 3; ++j)
-		//		ss << mySelf->m_contact_control_normal[j] << " ";
-		//	mySelf->m_plane_changed = false;
-		//}
+		if (mySelf->m_plane_changed)
+		{
+			ss << " " << 1 << " ";
+			for (int j = 0; j < 3; ++j)
+				ss << mySelf->m_contact_control_normal[j] << " ";
+			for (int j = 0; j < 3; ++j)
+				ss << mySelf->m_valve_center[j] << " ";
+			
+			ss << mySelf->m_radius << " "; 
+			mySelf->m_plane_changed = false;
+		}
+
+		ss << ::std::endl;
 
         // send data
         iSendResult = send( ClientSocket, ss.str().c_str(),  ss.str().size() + 1, 0 );
@@ -1453,9 +1447,9 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 
 				if (mySelf->m_forceControlActivated)
 				{
-					localStat.tgtTipPosDir[3] = planeNormal(0);
-					localStat.tgtTipPosDir[4] = planeNormal(1);
-					localStat.tgtTipPosDir[5] = planeNormal(2);
+					//localStat.tgtTipPosDir[3] = planeNormal(0);
+					//localStat.tgtTipPosDir[4] = planeNormal(1);
+					//localStat.tgtTipPosDir[5] = planeNormal(2);
 					tangentVelocity.setZero();
 				}
 
@@ -2588,10 +2582,14 @@ CCTRDoc::computeCameraJacobian(CTR_status stat)
 }
 
 void 
-CCTRDoc::setContactControlNormal(const ::Eigen::Vector3d& computedNormal)
+CCTRDoc::setContactControlNormal(const ::Eigen::Vector3d& computedNormal, const ::Eigen::Vector3d& center, double radius)
 {
 	for(int i = 0; i < 3; i++)
+	{
 		this->m_contact_control_normal(i) = computedNormal(i);
+		this->m_valve_center[i] = center(i);
+		this->m_radius = radius;
+	}
 	this->m_plane_changed = true;
 }
 

@@ -143,13 +143,16 @@ public:
 	void ToggleForceChkbox(bool flag);
 	void ToggleForceControl();
 	void ToggleCameraControl();
-
+	void computeCircle(::Eigen::Matrix3d rot, ::Eigen::Vector3d& center, double& radius);
 	bool m_freqUpdated;
 
 	CComboBox m_traj_type;
 	CString IDC_CIRCLE;
 
 	::Eigen::Vector3d normal;
+	::Eigen::Vector3d center;
+	double radius;
+
 };
 
 #ifndef _DEBUG  // debug version in CTRView.cpp

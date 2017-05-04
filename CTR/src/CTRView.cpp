@@ -658,8 +658,30 @@ void CCTRView::OnClickedBtnComputePlane()
 	::std::cout << normal_tmp << ::std::endl;
 	this->normal = normal_tmp;;
 	::std::cout << this->normal << ::std::endl;
+
+	::Eigen::Vector3d center;
+	double radius;
+	this->computeCircle(U, center, radius);
+	center += mu;
+
+	this->center = center;
+	::std::cout << "valve center:" << this->center.transpose() << ::std::endl;
+	this->radius = radius;
+	::std::cout << "valve radius:" << this->radius << ::std::endl;
 }
 
+void CCTRView::computeCircle(::Eigen::Matrix3d rot, ::Eigen::Vector3d& center, double& radius)
+{
+
+	::std::vector<::Eigen::Vector3d> rotated_points;
+	::std::vector<::Eigen::Vector3d>::iterator it = this->points_for_plane_estimation.begin();
+	for(it; it != this->points_for_plane_estimation.end(); ++it)
+		rotated_points.push_back(rot*(*it));
+
+	fitCircle(rotated_points, center, radius);
+
+	center = rot.transpose() * center;
+}
 
 void CCTRView::OnBnClickedRadioModesPlane()
 {
@@ -721,7 +743,7 @@ void CCTRView::OnClickedBtnUpdate()
 		this->SetDlgItemTextA(IDC_EDIT6, str);
 		str.Format("%1.4f", this->normal(2));
 		this->SetDlgItemTextA(IDC_EDIT7, str);
-		this->GetDocument()->setContactControlNormal(this->normal);
+		this->GetDocument()->setContactControlNormal(this->normal, this->center, radius);
 		break;
 	case 1:
 		this->GetDlgItemTextA(IDC_EDIT8, str);		
@@ -730,6 +752,7 @@ void CCTRView::OnClickedBtnUpdate()
 		this->normal[1] = atof(str);
 		this->GetDlgItemTextA(IDC_EDIT10, str);		
 		this->normal[2] = atof(str);
+		this->GetDocument()->setContactControlNormal(this->normal, this->center, radius);
 		break;
 	case 2:
 		break;

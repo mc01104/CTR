@@ -256,7 +256,7 @@ void CCTRDoc::ComputeDesiredVelocity()
 
 	// this is the PD controller -> need to correctly propagate this goal to the position controller
 	::Eigen::Vector3d local_vel = this->m_contact_control_normal *  (m_contactGain * m_contactError + m_contactDGain * contact_error_deriv + m_contactIGain * m_contact_error_integral);
-	::std::cout << local_vel.transpose() << ::std::endl;
+	//::std::cout << local_vel.transpose() << ::std::endl;
 	memcpy(m_desiredPosition, local_vel.data(), 3 * sizeof(double));
 
 	m_ContactUpdateReceived = !m_ContactUpdateReceived;
@@ -1453,9 +1453,9 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 
 				if (mySelf->m_forceControlActivated)
 				{
-					localStat.tgtTipPosDir[3] = planeNormal(0);
-					localStat.tgtTipPosDir[4] = planeNormal(1);
-					localStat.tgtTipPosDir[5] = planeNormal(2);
+					//localStat.tgtTipPosDir[3] = planeNormal(0);
+					//localStat.tgtTipPosDir[4] = planeNormal(1);
+					//localStat.tgtTipPosDir[5] = planeNormal(2);
 					tangentVelocity.setZero();
 				}
 

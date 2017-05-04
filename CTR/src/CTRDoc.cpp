@@ -609,9 +609,12 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 				ss << mySelf->m_valve_center[j] << " ";
 			
 			ss << mySelf->m_radius << " "; 
-			mySelf->m_plane_changed = false;
+			//mySelf->m_plane_changed = false;
 		}
-
+		else
+		{
+			ss << " " << 0 << " ";
+		}
 		ss << ::std::endl;
 
         // send data

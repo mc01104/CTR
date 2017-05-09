@@ -750,7 +750,7 @@ void CCTRView::OnClickedBtnUpdate()
 		this->SetDlgItemTextA(IDC_EDIT6, str);
 		str.Format("%1.4f", this->normal(2));
 		this->SetDlgItemTextA(IDC_EDIT7, str);
-		this->GetDocument()->setContactControlNormal(this->normal, this->center, radius);
+		this->GetDocument()->setContactControlNormal(this->normal, this->center, radius, this->points_for_plane_estimation);
 		break;
 	case 1:
 		this->GetDlgItemTextA(IDC_EDIT8, str);		
@@ -759,7 +759,7 @@ void CCTRView::OnClickedBtnUpdate()
 		this->normal[1] = atof(str);
 		this->GetDlgItemTextA(IDC_EDIT10, str);		
 		this->normal[2] = atof(str);
-		this->GetDocument()->setContactControlNormal(this->normal, this->center, radius);
+		this->GetDocument()->setContactControlNormal(this->normal, this->center, radius, this->points_for_plane_estimation);
 		break;
 	case 2:
 		break;

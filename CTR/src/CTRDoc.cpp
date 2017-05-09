@@ -610,6 +610,12 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 			
 			ss << mySelf->m_radius << " "; 
 			//mySelf->m_plane_changed = false;
+
+			ss << mySelf->points_for_plane_estimation.size() << " ";
+
+			for (int j = 0; j < mySelf->points_for_plane_estimation.size(); ++j)
+				ss << mySelf->points_for_plane_estimation[j](0) << " " << mySelf->points_for_plane_estimation[j](1) << " " << mySelf->points_for_plane_estimation[j](2) << " "; 
+
 		}
 		else
 		{
@@ -2585,7 +2591,7 @@ CCTRDoc::computeCameraJacobian(CTR_status stat)
 }
 
 void 
-CCTRDoc::setContactControlNormal(const ::Eigen::Vector3d& computedNormal, const ::Eigen::Vector3d& center, double radius)
+CCTRDoc::setContactControlNormal(const ::Eigen::Vector3d& computedNormal, const ::Eigen::Vector3d& center, double radius, ::std::vector<::Eigen::Vector3d> pts)
 {
 	for(int i = 0; i < 3; i++)
 	{
@@ -2593,6 +2599,7 @@ CCTRDoc::setContactControlNormal(const ::Eigen::Vector3d& computedNormal, const 
 		this->m_valve_center[i] = center(i);
 		this->m_radius = radius;
 	}
+	points_for_plane_estimation = pts;
 	this->m_plane_changed = true;
 }
 

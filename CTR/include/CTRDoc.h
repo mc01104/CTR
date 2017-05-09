@@ -205,9 +205,9 @@ public:
 	void	UpdateDesiredPosition();
 	void	ComputeDesiredPosition(double tmpPosition[6]);
 	void	ComputeDesiredVelocity();
-
+	::std::vector<::Eigen::Vector3d> points_for_plane_estimation;
 	Eigen::Vector3d GetTipPosition();
-	void setContactControlNormal(const ::Eigen::Vector3d& computedNormal, const ::Eigen::Vector3d& center, double radius);
+	void setContactControlNormal(const ::Eigen::Vector3d& computedNormal, const ::Eigen::Vector3d& center, double radius, ::std::vector<::Eigen::Vector3d> pts);
 
 #ifdef _DEBUG
 	virtual void AssertValid() const;

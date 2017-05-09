@@ -68,7 +68,7 @@ void HeartRateMonitor::run()
 		if (logData)
 		{
 			date = GetDateString();
-			os << strings << "," << date <<::std::endl;
+			os << strings << " " << date <<::std::endl;
 		}
 	}
 

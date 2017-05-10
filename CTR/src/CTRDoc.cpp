@@ -563,6 +563,7 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 	//::std::ofstream* os;
 	//LeaveCriticalSection(&m_cSection);
 	double delta_t = 0;
+	int counter = 0;
     do {
 		::std::ostringstream ss;
 		// update the local joint variables
@@ -614,13 +615,16 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 
 			for (int j = 0; j < mySelf->points_for_plane_estimation.size(); ++j)
 				ss << mySelf->points_for_plane_estimation[j](0) << " " << mySelf->points_for_plane_estimation[j](1) << " " << mySelf->points_for_plane_estimation[j](2) << " "; 
-
-			mySelf->m_plane_changed = false;
+			if(++counter > 200)
+			{
+				mySelf->m_plane_changed = false;
+			}
 
 		}
 		else
 		{
 			ss << " " << 0 << " ";
+			counter = 0;
 		}
 		ss << ::std::endl;
 

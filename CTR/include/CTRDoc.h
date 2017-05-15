@@ -74,7 +74,7 @@ private:
 
 	// visual servoing stuff - these need to be read from the network
 	double				m_centroid[2];
-	double				m_valve_tangent;
+	double				m_valve_tangent[2];
 	int					m_direction;
 	::Eigen::Vector2d	m_image_center;
 	double				m_scaling_factor;
@@ -203,7 +203,7 @@ public:
 	void	SetFrequency(double frequency) {this->m_frequency = frequency; this->m_frequency_changed = true;};
 	void	SetScalingFactor(double scaling_factor) {this->m_scaling_factor = scaling_factor;};
 	void	SetCentroid(double x, double y) {this->m_centroid[0] = x; this->m_centroid[1] = y;};
-	void	SetTangent(double tangent) {this->m_valve_tangent = tangent;};
+	void	SetTangent(double tangent[2]) {memcpy(m_valve_tangent, tangent, 2 * sizeof(double));};
 	void	SetDirection(int direction){this->m_direction = direction;};
 
 	void	ChangeForceForTuning(double force);

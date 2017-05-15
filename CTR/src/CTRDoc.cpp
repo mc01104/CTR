@@ -2670,7 +2670,7 @@ void CCTRDoc::computeCircumnavigationDirection(Eigen::Matrix<double,6,1>& err)
 	error = m_image_center - ::Eigen::Map<::Eigen::Vector2d> (m_centroid, 2);
 
 	double delta = error.norm();
-	error += (m_direction * m_valve_tangent * 2.0 * delta)/m_scaling_factor * ::Eigen::Vector2d::Ones();
+	error += (m_direction * ::Eigen::Map<::Eigen::Vector2d> (m_valve_tangent,2) * 2.0 * delta)/m_scaling_factor * ::Eigen::Vector2d::Ones();
 
 	::Eigen::Vector3d error3D;
 	error3D.segment(0, 2) = error;
@@ -2693,7 +2693,8 @@ void CCTRDoc::UpdateCircumnavigationParams(::std::vector<double>& msg)
 {
 	m_centroid[0] = msg[2];
 	m_centroid[1] = msg[3];
-	m_valve_tangent  = msg[4];
+	m_valve_tangent[0]  = msg[4];
+	m_valve_tangent[1]  = msg[5];
 
 	::std::cout << msg << ::std::endl;
 }

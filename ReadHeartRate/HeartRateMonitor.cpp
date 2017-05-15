@@ -58,8 +58,8 @@ void HeartRateMonitor::run()
 			continue;
 		else
 		{
-			heartRate = atof(strings[index[1]].c_str());
-			::std::cout << sensorNames[1] << "-> Heart rate [bpm]:" << heartRate << ::std::endl;
+			heartRate = atof(strings[1].c_str());
+			::std::cout << " Heart rate [bpm]:" << heartRate << ::std::endl;
 		}
 
 

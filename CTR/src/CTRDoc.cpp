@@ -2691,10 +2691,9 @@ void CCTRDoc::ToggleCircumnavigation()
 
 void CCTRDoc::UpdateCircumnavigationParams(::std::vector<double>& msg)
 {
-	m_direction = msg[2];
-	m_centroid[0] = msg[3];
-	m_centroid[1] = msg[4];
-	m_valve_tangent  = msg[5];
+	m_centroid[0] = msg[2];
+	m_centroid[1] = msg[3];
+	m_valve_tangent  = msg[4];
 
 	::std::cout << msg << ::std::endl;
 }

@@ -607,6 +607,11 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 		for (int i = 0; i < 3; ++i)
 			ss << localStat.tgtTipPosDir[i] << " ";
 
+		if (mySelf->m_circumnavigation)
+			ss << 1 << " ";
+		else 
+			ss << 0 << " ";
+
 		if (mySelf->m_plane_changed)
 		{
 			ss << " " << 1 << " ";

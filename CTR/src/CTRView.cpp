@@ -85,6 +85,7 @@ BEGIN_MESSAGE_MAP(CCTRView, CFormView)
 	ON_BN_CLICKED(IDC_BTN_MOVE11, &CCTRView::OnClickedBtnStopLog)
 
 	ON_BN_CLICKED(IDC_CHECK1, &CCTRView::ToggleForceControl)
+	ON_BN_CLICKED(IDC_CHECK2, &CCTRView::ToggleCircumnavigation)
 //	ON_BN_CLICKED(IDC_CHECK3, &CCTRView::ToggleCameraControl)
 
 	ON_EN_KILLFOCUS(IDC_EDIT15, &CCTRView::UpdateGains)
@@ -92,11 +93,19 @@ BEGIN_MESSAGE_MAP(CCTRView, CFormView)
 	ON_EN_KILLFOCUS(IDC_EDIT17, &CCTRView::UpdateGains)
 	ON_EN_KILLFOCUS(IDC_EDIT18, &CCTRView::UpdateGains)
 
+	ON_EN_KILLFOCUS(IDC_EDIT21, &CCTRView::UpdateScalingFactor)
+	ON_EN_KILLFOCUS(IDC_EDIT22, &CCTRView::UpdateCentroid)
+	ON_EN_KILLFOCUS(IDC_EDIT24, &CCTRView::UpdateCentroid)	
+	ON_EN_KILLFOCUS(IDC_EDIT23, &CCTRView::UpdateTangent)
+
 	ON_BN_CLICKED(IDC_RADIO_JA3, &CCTRView::OnBnClickedRadioModesController)	
 	ON_BN_CLICKED(IDC_RADIO_TELE4, &CCTRView::OnBnClickedRadioModesController)
 
 	ON_BN_CLICKED(IDC_RADIO_JA4, &CCTRView::OnBnClickedRadioModesFreq)	
 	ON_BN_CLICKED(IDC_RADIO_TELE5, &CCTRView::OnBnClickedRadioModesFreq)
+
+	ON_BN_CLICKED(IDC_RADIO_JA5, &CCTRView::OnBnClickedRadioModesCircum)	
+	ON_BN_CLICKED(IDC_RADIO_TELE6, &CCTRView::OnBnClickedRadioModesCircum)
 
 	ON_WM_CTLCOLOR()
 	ON_BN_CLICKED(IDC_BUTTON6, &CCTRView::OnClickedBtnHome)
@@ -200,7 +209,7 @@ void CCTRView::DoDataExchange(CDataExchange* pDX)
 	DDX_Radio(pDX, IDC_RADIO_JA2, m_PlaneEstimationMode);
 	DDX_Radio(pDX, IDC_RADIO_JA3, m_controlMode);
 	DDX_Radio(pDX, IDC_RADIO_JA4, m_frequencyMode);
-
+	DDX_Radio(pDX, IDC_RADIO_JA5, m_direction);
 	m_ctrlMode != 1 ? GetDlgItem(IDC_CHECK1)->EnableWindow(false) : GetDlgItem(IDC_CHECK1)->EnableWindow(true);
 //	m_ctrlMode != 1 ? GetDlgItem(IDC_CHECK3)->EnableWindow(false) : GetDlgItem(IDC_CHECK3)->EnableWindow(true);
 
@@ -843,6 +852,55 @@ void CCTRView::OnBnClickedRadioModesFreq()
 	}
 
 	this->GetDocument()->SwitchFreqMode(m_frequencyMode);
+	return;		
+	
+}
+
+void CCTRView::ToggleCircumnavigation()
+{
+	this->GetDocument()->ToggleCircumnavigation();
+}
+
+void CCTRView::UpdateScalingFactor()
+{
+	CString str;
+	this->GetDlgItemTextA(IDC_EDIT21, str);		
+	this->GetDocument()->SetScalingFactor(atof(str));
+}
+
+void CCTRView::UpdateCentroid()
+{
+	CString str;
+	this->GetDlgItemTextA(IDC_EDIT22, str);		
+	double x = atof(str);
+	this->GetDlgItemTextA(IDC_EDIT24, str);		
+	double y = atof(str);
+	this->GetDocument()->SetCentroid(x, y);
+}
+
+void CCTRView::UpdateTangent()
+{
+	CString str;
+	this->GetDlgItemTextA(IDC_EDIT23, str);		
+	this->GetDocument()->SetTangent(atof(str));
+}
+
+void CCTRView::OnBnClickedRadioModesCircum()
+{
+	UpdateData(true);	
+	int dir = 0;
+	if(m_direction == 0)	
+	{
+		::std::cout << "Circumnavigation direction: CCW" << ::std::endl;
+		dir = -1;
+	}
+	else if (m_direction == 1)
+	{
+		::std::cout << "Circumnavigation direction: CW" << ::std::endl;
+		dir = 1;
+	}
+
+	this->GetDocument()->SetDirection(dir);
 	return;		
 
 }

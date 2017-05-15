@@ -189,6 +189,12 @@ CCTRDoc::CCTRDoc()
 	m_plane_covar = 0.01 * ::Eigen::Matrix<double, 2, 2>::Identity();
 	m_plane_changed =false;
 	m_Status.isTeleOpMoving = false;
+
+	// visual servoing
+	m_image_center(0) = 250 * 0.5;
+	m_image_center(1) = 250 * 0.5;
+	m_scaling_factor = 1;
+	m_circumnavigation = false;
 }
 
 CCTRDoc::~CCTRDoc()
@@ -659,36 +665,28 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 			}
 			else
 			{
-				contactRatio = atof(recvbuf);
+				//contactRatio = atof(recvbuf);
+				::std::vector<double> msg = DoubleVectorFromString(::std::string(recvbuf));
+				contactRatio = msg[0];
 				contactRatioError = desiredContactRatio - contactRatio;
+
+
 				EnterCriticalSection(&m_cSection);
 				mySelf->m_ContactUpdateReceived = true;
 				mySelf->m_contactError_prev = contactRatioError;
 				mySelf->m_contactError = contactRatioError;
 				mySelf->m_contactRatio = contactRatio;
 				mySelf->m_contact_error_integral += contactRatioError * delta_t;
+
+				if (msg[1])
+					mySelf->UpdateCircumnavigationParams(msg);
+
 				LeaveCriticalSection(&m_cSection);
+
+
 				::std::cout << "Ratio:" << contactRatio << ", error:" << contactRatioError << ::std::endl;
 				end_loop = clock();
 
-				//EnterCriticalSection(&m_cSection);
-				//bool logData = mySelf->m_logData;
-				//os = mySelf->m_fileStream;
-				//LeaveCriticalSection(&m_cSection);
-
-				//if (logData)
-				//{
-				//	for (int i = 0; i < 6; i++)
-				//		*os << localStat.currTipPosDir[i] << "\t";
-
-				//	*os << contactRatio << "\t";
-				//	*os << ((float) (end_loop - start_loop))/CLOCKS_PER_SEC << ::std::endl;
-				//}
-
-				//::std::cout << "Desired Ratio:" << desiredContactRatio << ::std::endl;
-				//::std::cout << ::std::endl;
-				//::std::cout << "Contact Ratio Error:" << desiredContactRatio - atof(recvbuf) << ::std::endl;
-				//force = atof(recvbuf);
 			}
 			
 		}
@@ -1317,6 +1315,7 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 	CCTRDoc* mySelf = (CCTRDoc*) para;	
 	CTR_status	localStat;
 
+	bool circumnavigation = false;
 	// CKim - Variables for Feedforward position control
 	bool safeToTeleOp = false;			
 	double vel[7];			
@@ -1439,6 +1438,7 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 			for (int i = 0; i < 3; ++i)
 				planeNormal(i) = mySelf->m_contact_control_normal(i);
 
+			circumnavigation = mySelf->m_circumnavigation;
 			LeaveCriticalSection(&m_cSection);
 			//PrintCArray(localStat.tgtWorkspaceVelocity, 3);
 			//PrintCArray(localStat.tgtWorkspaceAngVelocity, 3);
@@ -1473,6 +1473,8 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 				{	
 					if (!mySelf->m_camera_control)
 						err(i,0) = mySelf->m_position_gain * K[i]*(localStat.tgtTipPosDir[i] - localStat.currTipPosDir[i]) + mySelf->m_position_gain_feedforward * localStat.tgtWorkspaceVelocity[i];
+					else if (true)
+						mySelf->computeCircumnavigationDirection(err);
 					else
 						err(i, 0) = K_image[i] * localStat.tgtWorkspaceVelocity[i];   // this is to control the robot at the image-frame of the cardioscope
 					//sum += (localStat.tgtTipPosDir[i+3]*localStat.currTipPosDir[i+3]);				
@@ -1481,6 +1483,7 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 				{
 					err(i,0) = mySelf->m_orientation_gain * K[i]*(localStat.tgtTipPosDir[i] - localStat.currTipPosDir[i]) + mySelf->m_orientation_gain_feedforward * tangentVelocity[i-3];
 				}
+
 			}
 
 
@@ -2651,4 +2654,42 @@ void CCTRDoc::SwitchFreqMode(int mode)
 double CCTRDoc::GetMonitorFreq()
 {
 	return this->m_heartRateMonitor->getHeartRate();
+}
+
+void CCTRDoc::computeCircumnavigationDirection(Eigen::Matrix<double,6,1>& err)
+{
+	// later this needs to be computed from the plane normal
+	::Eigen::Matrix3d rot = ::Eigen::Matrix3d::Identity();
+
+	::Eigen::Vector2d error;
+	error = m_image_center - ::Eigen::Map<::Eigen::Vector2d> (m_centroid, 2);
+
+	double delta = error.norm();
+	error += (m_direction * m_valve_tangent * 2.0 * delta)/m_scaling_factor * ::Eigen::Vector2d::Ones();
+
+	::Eigen::Vector3d error3D;
+	error3D.segment(0, 2) = error;
+	error3D(2) = 0.0;
+
+	err.block(0, 0, 3, 0) = rot * error3D;
+}
+
+void CCTRDoc::ToggleCircumnavigation()
+{
+	this->m_circumnavigation != this->m_circumnavigation;
+
+	::std::cout << "circumnavigation: ";
+	(this->m_circumnavigation ?	::std::cout << "ON" : ::std::cout << "OFF");
+	::std::cout << ::std::endl;
+}
+
+
+void CCTRDoc::UpdateCircumnavigationParams(::std::vector<double>& msg)
+{
+	m_direction = msg[2];
+	m_centroid[0] = msg[3];
+	m_centroid[1] = msg[4];
+	m_valve_tangent  = msg[5];
+
+	::std::cout << msg << ::std::endl;
 }

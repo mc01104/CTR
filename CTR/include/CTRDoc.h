@@ -72,6 +72,14 @@ private:
 	TrjGenerator*		m_TrjGen;
 	ChunTimer*			m_timer;
 
+	// visual servoing stuff - these need to be read from the network
+	double				m_centroid[2];
+	double				m_valve_tangent;
+	int					m_direction;
+	::Eigen::Vector2d	m_image_center;
+	double				m_scaling_factor;
+	bool				m_circumnavigation;
+
 	// CKim - Variables for threads
 	bool				m_ioRunning;
 	bool				m_teleOpMode;
@@ -191,11 +199,18 @@ public:
 	LWPRKinematics* GetKinematics() { return this->m_kinLWPR;};
 	void	ToggleForceControl();
 	void	ToggleLog();
+	void	ToggleCircumnavigation();
 	void	SetFrequency(double frequency) {this->m_frequency = frequency; this->m_frequency_changed = true;};
+	void	SetScalingFactor(double scaling_factor) {this->m_scaling_factor = scaling_factor;};
+	void	SetCentroid(double x, double y) {this->m_centroid[0] = x; this->m_centroid[1] = y;};
+	void	SetTangent(double tangent) {this->m_valve_tangent = tangent;};
+	void	SetDirection(int direction){this->m_direction = direction;};
 
 	void	ChangeForceForTuning(double force);
 	void	SetForceGain(double forceGain, double forceGainD = 0, double forceGainI = 0);
 	void	SetContactRatio(double ratio);
+
+	void	UpdateCircumnavigationParams(::std::vector<double>& msg);
 
 	void	SaveModel();
 	void	ClearCommandQueue();
@@ -209,6 +224,7 @@ public:
 	Eigen::Vector3d GetTipPosition();
 	void setContactControlNormal(const ::Eigen::Vector3d& computedNormal, const ::Eigen::Vector3d& center, double radius, ::std::vector<::Eigen::Vector3d> pts);
 
+	void computeCircumnavigationDirection(Eigen::Matrix<double,6,1>& err);
 #ifdef _DEBUG
 	virtual void AssertValid() const;
 	virtual void Dump(CDumpContext& dc) const;

@@ -82,8 +82,12 @@ public:
 	afx_msg void OnKillFocusUpdateFrequency();
 
 	afx_msg void UpdateGains();
+	afx_msg void UpdateScalingFactor();
+	afx_msg void UpdateCentroid();
+	afx_msg void UpdateTangent();
 	afx_msg void OnBnClickedRadioModesController();
 	afx_msg void OnBnClickedRadioModesFreq();
+	afx_msg void OnBnClickedRadioModesCircum();
 
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 	
@@ -143,6 +147,7 @@ public:
 	void ToggleForceChkbox(bool flag);
 	void ToggleForceControl();
 	void ToggleCameraControl();
+	void ToggleCircumnavigation();
 	void computeCircle(::Eigen::Matrix3d rot, ::Eigen::Vector3d& center, double& radius);
 	bool m_freqUpdated;
 
@@ -153,10 +158,12 @@ public:
 	::Eigen::Vector3d center;
 	double radius;
 
+	int m_direction;
 };
 
 #ifndef _DEBUG  // debug version in CTRView.cpp
 inline CCTRDoc* CCTRView::GetDocument() const
    { return reinterpret_cast<CCTRDoc*>(m_pDocument); }
 #endif
+
 

@@ -1478,10 +1478,14 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 				{	
 					if (!mySelf->m_camera_control)
 						err(i,0) = mySelf->m_position_gain * K[i]*(localStat.tgtTipPosDir[i] - localStat.currTipPosDir[i]) + mySelf->m_position_gain_feedforward * localStat.tgtWorkspaceVelocity[i];
-					else if (true)
-						mySelf->computeCircumnavigationDirection(err);
 					else
 						err(i, 0) = K_image[i] * localStat.tgtWorkspaceVelocity[i];   // this is to control the robot at the image-frame of the cardioscope
+					if (circumnavigation)
+					{
+						mySelf->computeCircumnavigationDirection(err);
+						::std::cout << err.block(0,0,3,1).transpose() << ::std::endl;
+						err.setZero();
+					}
 					//sum += (localStat.tgtTipPosDir[i+3]*localStat.currTipPosDir[i+3]);				
 				}
 				for(int i=3; i<6; i++)
@@ -2669,19 +2673,19 @@ void CCTRDoc::computeCircumnavigationDirection(Eigen::Matrix<double,6,1>& err)
 	::Eigen::Vector2d error;
 	error = m_image_center - ::Eigen::Map<::Eigen::Vector2d> (m_centroid, 2);
 
-	double delta = error.norm();
+	double delta = 1;
 	error += (m_direction * ::Eigen::Map<::Eigen::Vector2d> (m_valve_tangent,2) * 2.0 * delta)/m_scaling_factor; // * ::Eigen::Vector2d::Ones();
 
 	::Eigen::Vector3d error3D;
 	error3D.segment(0, 2) = error;
 	error3D(2) = 0.0;
 
-	err.block(0, 0, 3, 0) = rot * error3D;
+	err.block(0, 0, 3, 1) = rot * error3D;
 }
 
 void CCTRDoc::ToggleCircumnavigation()
 {
-	this->m_circumnavigation != this->m_circumnavigation;
+	this->m_circumnavigation = !this->m_circumnavigation;
 
 	::std::cout << "circumnavigation: ";
 	(this->m_circumnavigation ?	::std::cout << "ON" : ::std::cout << "OFF");

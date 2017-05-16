@@ -97,7 +97,7 @@ BEGIN_MESSAGE_MAP(CCTRView, CFormView)
 	ON_EN_KILLFOCUS(IDC_EDIT22, &CCTRView::UpdateCentroid)
 	ON_EN_KILLFOCUS(IDC_EDIT24, &CCTRView::UpdateCentroid)	
 	ON_EN_KILLFOCUS(IDC_EDIT23, &CCTRView::UpdateTangent)
-	ON_EN_KILLFOCUS(IDC_EDIT23, &CCTRView::UpdateTangent)
+	ON_EN_KILLFOCUS(IDC_EDIT25, &CCTRView::UpdateTangent)
 
 	ON_BN_CLICKED(IDC_RADIO_JA3, &CCTRView::OnBnClickedRadioModesController)	
 	ON_BN_CLICKED(IDC_RADIO_TELE4, &CCTRView::OnBnClickedRadioModesController)
@@ -137,6 +137,7 @@ CCTRView::CCTRView()
 	m_PlaneEstimationMode = 0;
 	m_controlMode = 0;
 	m_frequencyMode = 1;
+	m_direction = 1;
 }
 
 CCTRView::~CCTRView()
@@ -261,6 +262,9 @@ void CCTRView::OnInitialUpdate()
 
 	tmp.Format("%0.2f",0.0);
 	this->SetDlgItemTextA(IDC_EDIT3,tmp);
+
+	tmp.Format("%0.2f",26.27);
+	this->SetDlgItemTextA(IDC_EDIT21,tmp);
 
 }
 

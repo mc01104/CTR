@@ -97,6 +97,7 @@ BEGIN_MESSAGE_MAP(CCTRView, CFormView)
 	ON_EN_KILLFOCUS(IDC_EDIT22, &CCTRView::UpdateCentroid)
 	ON_EN_KILLFOCUS(IDC_EDIT24, &CCTRView::UpdateCentroid)	
 	ON_EN_KILLFOCUS(IDC_EDIT23, &CCTRView::UpdateTangent)
+	ON_EN_KILLFOCUS(IDC_EDIT23, &CCTRView::UpdateTangent)
 
 	ON_BN_CLICKED(IDC_RADIO_JA3, &CCTRView::OnBnClickedRadioModesController)	
 	ON_BN_CLICKED(IDC_RADIO_TELE4, &CCTRView::OnBnClickedRadioModesController)
@@ -880,9 +881,13 @@ void CCTRView::UpdateCentroid()
 
 void CCTRView::UpdateTangent()
 {
+	double tangent[2];
 	CString str;
-	this->GetDlgItemTextA(IDC_EDIT23, str);		
-	this->GetDocument()->SetTangent(atof(str));
+	this->GetDlgItemTextA(IDC_EDIT23, str);	
+	tangent[0] = atof(str);
+	this->GetDlgItemTextA(IDC_EDIT25, str);	
+	tangent[1] = atof(str);
+	this->GetDocument()->SetTangent(tangent);
 }
 
 void CCTRView::OnBnClickedRadioModesCircum()

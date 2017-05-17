@@ -193,7 +193,7 @@ CCTRDoc::CCTRDoc()
 	// visual servoing
 	m_image_center(0) = 250 * 0.5;
 	m_image_center(1) = 250 * 0.5;
-	m_scaling_factor = 1;
+	m_scaling_factor = 26.27;
 	m_circumnavigation = false;
 }
 
@@ -684,12 +684,13 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 				mySelf->m_contact_error_integral += contactRatioError * delta_t;
 
 				if (msg[1])
+				{
 					mySelf->UpdateCircumnavigationParams(msg);
-
+				}
 				LeaveCriticalSection(&m_cSection);
 
 
-				::std::cout << "Ratio:" << contactRatio << ", error:" << contactRatioError << ::std::endl;
+				//::std::cout << "Ratio:" << contactRatio << ", error:" << contactRatioError << ::std::endl;
 				end_loop = clock();
 
 			}
@@ -1484,7 +1485,7 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 					{
 						mySelf->computeCircumnavigationDirection(err);
 						::std::cout << err.block(0,0,3,1).transpose() << ::std::endl;
-						err.setZero();
+						//err.setZero();
 					}
 					//sum += (localStat.tgtTipPosDir[i+3]*localStat.currTipPosDir[i+3]);				
 				}
@@ -2672,9 +2673,10 @@ void CCTRDoc::computeCircumnavigationDirection(Eigen::Matrix<double,6,1>& err)
 
 	::Eigen::Vector2d error;
 	error = m_image_center - ::Eigen::Map<::Eigen::Vector2d> (m_centroid, 2);
-
-	double delta = 1;
-	error += (m_direction * ::Eigen::Map<::Eigen::Vector2d> (m_valve_tangent,2) * 2.0 * delta)/m_scaling_factor; // * ::Eigen::Vector2d::Ones();
+	error /= m_scaling_factor;
+	error *= 0.3;
+	//double delta = 1;
+	//error += (m_direction * ::Eigen::Map<::Eigen::Vector2d> (m_valve_tangent,2) * 2.0 * delta)/m_scaling_factor; // * ::Eigen::Vector2d::Ones();
 
 	::Eigen::Vector3d error3D;
 	error3D.segment(0, 2) = error;
@@ -2700,5 +2702,5 @@ void CCTRDoc::UpdateCircumnavigationParams(::std::vector<double>& msg)
 	m_valve_tangent[0]  = msg[4];
 	m_valve_tangent[1]  = msg[5];
 
-	::std::cout << msg << ::std::endl;
+	//::std::cout << msg << ::std::endl;
 }

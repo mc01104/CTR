@@ -2674,7 +2674,7 @@ void CCTRDoc::computeCircumnavigationDirection(Eigen::Matrix<double,6,1>& err)
 	::Eigen::Vector2d error;
 	error = m_image_center - ::Eigen::Map<::Eigen::Vector2d> (m_centroid, 2);
 	error /= m_scaling_factor;
-	error *= 0.3;
+	error *= -0.3;
 	//double delta = 1;
 	//error += (m_direction * ::Eigen::Map<::Eigen::Vector2d> (m_valve_tangent,2) * 2.0 * delta)/m_scaling_factor; // * ::Eigen::Vector2d::Ones();
 

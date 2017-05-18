@@ -75,6 +75,7 @@ private:
 	// visual servoing stuff - these need to be read from the network
 	double				m_centroid[2];
 	double				m_valve_tangent[2];
+	double				m_valve_tangent_prev[2];
 	int					m_direction;
 	::Eigen::Vector2d	m_image_center;
 	double				m_scaling_factor;

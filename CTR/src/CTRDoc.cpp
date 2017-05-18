@@ -1492,8 +1492,10 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 					if (circumnavigation)
 					{
 						mySelf->computeCircumnavigationDirection(err);
+						//if (!mySelf->m_line_detected)
+						//	err.setZero();
 						::std::cout << err.block(0,0,3,1).transpose() << ::std::endl;
-						//err.setZero();
+						
 					}
 					//sum += (localStat.tgtTipPosDir[i+3]*localStat.currTipPosDir[i+3]);				
 				}
@@ -2677,11 +2679,11 @@ double CCTRDoc::GetMonitorFreq()
 void CCTRDoc::computeCircumnavigationDirection(Eigen::Matrix<double,6,1>& err)
 {
 
-	if (!m_line_detected)
-	{
-		err.setZero();
-		return;
-	}
+	//if (!m_line_detected)
+	//{
+	//	err.setZero();
+	//	return;
+	//}
 
 	// later this needs to be computed from the plane normal
 	::Eigen::Matrix3d rot = ::Eigen::Matrix3d::Identity();
@@ -2729,4 +2731,11 @@ void CCTRDoc::UpdateCircumnavigationParams(::std::vector<double>& msg)
 		m_valve_tangent[0] *= -1;
 		m_valve_tangent[1] *= -1;
 	}
+}
+
+void CCTRDoc::SetVSGains(double gain_center, double gain_tangent) 
+{
+	this->m_gain_center = gain_center; 
+	this->m_gain_tangent = gain_tangent;
+	::std::cout << m_gain_center << ::std::endl;
 }

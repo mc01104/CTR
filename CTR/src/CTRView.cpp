@@ -922,9 +922,9 @@ void CCTRView::OnBnClickedRadioModesCircum()
 void CCTRView::UpdateVSGains()
 {
 	CString str;
-	this->GetDlgItemTextA(IDC_EDIT23, str);	
+	this->GetDlgItemTextA(IDC_EDIT22, str);	
 	double gain_center = atof(str);
-	this->GetDlgItemTextA(IDC_EDIT25, str);	
+	this->GetDlgItemTextA(IDC_EDIT24, str);	
 	double gain_tangent = atof(str);
 	this->GetDocument()->SetVSGains(gain_center, gain_tangent);
 }

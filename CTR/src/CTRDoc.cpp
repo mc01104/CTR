@@ -202,6 +202,10 @@ CCTRDoc::CCTRDoc()
 	m_valve_tangent[0] = 0;
 	m_valve_tangent[1] = 0;
 
+	m_line_detected = false;
+
+	this->m_gain_center = 0.3;
+	this->m_gain_tangent = 0.3;
 }
 
 CCTRDoc::~CCTRDoc()
@@ -689,15 +693,12 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 				mySelf->m_contactError = contactRatioError;
 				mySelf->m_contactRatio = contactRatio;
 				mySelf->m_contact_error_integral += contactRatioError * delta_t;
-
-				if (msg[1])
-				{
-					mySelf->UpdateCircumnavigationParams(msg);
-				}
+				mySelf->m_line_detected = msg[1];
 				LeaveCriticalSection(&m_cSection);
 
+				if (mySelf->m_line_detected)
+					mySelf->UpdateCircumnavigationParams(msg);
 
-				//::std::cout << "Ratio:" << contactRatio << ", error:" << contactRatioError << ::std::endl;
 				end_loop = clock();
 
 			}
@@ -2675,16 +2676,23 @@ double CCTRDoc::GetMonitorFreq()
 
 void CCTRDoc::computeCircumnavigationDirection(Eigen::Matrix<double,6,1>& err)
 {
+
+	if (!m_line_detected)
+	{
+		err.setZero();
+		return;
+	}
+
 	// later this needs to be computed from the plane normal
 	::Eigen::Matrix3d rot = ::Eigen::Matrix3d::Identity();
 
 	::Eigen::Vector2d error;
 	error = m_image_center - ::Eigen::Map<::Eigen::Vector2d> (m_centroid, 2);
 	error /= m_scaling_factor;
-	error *= -0.3;
+	error *= -this->m_gain_center;
 
 	m_direction = 1;
-	error -= 0.3 * m_direction * ::Eigen::Map<::Eigen::Vector2d> (m_valve_tangent,2);
+	error -= this->m_gain_tangent * m_direction * ::Eigen::Map<::Eigen::Vector2d> (m_valve_tangent,2);
 
 	::Eigen::Vector3d error3D;
 	error3D.segment(0, 2) = error;
@@ -2705,6 +2713,7 @@ void CCTRDoc::ToggleCircumnavigation()
 
 void CCTRDoc::UpdateCircumnavigationParams(::std::vector<double>& msg)
 {
+
 	m_centroid[0] = msg[2];
 	m_centroid[1] = msg[3];
 

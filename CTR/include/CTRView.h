@@ -82,6 +82,7 @@ public:
 	afx_msg void OnKillFocusUpdateFrequency();
 
 	afx_msg void UpdateGains();
+	afx_msg void UpdateVSGains();
 	afx_msg void UpdateScalingFactor();
 	afx_msg void UpdateCentroid();
 	afx_msg void UpdateTangent();

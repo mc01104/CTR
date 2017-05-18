@@ -94,10 +94,10 @@ BEGIN_MESSAGE_MAP(CCTRView, CFormView)
 	ON_EN_KILLFOCUS(IDC_EDIT18, &CCTRView::UpdateGains)
 
 	ON_EN_KILLFOCUS(IDC_EDIT21, &CCTRView::UpdateScalingFactor)
-	ON_EN_KILLFOCUS(IDC_EDIT22, &CCTRView::UpdateCentroid)
-	ON_EN_KILLFOCUS(IDC_EDIT24, &CCTRView::UpdateCentroid)	
-	ON_EN_KILLFOCUS(IDC_EDIT23, &CCTRView::UpdateTangent)
-	ON_EN_KILLFOCUS(IDC_EDIT25, &CCTRView::UpdateTangent)
+	ON_EN_KILLFOCUS(IDC_EDIT22, &CCTRView::UpdateVSGains)
+	ON_EN_KILLFOCUS(IDC_EDIT24, &CCTRView::UpdateVSGains)	
+	//ON_EN_KILLFOCUS(IDC_EDIT23, &CCTRView::UpdateTangent)
+	//ON_EN_KILLFOCUS(IDC_EDIT25, &CCTRView::UpdateTangent)
 
 	ON_BN_CLICKED(IDC_RADIO_JA3, &CCTRView::OnBnClickedRadioModesController)	
 	ON_BN_CLICKED(IDC_RADIO_TELE4, &CCTRView::OnBnClickedRadioModesController)
@@ -265,6 +265,10 @@ void CCTRView::OnInitialUpdate()
 
 	tmp.Format("%0.2f",26.27);
 	this->SetDlgItemTextA(IDC_EDIT21,tmp);
+
+	tmp.Format("%0.2f",0.3);
+	this->SetDlgItemTextA(IDC_EDIT22,tmp);
+	this->SetDlgItemTextA(IDC_EDIT24,tmp);
 
 }
 
@@ -912,4 +916,15 @@ void CCTRView::OnBnClickedRadioModesCircum()
 	this->GetDocument()->SetDirection(dir);
 	return;		
 
+}
+
+
+void CCTRView::UpdateVSGains()
+{
+	CString str;
+	this->GetDlgItemTextA(IDC_EDIT23, str);	
+	double gain_center = atof(str);
+	this->GetDlgItemTextA(IDC_EDIT25, str);	
+	double gain_tangent = atof(str);
+	this->GetDocument()->SetVSGains(gain_center, gain_tangent);
 }

@@ -80,6 +80,9 @@ private:
 	::Eigen::Vector2d	m_image_center;
 	double				m_scaling_factor;
 	bool				m_circumnavigation;
+	bool				m_line_detected;
+	double				m_gain_center;
+	double				m_gain_tangent;
 
 	// CKim - Variables for threads
 	bool				m_ioRunning;
@@ -206,6 +209,7 @@ public:
 	void	SetCentroid(double x, double y) {this->m_centroid[0] = x; this->m_centroid[1] = y;};
 	void	SetTangent(double tangent[2]) {memcpy(m_valve_tangent, tangent, 2 * sizeof(double));};
 	void	SetDirection(int direction){this->m_direction = direction;};
+	void	SetVSGains(double gain_center, double gain_tangent) {this->m_gain_center = gain_center; this->m_gain_tangent = gain_tangent;};
 
 	void	ChangeForceForTuning(double force);
 	void	SetForceGain(double forceGain, double forceGainD = 0, double forceGainI = 0);

@@ -2684,7 +2684,7 @@ void CCTRDoc::computeCircumnavigationDirection(Eigen::Matrix<double,6,1>& err)
 	error *= -0.3;
 
 	m_direction = 1;
-	error -= m_direction * ::Eigen::Map<::Eigen::Vector2d> (m_valve_tangent,2);
+	error -= 0.3 * m_direction * ::Eigen::Map<::Eigen::Vector2d> (m_valve_tangent,2);
 
 	::Eigen::Vector3d error3D;
 	error3D.segment(0, 2) = error;

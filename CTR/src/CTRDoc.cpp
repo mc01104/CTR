@@ -700,7 +700,7 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 					mySelf->UpdateCircumnavigationParams(msg);
 
 				end_loop = clock();
-
+				::std::cout << "CR:" << contactRatio << ::std::endl;
 			}
 			
 		}
@@ -2679,11 +2679,11 @@ double CCTRDoc::GetMonitorFreq()
 void CCTRDoc::computeCircumnavigationDirection(Eigen::Matrix<double,6,1>& err)
 {
 
-	//if (!m_line_detected)
-	//{
-	//	err.setZero();
-	//	return;
-	//}
+	if (!m_line_detected)
+	{
+		err.setZero();
+		return;
+	}
 
 	// later this needs to be computed from the plane normal
 	::Eigen::Matrix3d rot = ::Eigen::Matrix3d::Identity();

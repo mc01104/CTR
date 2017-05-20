@@ -315,6 +315,9 @@ protected:
 	int		m_control_mode;
 	int		m_freq_mode;
 
+	bool	m_apex;
+	double	m_apex_coordinates[5];
+
 // Generated message map functions
 protected:
 	DECLARE_MESSAGE_MAP()
@@ -332,5 +335,6 @@ public:
 
 	afx_msg void OnViewPlot();
 	afx_msg void OnUpdateViewPlot(CCmdUI *pCmdUI);
+	afx_msg void OnBnClickedGoToApex();
 
 };

@@ -889,13 +889,13 @@ void CCTRView::UpdateCentroid()
 
 void CCTRView::UpdateTangent()
 {
-	double tangent[2];
-	CString str;
-	this->GetDlgItemTextA(IDC_EDIT23, str);	
-	tangent[0] = atof(str);
-	this->GetDlgItemTextA(IDC_EDIT25, str);	
-	tangent[1] = atof(str);
-	this->GetDocument()->SetTangent(tangent);
+	//double tangent[2];
+	//CString str;
+	//this->GetDlgItemTextA(IDC_EDIT23, str);	
+	//tangent[0] = atof(str);
+	//this->GetDlgItemTextA(IDC_EDIT25, str);	
+	//tangent[1] = atof(str);
+	//this->GetDocument()->SetTangent(tangent);
 }
 
 void CCTRView::OnBnClickedRadioModesCircum()

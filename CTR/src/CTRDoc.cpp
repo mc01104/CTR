@@ -47,7 +47,7 @@
 
 // Heart Rate Monitoring from surgivet
 #include "HeartRateMonitor.h"
-
+#include "resource.h"
 
 #define DEFAULT_BUFLEN 512
 #define DEFAULT_PORT "27015"
@@ -72,6 +72,7 @@ BEGIN_MESSAGE_MAP(CCTRDoc, CDocument)
 
 	ON_BN_CLICKED(IDC_INIT_EM, &CCTRDoc::OnBnClickedInitEm)
 	ON_BN_CLICKED(IDC_REGST, &CCTRDoc::OnBnClickedRegst)
+	ON_BN_CLICKED(IDC_BUTTON11, &CCTRDoc::OnBnClickedGoToApex)
 
 END_MESSAGE_MAP()
 
@@ -206,6 +207,10 @@ CCTRDoc::CCTRDoc()
 
 	this->m_gain_center = 0.3;
 	this->m_gain_tangent = 0.3;
+
+	m_apex = false;
+	for (int i = 0; i < 5; ++i)
+		m_apex_coordinates[i] = 0;
 }
 
 CCTRDoc::~CCTRDoc()
@@ -694,10 +699,14 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 				mySelf->m_contactRatio = contactRatio;
 				mySelf->m_contact_error_integral += contactRatioError * delta_t;
 				mySelf->m_line_detected = msg[1];
+				mySelf->m_apex = msg[6];
 				LeaveCriticalSection(&m_cSection);
 
 				if (mySelf->m_line_detected)
 					mySelf->UpdateCircumnavigationParams(msg);
+
+				if (mySelf->m_apex);
+					memcpy(mySelf->m_apex_coordinates, &msg.data()[7], 5 * sizeof(double));
 
 				end_loop = clock();
 				::std::cout << "CR:" << contactRatio << ::std::endl;
@@ -2701,6 +2710,10 @@ void CCTRDoc::computeCircumnavigationDirection(Eigen::Matrix<double,6,1>& err)
 	error3D(2) = 0.0;
 
 	err.block(0, 0, 3, 1) = rot * error3D;
+
+	EnterCriticalSection(&m_cSection);
+	memcpy(this->m_Status.tgtTipPosDir, this->m_Status.currTipPosDir, 3 * sizeof(double));
+	LeaveCriticalSection(&m_cSection);
 }
 
 void CCTRDoc::ToggleCircumnavigation()
@@ -2738,4 +2751,10 @@ void CCTRDoc::SetVSGains(double gain_center, double gain_tangent)
 	this->m_gain_center = gain_center; 
 	this->m_gain_tangent = gain_tangent;
 	::std::cout << m_gain_center << ::std::endl;
+}
+
+void CCTRDoc::OnBnClickedGoToApex()
+{
+	if (this->m_apex && m_control_mode == 0)
+		this->SendCommand(0, m_apex_coordinates);
 }

@@ -1037,6 +1037,17 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 				mySelf->SlaveToMaster(localStat, scl);
 
 			}
+			if (mySelf->m_circumnavigation)
+			{
+								for(int i=0; i<6; i++)	
+				{
+					localStat.tgtTipPosDir[i] = localStat.currTipPosDir[i];	
+					localStat.refTipPosDir[i] = localStat.currTipPosDir[i];	
+				}
+				for(int i=0; i<16; i++)	
+					localStat.M_T0[i] = localStat.hapticState.tfMat[i];	
+				mySelf->SlaveToMaster(localStat, scl);
+			}
 		}
 
 					
@@ -2711,9 +2722,23 @@ void CCTRDoc::computeCircumnavigationDirection(Eigen::Matrix<double,6,1>& err)
 
 	err.block(0, 0, 3, 1) = rot * error3D;
 
+	CTR_status localStat;
 	EnterCriticalSection(&m_cSection);
-	memcpy(this->m_Status.tgtTipPosDir, this->m_Status.currTipPosDir, 3 * sizeof(double));
+	localStat = this->m_Status;
 	LeaveCriticalSection(&m_cSection);
+
+	for(int i=0; i<6; i++)	
+	{
+		localStat.tgtTipPosDir[i] = localStat.currTipPosDir[i];	
+		localStat.refTipPosDir[i] = localStat.currTipPosDir[i];	
+	}
+	for(int i=0; i<16; i++)	
+		localStat.M_T0[i] = localStat.hapticState.tfMat[i];	
+
+	this->SlaveToMaster(localStat, 1);	
+	this->m_Status = localStat;
+	//memcpy(this->m_Status.tgtTipPosDir, this->m_Status.currTipPosDir, 3 * sizeof(double));
+
 }
 
 void CCTRDoc::ToggleCircumnavigation()
@@ -2755,6 +2780,7 @@ void CCTRDoc::SetVSGains(double gain_center, double gain_tangent)
 
 void CCTRDoc::OnBnClickedGoToApex()
 {
+	::std::cout << "Go to apex" << ::std::endl; 
 	if (this->m_apex && m_control_mode == 0)
 		this->SendCommand(0, m_apex_coordinates);
 }

@@ -2722,23 +2722,6 @@ void CCTRDoc::computeCircumnavigationDirection(Eigen::Matrix<double,6,1>& err)
 
 	err.block(0, 0, 3, 1) = rot * error3D;
 
-	CTR_status localStat;
-	EnterCriticalSection(&m_cSection);
-	localStat = this->m_Status;
-	LeaveCriticalSection(&m_cSection);
-
-	for(int i=0; i<6; i++)	
-	{
-		localStat.tgtTipPosDir[i] = localStat.currTipPosDir[i];	
-		localStat.refTipPosDir[i] = localStat.currTipPosDir[i];	
-	}
-	for(int i=0; i<16; i++)	
-		localStat.M_T0[i] = localStat.hapticState.tfMat[i];	
-
-	this->SlaveToMaster(localStat, 1);	
-	this->m_Status = localStat;
-	//memcpy(this->m_Status.tgtTipPosDir, this->m_Status.currTipPosDir, 3 * sizeof(double));
-
 }
 
 void CCTRDoc::ToggleCircumnavigation()

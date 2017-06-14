@@ -88,6 +88,7 @@ double CCTRDoc::c_CntToMM = 3.175;
 
 CCTRDoc::CCTRDoc()
 {
+	m_contact_response = false;
 	// TODO: add one-time construction code here
 	m_ioRunning = false;		m_teleOpMode = false;
 	m_frequency_changed = false;
@@ -211,6 +212,11 @@ CCTRDoc::CCTRDoc()
 	m_apex = false;
 	for (int i = 0; i < 5; ++i)
 		m_apex_coordinates[i] = 0;
+
+	m_wall_detected = false;
+
+	m_centroid_apex[0] = 0; 
+	m_centroid_apex[1] = 0;
 }
 
 CCTRDoc::~CCTRDoc()
@@ -614,16 +620,18 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 		if (mySelf->m_freq_mode == 1)
 			ss << mySelf->m_heartRateMonitor->getHeartRate() << " ";
 		else
-		{
 			ss << mySelf->m_frequency << " ";
-			//::std::cout << mySelf->m_frequency << ::std::endl;
-		}
 
 		// target tip position/orientation
 		for (int i = 0; i < 3; ++i)
 			ss << localStat.tgtTipPosDir[i] << " ";
 
 		if (mySelf->m_circumnavigation)
+			ss << 1 << " ";
+		else 
+			ss << 0 << " ";
+
+		if (mySelf->m_apex_to_valve)
 			ss << 1 << " ";
 		else 
 			ss << 0 << " ";
@@ -699,14 +707,23 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 				mySelf->m_contactRatio = contactRatio;
 				mySelf->m_contact_error_integral += contactRatioError * delta_t;
 				mySelf->m_line_detected = msg[1];
-				mySelf->m_apex = msg[6];
+				mySelf->m_contact_response = msg[2];
+				mySelf->m_wall_detected = msg[7];
+				mySelf->m_apex = msg[10];
 				LeaveCriticalSection(&m_cSection);
 
 				if (mySelf->m_line_detected)
 					mySelf->UpdateCircumnavigationParams(msg);
 
+				if (mySelf->m_wall_detected)
+				{
+					mySelf->m_centroid_apex[0] = msg[8];
+					mySelf->m_centroid_apex[1] = msg[9];
+				}
+
+
 				if (mySelf->m_apex);
-					memcpy(mySelf->m_apex_coordinates, &msg.data()[7], 5 * sizeof(double));
+					memcpy(mySelf->m_apex_coordinates, &msg.data()[8], 5 * sizeof(double));
 
 				end_loop = clock();
 				::std::cout << "CR:" << contactRatio << ::std::endl;
@@ -1037,7 +1054,7 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 				mySelf->SlaveToMaster(localStat, scl);
 
 			}
-			if (mySelf->m_circumnavigation)
+			if (mySelf->m_circumnavigation || mySelf->m_apex_to_valve)
 			{
 								for(int i=0; i<6; i++)	
 				{
@@ -1350,6 +1367,8 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 	CTR_status	localStat;
 
 	bool circumnavigation = false;
+	bool isInContact = false;
+	bool apex_to_valve = false;
 	// CKim - Variables for Feedforward position control
 	bool safeToTeleOp = false;			
 	double vel[7];			
@@ -1473,6 +1492,8 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 				planeNormal(i) = mySelf->m_contact_control_normal(i);
 
 			circumnavigation = mySelf->m_circumnavigation;
+			apex_to_valve = mySelf->m_apex_to_valve;
+			isInContact = mySelf->m_contact_response;
 			LeaveCriticalSection(&m_cSection);
 			//PrintCArray(localStat.tgtWorkspaceVelocity, 3);
 			//PrintCArray(localStat.tgtWorkspaceAngVelocity, 3);
@@ -1509,15 +1530,18 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 						err(i,0) = mySelf->m_position_gain * K[i]*(localStat.tgtTipPosDir[i] - localStat.currTipPosDir[i]) + mySelf->m_position_gain_feedforward * localStat.tgtWorkspaceVelocity[i];
 					else
 						err(i, 0) = K_image[i] * localStat.tgtWorkspaceVelocity[i];   // this is to control the robot at the image-frame of the cardioscope
+					::Eigen::Matrix<double, 6, 1> tmpVelocities;
 					if (circumnavigation)
 					{
-						mySelf->computeCircumnavigationDirection(err);
-						//if (!mySelf->m_line_detected)
-						//	err.setZero();
-						::std::cout << err.block(0,0,3,1).transpose() << ::std::endl;
-						
+						mySelf->computeCircumnavigationDirection(tmpVelocities);
+						if (isInContact)
+							err.block(0,0, 3, 1) = tmpVelocities;
+						else
+							err.setZero();
+
 					}
-					//sum += (localStat.tgtTipPosDir[i+3]*localStat.currTipPosDir[i+3]);				
+					else if (apex_to_valve)
+						mySelf->computeApexToValveMotion(err);
 				}
 				for(int i=3; i<6; i++)
 				{
@@ -2699,11 +2723,11 @@ double CCTRDoc::GetMonitorFreq()
 void CCTRDoc::computeCircumnavigationDirection(Eigen::Matrix<double,6,1>& err)
 {
 
-	if (!m_line_detected)
-	{
-		err.setZero();
-		return;
-	}
+	//if (!m_line_detected)
+	//{
+	//	err.setZero();
+	//	return;
+	//}
 
 	// later this needs to be computed from the plane normal
 	::Eigen::Matrix3d rot = ::Eigen::Matrix3d::Identity();
@@ -2724,6 +2748,7 @@ void CCTRDoc::computeCircumnavigationDirection(Eigen::Matrix<double,6,1>& err)
 
 }
 
+// BE CAREFULL TO SWITCH ON/OFF THE CIRCUM
 void CCTRDoc::ToggleCircumnavigation()
 {
 	this->m_circumnavigation = !this->m_circumnavigation;
@@ -2733,17 +2758,26 @@ void CCTRDoc::ToggleCircumnavigation()
 	::std::cout << ::std::endl;
 }
 
+void CCTRDoc::ToggleApexToValve()
+{
+
+	this->m_apex_to_valve = !this->m_apex_to_valve;
+	
+	::std::cout << "apex-to-valve navigation: ";
+	(this->m_circumnavigation ?	::std::cout << "ON" : ::std::cout << "OFF");
+	::std::cout << ::std::endl;
+}
 
 void CCTRDoc::UpdateCircumnavigationParams(::std::vector<double>& msg)
 {
 
-	m_centroid[0] = msg[2];
-	m_centroid[1] = msg[3];
+	m_centroid[0] = msg[3];
+	m_centroid[1] = msg[4];
 
 	memcpy(m_valve_tangent_prev, m_valve_tangent, 2 * sizeof(double));
 
-	m_valve_tangent[0]  = msg[4];
-	m_valve_tangent[1]  = msg[5];
+	m_valve_tangent[0]  = msg[5];
+	m_valve_tangent[1]  = msg[6];
 
 	double tmp = m_valve_tangent_prev[0] * m_valve_tangent[0] + m_valve_tangent_prev[1] * m_valve_tangent[1];
 
@@ -2767,3 +2801,24 @@ void CCTRDoc::OnBnClickedGoToApex()
 	if (this->m_apex && m_control_mode == 0)
 		this->SendCommand(0, m_apex_coordinates);
 }
+
+void CCTRDoc::computeApexToValveMotion(Eigen::Matrix<double,6,1>& err)
+{
+	if (!this->m_wall_detected)
+	{
+		err.setZero();
+		return;
+	}
+
+	double Kp = 2.0/this->m_scaling_factor;
+
+	// check controller
+	if (this->m_centroid_apex[0] >= 100)
+		err[1] = Kp * (this->m_centroid_apex[0] - 100);
+	else if (this->m_centroid_apex[0] <= 20)
+		err[1] = -Kp * (this->m_centroid_apex[0] - 20);
+
+	// forward velocity
+	err[2] = 2.0;    // mm/sec
+}
+

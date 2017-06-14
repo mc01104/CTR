@@ -149,6 +149,8 @@ public:
 	void ToggleForceControl();
 	void ToggleCameraControl();
 	void ToggleCircumnavigation();
+	void ToggleApexToValve();
+
 	void computeCircle(::Eigen::Matrix3d rot, ::Eigen::Vector3d& center, double& radius);
 	bool m_freqUpdated;
 

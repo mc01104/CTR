@@ -74,6 +74,7 @@ private:
 
 	// visual servoing stuff - these need to be read from the network
 	double				m_centroid[2];
+	double				m_centroid_apex[2];
 	double				m_valve_tangent[2];
 	double				m_valve_tangent_prev[2];
 	int					m_direction;
@@ -81,8 +82,10 @@ private:
 	double				m_scaling_factor;
 	bool				m_circumnavigation;
 	bool				m_line_detected;
+	bool				m_wall_detected;
 	double				m_gain_center;
 	double				m_gain_tangent;
+	bool				m_apex_to_valve;
 
 	// CKim - Variables for threads
 	bool				m_ioRunning;
@@ -204,6 +207,8 @@ public:
 	void	ToggleForceControl();
 	void	ToggleLog();
 	void	ToggleCircumnavigation();
+	void	ToggleApexToValve();
+
 	void	SetFrequency(double frequency) {this->m_frequency = frequency; this->m_frequency_changed = true;};
 	void	SetScalingFactor(double scaling_factor) {this->m_scaling_factor = scaling_factor;};
 	void	SetCentroid(double x, double y) {this->m_centroid[0] = x; this->m_centroid[1] = y;};
@@ -230,6 +235,7 @@ public:
 	void setContactControlNormal(const ::Eigen::Vector3d& computedNormal, const ::Eigen::Vector3d& center, double radius, ::std::vector<::Eigen::Vector3d> pts);
 
 	void computeCircumnavigationDirection(Eigen::Matrix<double,6,1>& err);
+	void computeApexToValveMotion(Eigen::Matrix<double,6,1>& err);
 #ifdef _DEBUG
 	virtual void AssertValid() const;
 	virtual void Dump(CDumpContext& dc) const;
@@ -317,6 +323,8 @@ protected:
 
 	bool	m_apex;
 	double	m_apex_coordinates[5];
+
+	bool	m_contact_response;
 
 // Generated message map functions
 protected:

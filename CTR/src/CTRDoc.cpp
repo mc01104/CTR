@@ -728,7 +728,8 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 					memcpy(mySelf->m_apex_coordinates, &msg.data()[8], 5 * sizeof(double));
 
 				end_loop = clock();
-				::std::cout << "CR:" << contactRatio << ::std::endl;
+				//PrintCArray(msg.data(), msg.size());
+				//::std::cout << "CR:" << contactRatio << ::std::endl;
 			}
 			
 		}
@@ -2811,11 +2812,11 @@ void CCTRDoc::OnBnClickedGoToApex()
 
 void CCTRDoc::computeApexToValveMotion(Eigen::Matrix<double,6,1>& err)
 {
-	if (!this->m_wall_detected)
-	{
-		err.setZero();
-		return;
-	}
+	//if (!this->m_wall_detected)
+	//{
+	//	err.setZero();
+	//	return;
+	//}
 
 	double Kp = 2.0/this->m_scaling_factor;
 
@@ -2823,10 +2824,10 @@ void CCTRDoc::computeApexToValveMotion(Eigen::Matrix<double,6,1>& err)
 
 
 	// check controller
-	if (this->m_centroid_apex[0] >= 100)
-		err[1] = Kp * (this->m_centroid_apex[0] - 100);
-	else if (this->m_centroid_apex[0] <= 20)
-		err[1] = -Kp * (this->m_centroid_apex[0] - 20);
+	if (this->m_centroid_apex[1] >= 100)
+		err[1] = Kp * (this->m_centroid_apex[1] - 100);
+	else if (this->m_centroid_apex[1] <= 20)
+		err[1] = Kp * (this->m_centroid_apex[1] - 20);
 
 	// forward velocity
 	err[2] = 2.0;    // mm/sec

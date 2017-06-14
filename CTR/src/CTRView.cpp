@@ -873,7 +873,7 @@ void CCTRView::ToggleCircumnavigation()
 
 void CCTRView::ToggleApexToValve()
 {
-	this->GetDocument()->ToggleCircumnavigation();
+	this->GetDocument()->ToggleApexToValve();
 }
 
 void CCTRView::UpdateScalingFactor()

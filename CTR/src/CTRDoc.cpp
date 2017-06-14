@@ -217,6 +217,8 @@ CCTRDoc::CCTRDoc()
 
 	m_centroid_apex[0] = 0; 
 	m_centroid_apex[1] = 0;
+
+	this->m_apex_to_valve = false;
 }
 
 CCTRDoc::~CCTRDoc()
@@ -1549,7 +1551,8 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 				}
 
 			}
-
+			// temporarily for debugging the higher level features
+			err.setZero();
 
 			//project the error on the plane
 			if (mySelf->m_forceControlActivated)
@@ -2764,7 +2767,7 @@ void CCTRDoc::ToggleApexToValve()
 	this->m_apex_to_valve = !this->m_apex_to_valve;
 	
 	::std::cout << "apex-to-valve navigation: ";
-	(this->m_circumnavigation ?	::std::cout << "ON" : ::std::cout << "OFF");
+	(this->m_apex_to_valve ?	::std::cout << "ON" : ::std::cout << "OFF");
 	::std::cout << ::std::endl;
 }
 

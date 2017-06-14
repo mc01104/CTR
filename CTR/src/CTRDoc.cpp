@@ -2732,6 +2732,9 @@ void CCTRDoc::computeCircumnavigationDirection(Eigen::Matrix<double,6,1>& err)
 	//	return;
 	//}
 
+	::std::cout << "centroid:[" << m_centroid[0] << "," << m_centroid[1] << "]" << ::std::endl; 
+	::std::cout << "tangent:[" << m_valve_tangent[0] << "," << m_valve_tangent[1] << "]" << ::std::endl; 
+
 	// later this needs to be computed from the plane normal
 	::Eigen::Matrix3d rot = ::Eigen::Matrix3d::Identity();
 
@@ -2748,6 +2751,7 @@ void CCTRDoc::computeCircumnavigationDirection(Eigen::Matrix<double,6,1>& err)
 	error3D(2) = 0.0;
 
 	err.block(0, 0, 3, 1) = rot * error3D;
+	::std::cout << "velocities:" << err.block(0, 0, 3, 1).transpose() << ::std::endl;
 
 }
 
@@ -2815,6 +2819,9 @@ void CCTRDoc::computeApexToValveMotion(Eigen::Matrix<double,6,1>& err)
 
 	double Kp = 2.0/this->m_scaling_factor;
 
+	::std::cout << "apex centroid:[" << m_centroid_apex[0] << "," << m_centroid_apex[1] << "]" << ::std::endl; 
+
+
 	// check controller
 	if (this->m_centroid_apex[0] >= 100)
 		err[1] = Kp * (this->m_centroid_apex[0] - 100);
@@ -2823,5 +2830,7 @@ void CCTRDoc::computeApexToValveMotion(Eigen::Matrix<double,6,1>& err)
 
 	// forward velocity
 	err[2] = 2.0;    // mm/sec
+
+	::std::cout << "velocities:" << err.block(0, 0, 3, 1).transpose() << ::std::endl;
 }
 

@@ -1495,9 +1495,9 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 
 				if (mySelf->m_forceControlActivated)
 				{
-					//localStat.tgtTipPosDir[3] = planeNormal(0);
-					//localStat.tgtTipPosDir[4] = planeNormal(1);
-					//localStat.tgtTipPosDir[5] = planeNormal(2);
+					localStat.tgtTipPosDir[3] = 0;
+					localStat.tgtTipPosDir[4] = 0;
+					localStat.tgtTipPosDir[5] = 1;
 					tangentVelocity.setZero();
 				}
 

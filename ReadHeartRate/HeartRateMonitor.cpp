@@ -24,8 +24,8 @@ void HeartRateMonitor::run()
 	::std::vector<bool> source;
 	::std::vector<int> index;
 	index.push_back(1);
-	index.push_back(4);
-	//index.push_back(5);
+	//index.push_back(4);
+	index.push_back(5);
 	index.push_back(8);
 
 	//::std::cout << "log:" << logData << "prev:" << prevLog;

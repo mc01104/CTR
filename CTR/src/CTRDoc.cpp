@@ -1519,9 +1519,9 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 
 				if (mySelf->m_forceControlActivated)
 				{
-					localStat.tgtTipPosDir[3] = 0;
-					localStat.tgtTipPosDir[4] = 0;
-					localStat.tgtTipPosDir[5] = 1;
+					//localStat.tgtTipPosDir[3] = 0;
+					//localStat.tgtTipPosDir[4] = 0;
+					//localStat.tgtTipPosDir[5] = 1;
 					tangentVelocity.setZero();
 				}
 
@@ -1553,7 +1553,7 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 
 			}
 			// temporarily for debugging the higher level features
-			err.setZero();
+			//err.setZero();
 
 			//project the error on the plane
 			if (mySelf->m_forceControlActivated)

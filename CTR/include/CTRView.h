@@ -74,6 +74,7 @@ public:
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	afx_msg void OnViewGraphicwin();
 	afx_msg void OnKillFocusContactRatio();
+	afx_msg void OnKillFocusSamplingPeriods();
 
 	afx_msg void OnUpdateViewGraphicwin(CCmdUI *pCmdUI);
 	afx_msg void OnBnClickedRadioModes();
@@ -150,6 +151,7 @@ public:
 	void ToggleCameraControl();
 	void ToggleCircumnavigation();
 	void ToggleApexToValve();
+	void ToggleGlobalGains();
 
 	void computeCircle(::Eigen::Matrix3d rot, ::Eigen::Vector3d& center, double& radius);
 	bool m_freqUpdated;

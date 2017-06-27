@@ -86,7 +86,7 @@ BEGIN_MESSAGE_MAP(CCTRView, CFormView)
 
 	ON_BN_CLICKED(IDC_CHECK1, &CCTRView::ToggleForceControl)
 	ON_BN_CLICKED(IDC_CHECK2, &CCTRView::ToggleCircumnavigation)
-//	ON_BN_CLICKED(IDC_CHECK3, &CCTRView::ToggleCameraControl)
+	ON_BN_CLICKED(IDC_CHECK3, &CCTRView::ToggleGlobalGains)
 	ON_BN_CLICKED(IDC_CHECK4, &CCTRView::ToggleApexToValve)
 
 	ON_EN_KILLFOCUS(IDC_EDIT15, &CCTRView::UpdateGains)
@@ -97,6 +97,7 @@ BEGIN_MESSAGE_MAP(CCTRView, CFormView)
 	ON_EN_KILLFOCUS(IDC_EDIT21, &CCTRView::UpdateScalingFactor)
 	ON_EN_KILLFOCUS(IDC_EDIT22, &CCTRView::UpdateVSGains)
 	ON_EN_KILLFOCUS(IDC_EDIT24, &CCTRView::UpdateVSGains)	
+	ON_EN_KILLFOCUS(IDC_EDIT23, &CCTRView::OnKillFocusSamplingPeriods)	
 	//ON_EN_KILLFOCUS(IDC_EDIT23, &CCTRView::UpdateTangent)
 	//ON_EN_KILLFOCUS(IDC_EDIT25, &CCTRView::UpdateTangent)
 
@@ -933,4 +934,18 @@ void CCTRView::UpdateVSGains()
 	this->GetDlgItemTextA(IDC_EDIT24, str);	
 	double gain_tangent = atof(str);
 	this->GetDocument()->SetVSGains(gain_center, gain_tangent);
+}
+
+void CCTRView::ToggleGlobalGains()
+{
+	this->GetDocument()->ToggleJacobianContactControl();
+}
+
+void CCTRView::OnKillFocusSamplingPeriods()
+{
+	CString str;
+	this->GetDlgItemTextA(IDC_EDIT23, str);	
+	int samplingPeriods = atoi(str);
+
+	this->GetDocument()->SetSamplingPeriod(samplingPeriods);
 }

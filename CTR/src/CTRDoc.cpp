@@ -219,6 +219,9 @@ CCTRDoc::CCTRDoc()
 	m_centroid_apex[1] = 0;
 
 	this->m_apex_to_valve = false;
+	m_useJacobianContactControl = false;
+
+	periodsForCRComputation = 1;
 }
 
 CCTRDoc::~CCTRDoc()
@@ -285,7 +288,13 @@ void CCTRDoc::ComputeDesiredVelocity()
 		contact_error_deriv = this->cr_dot_filter->step((m_contactError - m_contactError_prev)/m_deltaT);
 
 	// this is the PD controller -> need to correctly propagate this goal to the position controller
+
+
 	::Eigen::Vector3d local_vel = this->m_contact_control_normal *  (m_contactGain * m_contactError + m_contactDGain * contact_error_deriv + m_contactIGain * m_contact_error_integral);
+
+	if (m_useJacobianContactControl)
+		local_vel *= this->computeInverseApproxJacovianCR(this->m_contactRatio);
+
 	//::std::cout << local_vel.transpose() << ::std::endl;
 	memcpy(m_desiredPosition, local_vel.data(), 3 * sizeof(double));
 
@@ -637,6 +646,8 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 			ss << 1 << " ";
 		else 
 			ss << 0 << " ";
+
+		ss << mySelf->periodsForCRComputation << " ";
 
 		if (mySelf->m_plane_changed)
 		{
@@ -2835,3 +2846,25 @@ void CCTRDoc::computeApexToValveMotion(Eigen::Matrix<double,6,1>& err)
 	//::std::cout << "velocities:" << err.block(0, 0, 3, 1).transpose() << ::std::endl;
 }
 
+
+double	CCTRDoc::computeInverseApproxJacovianCR(double currentCR)
+{
+	double result = 0;
+	double coeffs[6] = {-4.30643464102747e-17, -5.95983404918811e-16, 2.47429266802908, 0.100012827571416, -2.62290365923007, 1.04859816362958};
+    if (currentCR > 0.01 && currentCR < 0.99)
+        result = coeffs[2] + 2*coeffs[3] * currentCR + 3*coeffs[4] * ::std::pow(currentCR, 2)+ 4*coeffs[5] * ::std::pow(currentCR, 3)+ 5*coeffs[6] * ::std::pow(currentCR, 4);
+    else
+        result = 0.1;
+	
+	return result;
+}
+
+
+void	CCTRDoc::ToggleJacobianContactControl()
+{
+	this->m_useJacobianContactControl = !this->m_useJacobianContactControl;
+	
+	::std::cout << "use global gains: ";
+	(this->m_useJacobianContactControl ?	::std::cout << "ON" : ::std::cout << "OFF");
+	::std::cout << ::std::endl;
+}

@@ -167,6 +167,7 @@ private:
 public:
 	bool				m_adapt_LWPR;
 	::std::string		m_date;
+	
 // Overrides
 public:
 	virtual BOOL OnNewDocument();
@@ -208,6 +209,7 @@ public:
 	void	ToggleLog();
 	void	ToggleCircumnavigation();
 	void	ToggleApexToValve();
+	void	ToggleJacobianContactControl();
 
 	void	SetFrequency(double frequency) {this->m_frequency = frequency; this->m_frequency_changed = true;};
 	void	SetScalingFactor(double scaling_factor) {this->m_scaling_factor = scaling_factor;};
@@ -215,7 +217,7 @@ public:
 	void	SetTangent(double tangent[2]) {memcpy(m_valve_tangent, tangent, 2 * sizeof(double));};
 	void	SetDirection(int direction){this->m_direction = direction;};
 	void	SetVSGains(double gain_center, double gain_tangent);
-
+	void	SetSamplingPeriod(int samplingPeriod) {this->periodsForCRComputation = samplingPeriod;};
 	void	ChangeForceForTuning(double force);
 	void	SetForceGain(double forceGain, double forceGainD = 0, double forceGainI = 0);
 	void	SetContactRatio(double ratio);
@@ -236,6 +238,8 @@ public:
 
 	void computeCircumnavigationDirection(Eigen::Matrix<double,6,1>& err);
 	void computeApexToValveMotion(Eigen::Matrix<double,6,1>& err);
+
+	int	 periodsForCRComputation;
 #ifdef _DEBUG
 	virtual void AssertValid() const;
 	virtual void Dump(CDumpContext& dc) const;
@@ -325,7 +329,8 @@ protected:
 	double	m_apex_coordinates[5];
 
 	bool	m_contact_response;
-
+	double	computeInverseApproxJacovianCR(double currentCR);
+	bool	m_useJacobianContactControl;
 // Generated message map functions
 protected:
 	DECLARE_MESSAGE_MAP()

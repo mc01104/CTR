@@ -729,7 +729,7 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 
 				end_loop = clock();
 				//PrintCArray(msg.data(), msg.size());
-				//::std::cout << "CR:" << contactRatio << ::std::endl;
+				::std::cout << "CR:" << contactRatio << ::std::endl;
 			}
 			
 		}
@@ -2818,9 +2818,9 @@ void CCTRDoc::computeApexToValveMotion(Eigen::Matrix<double,6,1>& err)
 	//	return;
 	//}
 
-	double Kp = 2.0/this->m_scaling_factor;
+	double Kp = 5.0/this->m_scaling_factor;
 
-	::std::cout << "apex centroid:[" << m_centroid_apex[0] << "," << m_centroid_apex[1] << "]" << ::std::endl; 
+	//::std::cout << "apex centroid:[" << m_centroid_apex[0] << "," << m_centroid_apex[1] << "]" << ::std::endl; 
 
 
 	// check controller
@@ -2832,6 +2832,6 @@ void CCTRDoc::computeApexToValveMotion(Eigen::Matrix<double,6,1>& err)
 	// forward velocity
 	err[2] = 2.0;    // mm/sec
 
-	::std::cout << "velocities:" << err.block(0, 0, 3, 1).transpose() << ::std::endl;
+	//::std::cout << "velocities:" << err.block(0, 0, 3, 1).transpose() << ::std::endl;
 }
 

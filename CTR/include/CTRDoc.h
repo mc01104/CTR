@@ -184,11 +184,13 @@ public:
 
 	double GetMonitorFreq();
 	void	UpdateGains(double position, double orientation, double position_forward, double orientation_forward);
+	void	UpdateGainsApexToValve(double center, double forward, double threshold_min, double threshold_max);
+	void	UpdateGlobalGain(double gain) {this->m_globalCR_gain = gain;};
 	void	SwitchControlMode(int mode);
 	void	SwitchFreqMode(int mode);
 
-	void SwitchAllControlFlagsOff();
-	void				ToggleCameraControl();
+	void	SwitchAllControlFlagsOff();
+	void	ToggleCameraControl();
 	// CKim - Get thread safe copy of the robot status
 	void	GetCurrentStatus(CTR_status& stat);
 
@@ -327,6 +329,13 @@ protected:
 
 	bool	m_apex;
 	double	m_apex_coordinates[5];
+
+	double	m_apex_theshold_min;
+	double	m_apex_theshold_max;
+	double  m_center_gainATV;
+	double  m_forward_gainATV;
+
+	double	m_globalCR_gain;
 
 	bool	m_contact_response;
 	double	computeInverseApproxJacovianCR(double currentCR);

@@ -222,6 +222,14 @@ CCTRDoc::CCTRDoc()
 	m_useJacobianContactControl = false;
 
 	periodsForCRComputation = 1;
+
+	m_apex_theshold_min = 20;
+	m_apex_theshold_max = 100;
+	m_center_gainATV = 5.0/this->m_scaling_factor;
+	m_forward_gainATV = 2.0;
+
+	m_globalCR_gain = 1.0;
+
 }
 
 CCTRDoc::~CCTRDoc()
@@ -293,7 +301,7 @@ void CCTRDoc::ComputeDesiredVelocity()
 	::Eigen::Vector3d local_vel = this->m_contact_control_normal *  (m_contactGain * m_contactError + m_contactDGain * contact_error_deriv + m_contactIGain * m_contact_error_integral);
 
 	if (m_useJacobianContactControl)
-		local_vel *= this->computeInverseApproxJacovianCR(this->m_contactRatio);
+		local_vel *= this->m_globalCR_gain * this->computeInverseApproxJacovianCR(this->m_contactRatio);
 
 	//::std::cout << local_vel.transpose() << ::std::endl;
 	memcpy(m_desiredPosition, local_vel.data(), 3 * sizeof(double));
@@ -2829,21 +2837,15 @@ void CCTRDoc::computeApexToValveMotion(Eigen::Matrix<double,6,1>& err)
 	//	return;
 	//}
 
-	double Kp = 5.0/this->m_scaling_factor;
-
-	//::std::cout << "apex centroid:[" << m_centroid_apex[0] << "," << m_centroid_apex[1] << "]" << ::std::endl; 
-
-
 	// check controller
-	if (this->m_centroid_apex[1] >= 100)
-		err[1] = Kp * (this->m_centroid_apex[1] - 100);
-	else if (this->m_centroid_apex[1] <= 20)
-		err[1] = Kp * (this->m_centroid_apex[1] - 20);
+	if (this->m_centroid_apex[1] >= m_apex_theshold_max)
+		err[1] = m_center_gainATV * (this->m_centroid_apex[1] - m_apex_theshold_max);
+	else if (this->m_centroid_apex[1] <= m_apex_theshold_min)
+		err[1] = m_center_gainATV * (this->m_centroid_apex[1] - m_apex_theshold_min);
 
 	// forward velocity
-	err[2] = 2.0;    // mm/sec
+	err[2] = m_forward_gainATV;    // mm/sec
 
-	//::std::cout << "velocities:" << err.block(0, 0, 3, 1).transpose() << ::std::endl;
 }
 
 
@@ -2867,4 +2869,14 @@ void	CCTRDoc::ToggleJacobianContactControl()
 	::std::cout << "use global gains: ";
 	(this->m_useJacobianContactControl ?	::std::cout << "ON" : ::std::cout << "OFF");
 	::std::cout << ::std::endl;
+}
+
+void	CCTRDoc::UpdateGainsApexToValve(double center, double forward, double threshold_min, double threshold_max)
+{
+	this->m_apex_theshold_min = threshold_min;
+	this->m_apex_theshold_max = threshold_max;
+	this->m_center_gainATV = center;
+	this->m_forward_gainATV = forward;
+
+	::std::cout << "Apex-to-valve gains updated" << ::std::endl;
 }

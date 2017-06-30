@@ -98,8 +98,12 @@ BEGIN_MESSAGE_MAP(CCTRView, CFormView)
 	ON_EN_KILLFOCUS(IDC_EDIT22, &CCTRView::UpdateVSGains)
 	ON_EN_KILLFOCUS(IDC_EDIT24, &CCTRView::UpdateVSGains)	
 	ON_EN_KILLFOCUS(IDC_EDIT23, &CCTRView::OnKillFocusSamplingPeriods)	
-	//ON_EN_KILLFOCUS(IDC_EDIT23, &CCTRView::UpdateTangent)
-	//ON_EN_KILLFOCUS(IDC_EDIT25, &CCTRView::UpdateTangent)
+	ON_EN_KILLFOCUS(IDC_EDIT25, &CCTRView::UpdateGainsATV)	
+	ON_EN_KILLFOCUS(IDC_EDIT26, &CCTRView::UpdateGainsATV)	
+	ON_EN_KILLFOCUS(IDC_EDIT27, &CCTRView::UpdateGainsATV)	
+	ON_EN_KILLFOCUS(IDC_EDIT29, &CCTRView::UpdateGainsATV)	
+
+	ON_EN_KILLFOCUS(IDC_EDIT28, &CCTRView::UpdateGlovalGain)	
 
 	ON_BN_CLICKED(IDC_RADIO_JA3, &CCTRView::OnBnClickedRadioModesController)	
 	ON_BN_CLICKED(IDC_RADIO_TELE4, &CCTRView::OnBnClickedRadioModesController)
@@ -948,4 +952,30 @@ void CCTRView::OnKillFocusSamplingPeriods()
 	int samplingPeriods = atoi(str);
 
 	this->GetDocument()->SetSamplingPeriod(samplingPeriods);
+}
+
+
+void CCTRView::UpdateGainsATV()
+{
+	CString str;
+	this->GetDlgItemTextA(IDC_EDIT25, str);	
+	double gain_forward = atof(str);
+	this->GetDlgItemTextA(IDC_EDIT26, str);	
+	double gain_center = atof(str);
+	this->GetDlgItemTextA(IDC_EDIT27, str);	
+	double thres_min = atof(str);
+	this->GetDlgItemTextA(IDC_EDIT29, str);	
+	double thres_max = atof(str);
+
+	this->GetDocument()->UpdateGainsApexToValve(gain_center, gain_forward, thres_min, thres_max);
+
+
+}
+
+void CCTRView::UpdateGlovalGain()
+{
+	CString str;
+	this->GetDlgItemTextA(IDC_EDIT28, str);
+	double gain = atof(str);
+	this->GetDocument()->UpdateGlobalGain(gain);
 }

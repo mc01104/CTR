@@ -90,6 +90,8 @@ public:
 	afx_msg void OnBnClickedRadioModesController();
 	afx_msg void OnBnClickedRadioModesFreq();
 	afx_msg void OnBnClickedRadioModesCircum();
+	afx_msg void UpdateGainsATV();
+	afx_msg void UpdateGlovalGain();
 
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 	

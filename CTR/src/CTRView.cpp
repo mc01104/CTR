@@ -950,7 +950,7 @@ void CCTRView::OnKillFocusSamplingPeriods()
 	CString str;
 	this->GetDlgItemTextA(IDC_EDIT23, str);	
 	int samplingPeriods = atoi(str);
-
+	//::std::cout << "sampling periods: " << samplingPeriods << ::std::endl;
 	this->GetDocument()->SetSamplingPeriod(samplingPeriods);
 }
 

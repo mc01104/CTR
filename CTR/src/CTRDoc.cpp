@@ -655,6 +655,7 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 		else 
 			ss << 0 << " ";
 
+		//::std::cout << mySelf->periodsForCRComputation << ::std::endl;
 		ss << mySelf->periodsForCRComputation << " ";
 
 		if (mySelf->m_plane_changed)
@@ -748,7 +749,7 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 
 				end_loop = clock();
 				//PrintCArray(msg.data(), msg.size());
-				::std::cout << "CR:" << contactRatio << ::std::endl;
+				//::std::cout << "CR:" << contactRatio << ::std::endl;
 			}
 			
 		}
@@ -1556,7 +1557,7 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 					if (circumnavigation)
 					{
 						mySelf->computeCircumnavigationDirection(tmpVelocities);
-						if (isInContact)
+						if (!isInContact)
 							err.block(0,0, 3, 1) = tmpVelocities;
 						else
 							err.setZero();
@@ -2879,4 +2880,9 @@ void	CCTRDoc::UpdateGainsApexToValve(double center, double forward, double thres
 	this->m_forward_gainATV = forward;
 
 	::std::cout << "Apex-to-valve gains updated" << ::std::endl;
+	::std::cout << "minimum threshold:" << this->m_apex_theshold_min << ::std::endl;
+	::std::cout << "maximum threshold:" << this->m_apex_theshold_max << ::std::endl;
+
+	::std::cout << "center gain:" << this->m_center_gainATV << ::std::endl;
+	::std::cout << "forward gain:" << this->m_forward_gainATV << ::std::endl;
 }

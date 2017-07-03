@@ -185,7 +185,7 @@ public:
 	double GetMonitorFreq();
 	void	UpdateGains(double position, double orientation, double position_forward, double orientation_forward);
 	void	UpdateGainsApexToValve(double center, double forward, double threshold_min, double threshold_max);
-	void	UpdateGlobalGain(double gain) {this->m_globalCR_gain = gain;};
+	void	UpdateGlobalGain(double gain) {this->m_globalCR_gain = gain; ::std::cout << this->m_globalCR_gain << ::std::endl; };
 	void	SwitchControlMode(int mode);
 	void	SwitchFreqMode(int mode);
 

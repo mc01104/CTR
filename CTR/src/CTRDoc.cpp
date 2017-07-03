@@ -749,7 +749,7 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 
 				end_loop = clock();
 				//PrintCArray(msg.data(), msg.size());
-				//::std::cout << "CR:" << contactRatio << ::std::endl;
+				::std::cout << "CR:" << contactRatio << ::std::endl;
 			}
 			
 		}
@@ -2840,9 +2840,9 @@ void CCTRDoc::computeApexToValveMotion(Eigen::Matrix<double,6,1>& err)
 
 	// check controller
 	if (this->m_centroid_apex[1] >= m_apex_theshold_max)
-		err[1] = m_center_gainATV * (this->m_centroid_apex[1] - m_apex_theshold_max);
+		err[1] = m_center_gainATV/m_scaling_factor * (this->m_centroid_apex[1] - m_apex_theshold_max);
 	else if (this->m_centroid_apex[1] <= m_apex_theshold_min)
-		err[1] = m_center_gainATV * (this->m_centroid_apex[1] - m_apex_theshold_min);
+		err[1] = m_center_gainATV/m_scaling_factor * (this->m_centroid_apex[1] - m_apex_theshold_min);
 
 	// forward velocity
 	err[2] = m_forward_gainATV;    // mm/sec

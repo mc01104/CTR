@@ -254,6 +254,7 @@ void CCTRView::OnInitialUpdate()
 
 	tmp.Format("%f",1.0);
 	this->SetDlgItemTextA(IDC_EDIT15,tmp);
+	tmp.Format("%f",0.7);
 	this->SetDlgItemTextA(IDC_EDIT16,tmp);
 
 	tmp.Format("%0.2f",0.7);

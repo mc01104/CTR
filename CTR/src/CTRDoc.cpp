@@ -745,7 +745,7 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 
 
 				if (mySelf->m_apex);
-					memcpy(mySelf->m_apex_coordinates, &msg.data()[8], 5 * sizeof(double));
+					memcpy(mySelf->m_apex_coordinates, &msg.data()[11], 5 * sizeof(double));
 
 				end_loop = clock();
 				//PrintCArray(msg.data(), msg.size());
@@ -2826,8 +2826,13 @@ void CCTRDoc::SetVSGains(double gain_center, double gain_tangent)
 void CCTRDoc::OnBnClickedGoToApex()
 {
 	::std::cout << "Go to apex" << ::std::endl; 
-	if (this->m_apex && m_control_mode == 0)
+	PrintCArray(this->m_apex_coordinates,5);
+
+	if (this->m_apex)
+	{
+		::std::cout <<"active"<<::std::endl;
 		this->SendCommand(0, m_apex_coordinates);
+	}
 }
 
 void CCTRDoc::computeApexToValveMotion(Eigen::Matrix<double,6,1>& err)

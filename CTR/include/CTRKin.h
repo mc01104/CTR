@@ -62,7 +62,7 @@ public:
 	void ApplyKinematicControl_NEW(const Eigen::MatrixXd& J, const Eigen::MatrixXd& err, double* dotq);
 	void ApplyKinematicControlNullspace(const Eigen::MatrixXd& J, const Eigen::MatrixXd& err, double* dotq, double* q);
 	void ApplyHybridPositionForceControl(const ::Eigen::MatrixXd& J, const ::Eigen::MatrixXd& err, const ::Eigen::MatrixXd& desiredForce, const ::Eigen::MatrixXd& actualForce, double* dq, double* q);
-
+	void ComputeJointspaceVelocities(const ::Eigen::MatrixXd& J, const ::Eigen::MatrixXd& err, ::Eigen::VectorXd& qdot);
 	double m_forgettingFactor;
 
 protected:

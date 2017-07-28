@@ -191,3 +191,5 @@ void binary_from_string(::std::string& sHex, ::std::string& sReturn);
 ::std::vector<::std::string> splitStr(::std::string inputStr, char delim);
 
 void fitCircle(::std::vector<::Eigen::Vector3d>& points, ::Eigen::Vector3d& center, double& radius); 
+
+void removeColumn(Eigen::MatrixXd& matrix, unsigned int colToRemove);

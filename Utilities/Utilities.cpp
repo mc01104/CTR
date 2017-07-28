@@ -211,3 +211,13 @@ void fitCircle(::std::vector<::Eigen::Vector3d>& points, ::Eigen::Vector3d& cent
 	radius = ::std::sqrt((::std::pow(x(0), 2) + ::std::pow(x(1), 2))/4.0 - x(2));
 }
 
+void removeColumn(Eigen::MatrixXd& matrix, unsigned int colToRemove)
+{
+    unsigned int numRows = matrix.rows();
+    unsigned int numCols = matrix.cols()-1;
+
+    if( colToRemove < numCols )
+        matrix.block(0,colToRemove,numRows,numCols-colToRemove) = matrix.block(0,colToRemove+1,numRows,numCols-colToRemove);
+
+    matrix.conservativeResize(numRows,numCols);
+}

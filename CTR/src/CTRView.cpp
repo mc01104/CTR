@@ -980,3 +980,8 @@ void CCTRView::UpdateGlovalGain()
 	double gain = atof(str);
 	this->GetDocument()->UpdateGlobalGain(gain);
 }
+
+//void CCTRView::GoToApex()
+//{
+//	this->GetDocument()->OnBnClickedGoToAp
+//}

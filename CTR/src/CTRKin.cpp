@@ -1013,19 +1013,59 @@ void CTRKin::EvalCurrentKinematicsModel_NEW(const double* jAng,  const double* t
 
 void CTRKin::ApplyKinematicControlNullspace(const Eigen::MatrixXd& J, const Eigen::MatrixXd& err, double* dq, double* q)
 {
-	//::std::cout << err.transpose() << ::std::endl;
 
 	::Eigen::VectorXd dotq(5);
-	::Eigen::Matrix<double, 6, 5> Jtemp = J;
+	this->ComputeJointspaceVelocities(J, err, dotq);
+
+	if ((q[2] >= L31_MAX - 0.5 && dotq[2] > 0) || (q[2] <= L31_MIN && dotq[2] < 0))
+	{
+		::Eigen::MatrixXd Jtemp = J;		
+		removeColumn(Jtemp, 2);
+		this->ComputeJointspaceVelocities(Jtemp, err, dotq);
+	}
+
+	// Joint limit avoidance using potential-field method 
+	// why add this to the existing value and not just assign the velocity to the joint-limit avoidance potential field?
+	//double upperSoft = L31_MAX - 5;
+	//double lowerSoft = L31_MIN + 5;
+	//double jointLimitGain = 0.2;
+
+	//if (q[2] >= upperSoft)
+	//	dotq[2] += max(-5.0, -jointLimitGain/::std::pow(q[2] - L31_MAX, 2) + jointLimitGain/::std::pow(upperSoft - L31_MAX, 2));
+
+	//if (q[2] <= lowerSoft )
+	//	dotq[2] += min(5.0, jointLimitGain/::std::pow(q[2] - L31_MIN, 2) - jointLimitGain/::std::pow(lowerSoft - L31_MIN, 2));
+
+
+	//if (q[2] >= L31_MAX && dotq[2] > 0) 
+	//	dotq[2] = -5.0;
+	//else if (q[2] <= L31_MIN && dotq[2] < 0)
+	//	dotq[2] = 5.0;
+
+	for(int i=0; i<5; i++)	{	dq[i] = dotq(i,0);	}
+
+}
+
+void CTRKin::ComputeJointspaceVelocities(const ::Eigen::MatrixXd& J, const ::Eigen::MatrixXd& err, ::Eigen::VectorXd& qdot)
+{
+	int nCol = J.cols();
 	double scl_jacobian = M_PI / 180.0 * 3;
-	//scl_jacobian *= 2;
+
+	::Eigen::VectorXd qdotTemp(nCol);
+
+	::Eigen::MatrixXd Jtemp = J;
+
 	Jtemp.col(0) *= scl_jacobian;
 	Jtemp.col(1) *= scl_jacobian;
-	Jtemp.col(3) *= scl_jacobian;
+
+	if (nCol == 4)
+		Jtemp.col(2) *= scl_jacobian;
+	else
+		Jtemp.col(3) *= scl_jacobian;
 
 	// position and orientation jacobian
-	::Eigen::Matrix<double, 3, 5> Jp  = Jtemp.block(0,0, 3, 5);
-	::Eigen::Matrix<double, 3, 5> Jo = Jtemp.block(3,0, 3, 5);
+	::Eigen::MatrixXd Jp  = Jtemp.block(0,0, 3, nCol);
+	::Eigen::MatrixXd Jo = Jtemp.block(3,0, 3, nCol);
 
 	// condition matrix for pseudo inverse
 	::Eigen::Matrix<double, 3, 3> tmpMat (Jp * Jp.transpose());
@@ -1033,10 +1073,10 @@ void CTRKin::ApplyKinematicControlNullspace(const Eigen::MatrixXd& J, const Eige
 	double lambda_position = 0.0;
 	double epsilon = 0.01;
 	double lambda_position_max = 0.01;
+
 	::Eigen::JacobiSVD<::Eigen::MatrixXd> svd(tmpMat, ::Eigen::ComputeThinU | ::Eigen::ComputeThinV);
 	::Eigen::VectorXd singVal = svd.singularValues();
 
-	//::std::cout << singVal[singVal.size() - 1] << ::std::endl;
 	if (singVal[singVal.size() - 1] <= epsilon)
 		lambda_position = (1.0 - ::std::pow(singVal[singVal.size() - 1]/epsilon, 2)) * lambda_position_max;
 
@@ -1045,22 +1085,19 @@ void CTRKin::ApplyKinematicControlNullspace(const Eigen::MatrixXd& J, const Eige
 
 	// task 1: control position
 	::Eigen::MatrixXd task1_pseudo = Jp.transpose() * tmpMat.inverse();
-	dotq = task1_pseudo * err.block(0, 0, 3, 1);
-	//::std::cout << "1st: "<< dotq.transpose() << ::std::endl;
+	qdotTemp = task1_pseudo * err.block(0, 0, 3, 1);
 
 	// task 2: control orientation
-	::Eigen::Matrix<double, 5, 5> IdMat;
+	::Eigen::MatrixXd IdMat(nCol, nCol);
 	IdMat.setIdentity();
 
-	::Eigen::Matrix<double, 3, 5> tmpOrient;
+	::Eigen::MatrixXd tmpOrient;
 	::Eigen::Matrix<double, 3, 3> tmpOrientPseudo;
 
-	//double orientationGain = 10.0;
+
 	tmpOrient = Jo * (IdMat - task1_pseudo * Jp);
-	//tmpOrient = Jo;
 	tmpOrientPseudo = tmpOrient * tmpOrient.transpose();
 
-	//::std::cout << tmpOrientPseudo << ::std::endl;
 	double lambda_orientation = 0.00001;
 	//double lambda_orientation_max = 1.0e-04;
 	//epsilon = 1.0e-04;
@@ -1074,36 +1111,24 @@ void CTRKin::ApplyKinematicControlNullspace(const Eigen::MatrixXd& J, const Eige
 		tmpOrientPseudo(i, i) += lambda_orientation;
 	
 	::Eigen::MatrixXd orientPseudo = tmpOrient.transpose() * tmpOrientPseudo.inverse();
-	dotq += orientPseudo * ( err.block(3, 0, 3, 1) - Jo * task1_pseudo * err.block(0, 0, 3, 1));
+	qdotTemp += orientPseudo * ( err.block(3, 0, 3, 1) - Jo * task1_pseudo * err.block(0, 0, 3, 1));
 
-	dotq[0] *= scl_jacobian;
-	dotq[1] *= scl_jacobian;
-	dotq[3] *= scl_jacobian;
-	
-	
-	//::std::cout << dotq.transpose() << ::std::endl;
-	// overall gain
-	//dotq *= 0.3; 
-
-	// Joint limit avoidance using potential-field method 
-	// why add this to the existing value and not just assign the velocity to the joint-limit avoidance potential field?
-	double upperSoft = L31_MAX - 5;
-	double lowerSoft = L31_MIN + 5;
-	double jointLimitGain = 0.2;
-
-	if (q[2] >= upperSoft)
-		dotq[2] += max(-5.0, -jointLimitGain/::std::pow(q[2] - L31_MAX, 2) + jointLimitGain/::std::pow(upperSoft - L31_MAX, 2));
-
-	if (q[2] <= lowerSoft )
-		dotq[2] += min(5.0, jointLimitGain/::std::pow(q[2] - L31_MIN, 2) - jointLimitGain/::std::pow(lowerSoft - L31_MIN, 2));
+	qdotTemp[0] *= scl_jacobian;
+	qdotTemp[1] *= scl_jacobian;
 
 
-	if (q[2] >= L31_MAX && dotq[2] > 0) 
-		dotq[2] = -5.0;
-	else if (q[2] <= L31_MIN && dotq[2] < 0)
-		dotq[2] = 5.0;
-
-	for(int i=0; i<5; i++)	{	dq[i] = dotq(i,0);	}
+	if (nCol == 4)
+	{
+		qdotTemp[2] *= scl_jacobian;
+		qdot.segment(0, 2) = qdotTemp.segment(0, 2);
+		qdot(2) = 0;
+		qdot.segment(3, 2) = qdotTemp.segment(2, 2);
+	}
+	else
+	{
+		qdotTemp[3] *= scl_jacobian;
+		qdot = qdotTemp;
+	}
 
 }
 

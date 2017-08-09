@@ -114,6 +114,12 @@ BEGIN_MESSAGE_MAP(CCTRView, CFormView)
 	ON_BN_CLICKED(IDC_RADIO_JA5, &CCTRView::OnBnClickedRadioModesCircum)	
 	ON_BN_CLICKED(IDC_RADIO_TELE6, &CCTRView::OnBnClickedRadioModesCircum)
 
+	ON_BN_CLICKED(IDC_RADIO_JA6, &CCTRView::OnBnClickedRadioModesATV)	
+	ON_BN_CLICKED(IDC_RADIO_TELE7, &CCTRView::OnBnClickedRadioModesATV)
+	ON_BN_CLICKED(IDC_RADIO_TELE8, &CCTRView::OnBnClickedRadioModesATV)
+
+	ON_BN_CLICKED(IDC_RADIO_TELE6, &CCTRView::OnBnClickedRadioModesCircum)
+
 	ON_WM_CTLCOLOR()
 	ON_BN_CLICKED(IDC_BUTTON6, &CCTRView::OnClickedBtnHome)
 END_MESSAGE_MAP()
@@ -144,6 +150,7 @@ CCTRView::CCTRView()
 	m_controlMode = 0;
 	m_frequencyMode = 1;
 	m_direction = 1;
+	m_apex_wall = 0;
 }
 
 CCTRView::~CCTRView()
@@ -218,6 +225,8 @@ void CCTRView::DoDataExchange(CDataExchange* pDX)
 	DDX_Radio(pDX, IDC_RADIO_JA3, m_controlMode);
 	DDX_Radio(pDX, IDC_RADIO_JA4, m_frequencyMode);
 	DDX_Radio(pDX, IDC_RADIO_JA5, m_direction);
+
+	DDX_Radio(pDX, IDC_RADIO_JA6, m_apex_wall);
 	m_ctrlMode != 1 ? GetDlgItem(IDC_CHECK1)->EnableWindow(false) : GetDlgItem(IDC_CHECK1)->EnableWindow(true);
 //	m_ctrlMode != 1 ? GetDlgItem(IDC_CHECK3)->EnableWindow(false) : GetDlgItem(IDC_CHECK3)->EnableWindow(true);
 
@@ -981,7 +990,29 @@ void CCTRView::UpdateGlovalGain()
 	this->GetDocument()->UpdateGlobalGain(gain);
 }
 
-//void CCTRView::GoToApex()
-//{
-//	this->GetDocument()->OnBnClickedGoToAp
-//}
+void CCTRView::OnBnClickedRadioModesATV()
+{
+	UpdateData(true);	
+
+	if(m_apex_wall == 0)	
+	{
+		::std::cout << "Apex-to-valve direction: left" << ::std::endl;
+		this->GetDocument()->SwitchApexToValveStatus(CCTRDoc::APEX_TO_VALVE_STATUS::LEFT);
+	}
+	else if (m_apex_wall == 1)
+	{
+		::std::cout << "Apex-to-valve direction: top" << ::std::endl;
+		this->GetDocument()->SwitchApexToValveStatus(CCTRDoc::APEX_TO_VALVE_STATUS::TOP);
+	}
+	else if (m_apex_wall == 2)
+	{
+		::std::cout << "Apex-to-valve direction: bottom" << ::std::endl;
+		this->GetDocument()->SwitchApexToValveStatus(CCTRDoc::APEX_TO_VALVE_STATUS::BOTTOM);
+	}
+
+	::std::cout << "undefined direction for apex-to-valve navigation -> switching to default (LEFT)" << ::std::endl;
+	this->GetDocument()->SwitchApexToValveStatus(CCTRDoc::APEX_TO_VALVE_STATUS::LEFT);
+	
+	return;		
+
+}

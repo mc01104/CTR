@@ -40,15 +40,15 @@ protected: // create from serialization only
 public:
 	::std::queue<::std::string, ::std::deque< ::std::string> > setPointsQ;
 	double durationLWPR;
-
-private:
-
 	enum APEX_TO_VALVE_STATUS 
 	{
 		LEFT,
 		TOP,
 		BOTTOM
-	} aStatus;
+	};
+private:
+
+	APEX_TO_VALVE_STATUS aStatus;
 
 	// CKim - Robot Status
 	CTR_status		m_Status;
@@ -157,7 +157,7 @@ private:
 
 
 	void				TogglePlaneEstimation();
-	
+
 
 	// new teleoperation control
 	void				computeHapticDisplacement(CTR_status stat, double dP[3]);
@@ -258,6 +258,7 @@ public:
 	::std::vector<double*> valve_points_visited;
 
 	int	 periodsForCRComputation;
+	void	SwitchApexToValveStatus(APEX_TO_VALVE_STATUS sts) {this->aStatus = sts;};
 #ifdef _DEBUG
 	virtual void AssertValid() const;
 	virtual void Dump(CDumpContext& dc) const;

@@ -90,6 +90,7 @@ public:
 	afx_msg void OnBnClickedRadioModesController();
 	afx_msg void OnBnClickedRadioModesFreq();
 	afx_msg void OnBnClickedRadioModesCircum();
+	afx_msg void OnBnClickedRadioModesATV();
 	afx_msg void UpdateGainsATV();
 	afx_msg void UpdateGlovalGain();
 
@@ -167,6 +168,8 @@ public:
 	double radius;
 
 	int m_direction;
+
+	int m_apex_wall;
 };
 
 #ifndef _DEBUG  // debug version in CTRView.cpp

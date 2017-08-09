@@ -28,6 +28,8 @@ class HeartRateMonitor;
 
 //class RecursiveFilter::Filter;
 
+
+
 class CCTRDoc : public CDocument
 {
 protected: // create from serialization only
@@ -40,6 +42,13 @@ public:
 	double durationLWPR;
 
 private:
+
+	enum APEX_TO_VALVE_STATUS 
+	{
+		LEFT,
+		TOP,
+		BOTTOM
+	} aStatus;
 
 	// CKim - Robot Status
 	CTR_status		m_Status;
@@ -239,7 +248,14 @@ public:
 	void setContactControlNormal(const ::Eigen::Vector3d& computedNormal, const ::Eigen::Vector3d& center, double radius, ::std::vector<::Eigen::Vector3d> pts);
 
 	void computeCircumnavigationDirection(Eigen::Matrix<double,6,1>& err);
-	void computeApexToValveMotion(Eigen::Matrix<double,6,1>& err);
+	void computeApexToValveMotion(Eigen::Matrix<double,6,1>& err, APEX_TO_VALVE_STATUS aStatus = LEFT);
+
+	void computeATVLeft(Eigen::Matrix<double,6,1>& err);
+	void computeATVTop(Eigen::Matrix<double,6,1>& err);
+	void computeATVBottom(Eigen::Matrix<double,6,1>& err);
+
+	bool storeValvePoint;
+	::std::vector<double*> valve_points_visited;
 
 	int	 periodsForCRComputation;
 #ifdef _DEBUG
@@ -358,5 +374,12 @@ public:
 	afx_msg void OnViewPlot();
 	afx_msg void OnUpdateViewPlot(CCmdUI *pCmdUI);
 	afx_msg void OnBnClickedGoToApex();
+
+	afx_msg void OnBnClickedGoToFirst();
+	afx_msg void OnBnClickedGoToLast();
+	afx_msg void OnBnClickedGoToPrev();
+	afx_msg void OnBnClickedGoToNext();
+
+	int index;
 
 };

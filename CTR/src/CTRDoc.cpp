@@ -74,6 +74,11 @@ BEGIN_MESSAGE_MAP(CCTRDoc, CDocument)
 	ON_BN_CLICKED(IDC_REGST, &CCTRDoc::OnBnClickedRegst)
 	ON_BN_CLICKED(IDC_BUTTON11, &CCTRDoc::OnBnClickedGoToApex)
 
+	ON_BN_CLICKED(IDC_BTN_MOVE12, &CCTRDoc::OnBnClickedGoToFirst)
+	ON_BN_CLICKED(IDC_BTN_MOVE13, &CCTRDoc::OnBnClickedGoToPrev)
+	ON_BN_CLICKED(IDC_BTN_MOVE14, &CCTRDoc::OnBnClickedGoToLast)
+	ON_BN_CLICKED(IDC_BTN_MOVE15, &CCTRDoc::OnBnClickedGoToNext)
+
 END_MESSAGE_MAP()
 
 
@@ -230,6 +235,9 @@ CCTRDoc::CCTRDoc()
 
 	m_globalCR_gain = 1.0;
 
+	APEX_TO_VALVE_STATUS aStatus = LEFT;
+	storeValvePoint = false;
+	index = 0;
 }
 
 CCTRDoc::~CCTRDoc()
@@ -730,8 +738,16 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 				mySelf->m_contact_error_integral += contactRatioError * delta_t;
 				mySelf->m_line_detected = msg[1];
 				mySelf->m_contact_response = msg[2];
+
+
 				mySelf->m_wall_detected = msg[7];
 				mySelf->m_apex = msg[10];
+
+				// change all the following network depedencies!!!!!!!!!! //
+				mySelf->storeValvePoint = msg[10];
+				// update the respective network function on the client side !!!!!///
+
+
 				LeaveCriticalSection(&m_cSection);
 
 				if (mySelf->m_line_detected)
@@ -744,7 +760,7 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 				}
 
 
-				if (mySelf->m_apex);
+				if (mySelf->m_apex)
 					memcpy(mySelf->m_apex_coordinates, &msg.data()[11], 5 * sizeof(double));
 
 				end_loop = clock();
@@ -1562,9 +1578,19 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 						else
 							err.setZero();
 
+						if (mySelf->storeValvePoint)
+						{
+							mySelf->valve_points_visited.push_back(localStat.currJang);
+							mySelf->index++;
+						}
 					}
 					else if (apex_to_valve)
-						mySelf->computeApexToValveMotion(err);
+						mySelf->computeApexToValveMotion(err, mySelf->aStatus);
+					else
+					{
+						mySelf->valve_points_visited.clear();
+						mySelf->index = 0;
+					}
 				}
 				for(int i=3; i<6; i++)
 				{
@@ -2835,22 +2861,68 @@ void CCTRDoc::OnBnClickedGoToApex()
 	}
 }
 
-void CCTRDoc::computeApexToValveMotion(Eigen::Matrix<double,6,1>& err)
+void CCTRDoc::computeApexToValveMotion(Eigen::Matrix<double,6,1>& err, APEX_TO_VALVE_STATUS aStatus)
 {
-	//if (!this->m_wall_detected)
-	//{
-	//	err.setZero();
-	//	return;
-	//}
+	switch(aStatus)
+	{
+		case LEFT:
+			computeATVLeft(err);
+			break;
+		case TOP:
+			computeATVTop(err);
+			break;
+		case BOTTOM:
+			computeATVBottom(err);
+			break;
+	}
 
-	// check controller
-	if (this->m_centroid_apex[1] >= m_apex_theshold_max)
-		err[1] = m_center_gainATV/m_scaling_factor * (this->m_centroid_apex[1] - m_apex_theshold_max);
-	else if (this->m_centroid_apex[1] <= m_apex_theshold_min)
-		err[1] = m_center_gainATV/m_scaling_factor * (this->m_centroid_apex[1] - m_apex_theshold_min);
+}
+
+void CCTRDoc::computeATVLeft(Eigen::Matrix<double,6,1>& err)
+{
+	// left bias
+	err[1] = 1.0;
 
 	// forward velocity
 	err[2] = m_forward_gainATV;    // mm/sec
+
+	// check controller
+	if (this->m_centroid_apex[1] >= m_apex_theshold_max)
+		err[1] += m_center_gainATV/m_scaling_factor * (this->m_centroid_apex[1] - m_apex_theshold_max);
+	else if (this->m_centroid_apex[1] <= m_apex_theshold_min)
+		err[1] += m_center_gainATV/m_scaling_factor * (this->m_centroid_apex[1] - m_apex_theshold_min);
+}
+
+
+void CCTRDoc::computeATVTop(Eigen::Matrix<double,6,1>& err)
+{
+	// Upward bias
+	err[0] = 1.0;
+
+	// forward velocity
+	err[2] = m_forward_gainATV;    // mm/sec
+
+	// check controller
+
+	if (this->m_centroid_apex[0] <= 250 - m_apex_theshold_max)
+		err[0] += m_center_gainATV/m_scaling_factor * (this->m_centroid_apex[0] - 255 + m_apex_theshold_max);
+	else if (this->m_centroid_apex[0] >= m_apex_theshold_min)
+		err[0] += m_center_gainATV/m_scaling_factor * (this->m_centroid_apex[0] - 255 + m_apex_theshold_min);
+}
+
+void CCTRDoc::computeATVBottom(Eigen::Matrix<double,6,1>& err)
+{
+	// Downward bias
+	err[0] = -1.0;
+
+	// forward velocity
+	err[2] = m_forward_gainATV;    // mm/sec
+
+	// check controller
+	if (this->m_centroid_apex[0] >= m_apex_theshold_max)
+		err[0] += m_center_gainATV/m_scaling_factor * (this->m_centroid_apex[0] - m_apex_theshold_max);
+	else if (this->m_centroid_apex[1] <= m_apex_theshold_min)
+		err[0] += m_center_gainATV/m_scaling_factor * (this->m_centroid_apex[0] - m_apex_theshold_min);
 
 }
 
@@ -2891,3 +2963,24 @@ void	CCTRDoc::UpdateGainsApexToValve(double center, double forward, double thres
 	::std::cout << "center gain:" << this->m_center_gainATV << ::std::endl;
 	::std::cout << "forward gain:" << this->m_forward_gainATV << ::std::endl;
 }
+
+void CCTRDoc::OnBnClickedGoToFirst()
+{
+	this->SendCommand(0, this->valve_points_visited.front());
+}
+
+void CCTRDoc::OnBnClickedGoToLast()
+{
+	this->SendCommand(0, this->valve_points_visited.back());
+}
+
+void CCTRDoc::OnBnClickedGoToPrev()
+{
+	this->SendCommand(0, this->valve_points_visited[--this->index]);
+}
+
+void CCTRDoc::OnBnClickedGoToNext()
+{
+	this->SendCommand(0, this->valve_points_visited[++this->index]);
+}
+

@@ -238,6 +238,7 @@ CCTRDoc::CCTRDoc()
 	APEX_TO_VALVE_STATUS aStatus = LEFT;
 	storeValvePoint = false;
 	index = 0;
+	switchToCircum = false;
 }
 
 CCTRDoc::~CCTRDoc()
@@ -741,10 +742,11 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 
 
 				mySelf->m_wall_detected = msg[7];
-				mySelf->m_apex = msg[10];
+				mySelf->switchToCircum = msg[10];
+				mySelf->m_apex = msg[11];
 
 				// change all the following network depedencies!!!!!!!!!! //
-				mySelf->storeValvePoint = msg[10];
+				//mySelf->storeValvePoint = msg[10];
 				// update the respective network function on the client side !!!!!///
 
 
@@ -759,9 +761,14 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 					mySelf->m_centroid_apex[1] = msg[9];
 				}
 
+				if (mySelf->switchToCircum)
+				{
+					mySelf->m_apex_to_valve = false;
+					mySelf->m_circumnavigation = true;
+				}
 
 				if (mySelf->m_apex)
-					memcpy(mySelf->m_apex_coordinates, &msg.data()[11], 5 * sizeof(double));
+					memcpy(mySelf->m_apex_coordinates, &msg.data()[12], 5 * sizeof(double));
 
 				end_loop = clock();
 				//PrintCArray(msg.data(), msg.size());

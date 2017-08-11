@@ -170,7 +170,7 @@ private:
 	
 	void				resetIntegral(){m_contact_error_integral = 0.0;};
 
-
+	bool				switchToCircum;
 
 // Operations
 public:

@@ -28,6 +28,8 @@ class HeartRateMonitor;
 
 //class RecursiveFilter::Filter;
 
+
+
 class CCTRDoc : public CDocument
 {
 protected: // create from serialization only
@@ -38,8 +40,15 @@ protected: // create from serialization only
 public:
 	::std::queue<::std::string, ::std::deque< ::std::string> > setPointsQ;
 	double durationLWPR;
-
+	enum APEX_TO_VALVE_STATUS 
+	{
+		LEFT,
+		TOP,
+		BOTTOM
+	};
 private:
+
+	APEX_TO_VALVE_STATUS aStatus;
 
 	// CKim - Robot Status
 	CTR_status		m_Status;
@@ -148,7 +157,7 @@ private:
 
 
 	void				TogglePlaneEstimation();
-	
+
 
 	// new teleoperation control
 	void				computeHapticDisplacement(CTR_status stat, double dP[3]);
@@ -161,7 +170,7 @@ private:
 	
 	void				resetIntegral(){m_contact_error_integral = 0.0;};
 
-
+	bool				switchToCircum;
 
 // Operations
 public:
@@ -239,9 +248,17 @@ public:
 	void setContactControlNormal(const ::Eigen::Vector3d& computedNormal, const ::Eigen::Vector3d& center, double radius, ::std::vector<::Eigen::Vector3d> pts);
 
 	void computeCircumnavigationDirection(Eigen::Matrix<double,6,1>& err);
-	void computeApexToValveMotion(Eigen::Matrix<double,6,1>& err);
+	void computeApexToValveMotion(Eigen::Matrix<double,6,1>& err, APEX_TO_VALVE_STATUS aStatus = LEFT);
+
+	void computeATVLeft(Eigen::Matrix<double,6,1>& err);
+	void computeATVTop(Eigen::Matrix<double,6,1>& err);
+	void computeATVBottom(Eigen::Matrix<double,6,1>& err);
+
+	bool storeValvePoint;
+	::std::vector<double*> valve_points_visited;
 
 	int	 periodsForCRComputation;
+	void	SwitchApexToValveStatus(APEX_TO_VALVE_STATUS sts) {this->aStatus = sts;};
 #ifdef _DEBUG
 	virtual void AssertValid() const;
 	virtual void Dump(CDumpContext& dc) const;
@@ -358,5 +375,12 @@ public:
 	afx_msg void OnViewPlot();
 	afx_msg void OnUpdateViewPlot(CCmdUI *pCmdUI);
 	afx_msg void OnBnClickedGoToApex();
+
+	afx_msg void OnBnClickedGoToFirst();
+	afx_msg void OnBnClickedGoToLast();
+	afx_msg void OnBnClickedGoToPrev();
+	afx_msg void OnBnClickedGoToNext();
+
+	int index;
 
 };

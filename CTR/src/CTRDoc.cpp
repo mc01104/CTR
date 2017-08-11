@@ -235,7 +235,7 @@ CCTRDoc::CCTRDoc()
 
 	m_globalCR_gain = 1.0;
 
-	APEX_TO_VALVE_STATUS aStatus = LEFT;
+	aStatus = LEFT;
 	storeValvePoint = false;
 	index = 0;
 	switchToCircum = false;
@@ -761,10 +761,12 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 					mySelf->m_centroid_apex[1] = msg[9];
 				}
 
+				//	::std::cout << "in network:" << msg[8] << " " << msg[9] << ::std::endl;
 				if (mySelf->switchToCircum)
 				{
 					mySelf->m_apex_to_valve = false;
 					mySelf->m_circumnavigation = true;
+					::std::cout << "switching to circumnavigation" << ::std::endl;
 				}
 
 				if (mySelf->m_apex)
@@ -772,7 +774,7 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 
 				end_loop = clock();
 				//PrintCArray(msg.data(), msg.size());
-				::std::cout << "CR:" << contactRatio << ::std::endl;
+				//::std::cout << "CR:" << contactRatio << ::std::endl;
 			}
 			
 		}
@@ -1592,7 +1594,11 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 						}
 					}
 					else if (apex_to_valve)
+					{
+						::std::cout << "right before activating" << ::std::endl;
+						::std::cout << mySelf->aStatus << ::std::endl;
 						mySelf->computeApexToValveMotion(err, mySelf->aStatus);
+					}
 					else
 					{
 						mySelf->valve_points_visited.clear();
@@ -1603,7 +1609,7 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 				{
 					err(i,0) = mySelf->m_orientation_gain * K[i]*(localStat.tgtTipPosDir[i] - localStat.currTipPosDir[i]) + mySelf->m_orientation_gain_feedforward * tangentVelocity[i-3];
 				}
-
+				//::std::cout << "err from main loop: " << err.col(0).transpose() << ::std::endl;
 			}
 			// temporarily for debugging the higher level features
 			//err.setZero();
@@ -2870,9 +2876,11 @@ void CCTRDoc::OnBnClickedGoToApex()
 
 void CCTRDoc::computeApexToValveMotion(Eigen::Matrix<double,6,1>& err, APEX_TO_VALVE_STATUS aStatus)
 {
+	//::std::cout << "activating circumnavigation" << ::std::endl;
 	switch(aStatus)
 	{
 		case LEFT:
+			//::std::cout << "activate left" << ::std::endl;
 			computeATVLeft(err);
 			break;
 		case TOP:
@@ -2887,17 +2895,20 @@ void CCTRDoc::computeApexToValveMotion(Eigen::Matrix<double,6,1>& err, APEX_TO_V
 
 void CCTRDoc::computeATVLeft(Eigen::Matrix<double,6,1>& err)
 {
+	//::std::cout << "left Apex-to-valve" << ::std::endl;
 	// left bias
-	err[1] = 1.0;
+	err[1] = -0.5;
 
 	// forward velocity
 	err[2] = m_forward_gainATV;    // mm/sec
-
+	::std::cout <<"centroid in controller  :" <<  this->m_centroid_apex[0] << " " << this->m_centroid_apex[1] << ::std::endl;
 	// check controller
 	if (this->m_centroid_apex[1] >= m_apex_theshold_max)
 		err[1] += m_center_gainATV/m_scaling_factor * (this->m_centroid_apex[1] - m_apex_theshold_max);
 	else if (this->m_centroid_apex[1] <= m_apex_theshold_min)
 		err[1] += m_center_gainATV/m_scaling_factor * (this->m_centroid_apex[1] - m_apex_theshold_min);
+
+	//::std::cout << "vel from aTV: " << err.transpose() << ::std::endl;
 }
 
 

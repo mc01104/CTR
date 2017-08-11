@@ -1109,7 +1109,7 @@ void CTRKin::ApplyKinematicControlNullspace(const Eigen::MatrixXd& J, const Eige
 
 
 
-	static ofstream vel_log("vel_log.txt");
+	//static ofstream vel_log("vel_log.txt");
 	::Eigen::VectorXd dotq(5);
 	this->ComputeJointspaceVelocities(J, err, dotq);
 
@@ -1193,9 +1193,9 @@ void CTRKin::ApplyKinematicControlNullspace(const Eigen::MatrixXd& J, const Eige
 
 	for(int i=0; i<5; i++)	{	dq[i] = dotq(i,0);	}
 
-	static int counter = 0;
+	/*static int counter = 0;
 	counter++;
-
+*/
 
 	//static ChunTimer timer;
 

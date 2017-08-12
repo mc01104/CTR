@@ -122,6 +122,13 @@ BEGIN_MESSAGE_MAP(CCTRView, CFormView)
 
 	ON_WM_CTLCOLOR()
 	ON_BN_CLICKED(IDC_BUTTON6, &CCTRView::OnClickedBtnHome)
+
+	ON_BN_KILLFOCUS(IDC_EDIT30, &CCTRView::OnBnClickedKillFocusId)
+	ON_BN_KILLFOCUS(IDC_EDIT31, &CCTRView::OnBnClickedKillFocusId)
+	ON_BN_KILLFOCUS(IDC_EDIT32, &CCTRView::OnBnClickedKillFocusId)
+	ON_BN_KILLFOCUS(IDC_EDIT33, &CCTRView::OnBnClickedKillFocusId)
+	ON_BN_KILLFOCUS(IDC_EDIT34, &CCTRView::OnEnKillFocusBias)
+	
 END_MESSAGE_MAP()
 
 
@@ -151,6 +158,8 @@ CCTRView::CCTRView()
 	m_frequencyMode = 1;
 	m_direction = 1;
 	m_apex_wall = 0;
+
+	m_transition = false;
 }
 
 CCTRView::~CCTRView()
@@ -516,6 +525,17 @@ void CCTRView::OnBnClickedRadioModes()
 	{	
 		this->GetDocument()->SwitchTeleOpMode(0);	
 		return;		
+	}
+
+	if (m_ctrlMode == 2)
+	{
+		this->GetDocument()->switchIDMode(1);
+		return;
+	}
+	else if (prevMode == 2)
+	{
+		this->GetDocument()->switchIDMode(0);
+		return;
 	}
 
 }
@@ -1015,4 +1035,29 @@ void CCTRView::OnBnClickedRadioModesATV()
 	
 	return;		
 
+}
+
+
+void CCTRView::OnBnClickedKillFocusId()
+{
+	CString str;
+	this->GetDlgItemTextA(IDC_EDIT30, str);	
+	double min_freq = atof(str);
+	this->GetDlgItemTextA(IDC_EDIT31, str);	
+	double max_freq = atof(str);
+	this->GetDlgItemTextA(IDC_EDIT32, str);	
+	double amplitude = atof(str);
+	this->GetDlgItemTextA(IDC_EDIT33, str);	
+	int num_of_sins = atof(str);
+
+	this->GetDocument()->UpdateIDParams(min_freq, max_freq, amplitude, num_of_sins);
+
+}
+
+void CCTRView::OnEnKillFocusBias()
+{
+	CString str;
+	this->GetDlgItemTextA(IDC_EDIT34, str);	
+	double bias = atof(str);
+	this->GetDocument()->SetBias(bias);
 }

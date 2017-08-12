@@ -79,6 +79,12 @@ BEGIN_MESSAGE_MAP(CCTRDoc, CDocument)
 	ON_BN_CLICKED(IDC_BTN_MOVE14, &CCTRDoc::OnBnClickedGoToLast)
 	ON_BN_CLICKED(IDC_BTN_MOVE15, &CCTRDoc::OnBnClickedGoToNext)
 
+	ON_BN_CLICKED(IDC_BTN_MOVE18, &CCTRDoc::OnBnClickedStartId)
+	ON_BN_CLICKED(IDC_BTN_MOVE11, &CCTRDoc::OnBnClickedStopId)
+
+	ON_BN_CLICKED(IDC_BTN_MOVE16, &CCTRDoc::OnBnClickedResetAutomation)
+
+
 END_MESSAGE_MAP()
 
 
@@ -239,6 +245,19 @@ CCTRDoc::CCTRDoc()
 	storeValvePoint = false;
 	index = 0;
 	switchToCircum = false;
+
+	num_of_sins = 2;
+	min_frequency = 0;
+	max_frequency = 0;
+	amplitude = 0;
+	activateIdentification = false;
+
+	//reset with play button
+	timerId.ResetTime();
+	reference_translation = 0;
+	m_idMode = false;
+
+	m_bias = 0;
 }
 
 CCTRDoc::~CCTRDoc()
@@ -1445,7 +1464,8 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 	ChunTimer timer;	
 	int perfcnt = 0;	
 	int navg = 50;		
-	timer.ResetTime();		
+	timer.ResetTime();	
+
 	long endTime = 0;		
 
 
@@ -1658,7 +1678,46 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 				for(int i=0; i<7; i++)	
 					vel[i] = 0.0;	
 		}
+		else if(mySelf->activateIdentification && mySelf->m_idMode)
+		{
+			EnterCriticalSection(&m_cSection);
+			
 
+			double tgtTranslation = mySelf->reference_translation;
+			double tgtTranslationVel = 0;
+			double time = (double)mySelf->timerId.GetTime()/1e6;
+			for (int i = 0 ; i < mySelf->num_of_sins; i++)
+			{
+				double freq_rad_per_sec = mySelf->frequencies[i]/60 * 2 * M_PI;
+				tgtTranslation += mySelf->amplitude/(double)mySelf->num_of_sins * sin(freq_rad_per_sec*time);
+
+				tgtTranslationVel += mySelf->amplitude/(double)mySelf->num_of_sins * freq_rad_per_sec * cos(freq_rad_per_sec*time);
+			}
+
+			
+			MtrCntSetPt[0] = MtrCntSetPt[1] = tgtTranslation/c_CntToMM;
+			for(int i=2; i<7; i++)	
+				MtrCntSetPt[i] = localStat.currMotorCnt[i];
+
+			kp = mySelf->m_Status.gain;
+			
+			safeToTeleOp = mySelf->m_Status.isTeleOpMoving;
+
+			LeaveCriticalSection(&m_cSection);
+
+			if (safeToTeleOp)
+			{
+				for(int i=0; i<7; i++)	
+					vel[i] = -kp*(localStat.currMotorCnt[i]-MtrCntSetPt[i]);
+
+				vel[0] += tgtTranslationVel/c_CntToMM;
+				vel[1] += tgtTranslationVel/c_CntToMM;
+			}
+			else
+				for(int i=0; i<7; i++)	
+					vel[i] = 0.0;	
+			
+		}
 		else	// CKim - When control is not running
 		{
 			//mySelf->m_kinLWPR->TipFwdKin(localStat.currJang, localStat.currTipPosDir);
@@ -2897,7 +2956,7 @@ void CCTRDoc::computeATVLeft(Eigen::Matrix<double,6,1>& err)
 {
 	//::std::cout << "left Apex-to-valve" << ::std::endl;
 	// left bias
-	err[1] = -0.5;
+	err[1] = -this->m_bias;
 
 	// forward velocity
 	err[2] = m_forward_gainATV;    // mm/sec
@@ -2915,7 +2974,7 @@ void CCTRDoc::computeATVLeft(Eigen::Matrix<double,6,1>& err)
 void CCTRDoc::computeATVTop(Eigen::Matrix<double,6,1>& err)
 {
 	// Upward bias
-	err[0] = 1.0;
+	err[0] = this->m_bias;
 
 	// forward velocity
 	err[2] = m_forward_gainATV;    // mm/sec
@@ -2931,7 +2990,7 @@ void CCTRDoc::computeATVTop(Eigen::Matrix<double,6,1>& err)
 void CCTRDoc::computeATVBottom(Eigen::Matrix<double,6,1>& err)
 {
 	// Downward bias
-	err[0] = -1.0;
+	err[0] = -this->m_bias;
 
 	// forward velocity
 	err[2] = m_forward_gainATV;    // mm/sec
@@ -3002,3 +3061,44 @@ void CCTRDoc::OnBnClickedGoToNext()
 	this->SendCommand(0, this->valve_points_visited[++this->index]);
 }
 
+void CCTRDoc::OnBnClickedStartId()
+{
+
+	activateIdentification = true;
+	timerId.ResetTime();
+	reference_translation = m_Status.currJang[4];
+}
+
+void CCTRDoc::OnBnClickedStopId()
+{
+	activateIdentification = false;
+	double joints[5];
+	memcpy(joints, m_Status.currJang, 5*sizeof(double));
+	joints[4] = reference_translation;
+	SendCommand(0, joints);
+}
+
+void CCTRDoc::UpdateIDParams(double min_freq, double max_freq, double amplitude, int num_of_sins)
+{
+	this->min_frequency = min_freq;
+	this->max_frequency = max_freq;
+	this->amplitude = amplitude;
+	this->num_of_sins = num_of_sins;
+
+	frequencies.clear();
+	frequencies.resize(num_of_sins);
+
+	if (num_of_sins < 2)
+		num_of_sins = 2;
+
+	for(int i = 0 ; i < num_of_sins; ++i)
+		frequencies[i] = min_frequency + (max_frequency - min_frequency) * (double)i / (double)(num_of_sins-1);
+
+}
+
+void 
+CCTRDoc::OnBnClickedResetAutomation()
+{
+	this->m_apex_to_valve = false;
+	this->m_circumnavigation = false;
+}

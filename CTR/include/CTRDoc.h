@@ -254,8 +254,10 @@ public:
 	void computeATVTop(Eigen::Matrix<double,6,1>& err);
 	void computeATVBottom(Eigen::Matrix<double,6,1>& err);
 
+	void addPointOnValve();
+
 	bool storeValvePoint;
-	::std::vector<double*> valve_points_visited;
+	::std::vector<::Eigen::VectorXd> valve_points_visited;
 
 	int	 periodsForCRComputation;
 	void	SwitchApexToValveStatus(APEX_TO_VALVE_STATUS sts) {this->aStatus = sts;};

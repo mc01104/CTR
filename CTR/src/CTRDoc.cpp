@@ -772,7 +772,10 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 				LeaveCriticalSection(&m_cSection);
 
 				if (mySelf->m_line_detected)
+				{
 					mySelf->UpdateCircumnavigationParams(msg);
+					mySelf->addPointOnValve();
+				}
 
 				if (mySelf->m_wall_detected)
 				{
@@ -1607,22 +1610,12 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 						else
 							err.setZero();
 
-						if (mySelf->storeValvePoint)
-						{
-							mySelf->valve_points_visited.push_back(localStat.currJang);
-							mySelf->index++;
-						}
 					}
 					else if (apex_to_valve)
 					{
 						::std::cout << "right before activating" << ::std::endl;
 						::std::cout << mySelf->aStatus << ::std::endl;
 						mySelf->computeApexToValveMotion(err, mySelf->aStatus);
-					}
-					else
-					{
-						mySelf->valve_points_visited.clear();
-						mySelf->index = 0;
 					}
 				}
 				for(int i=3; i<6; i++)
@@ -3043,22 +3036,22 @@ void	CCTRDoc::UpdateGainsApexToValve(double center, double forward, double thres
 
 void CCTRDoc::OnBnClickedGoToFirst()
 {
-	this->SendCommand(0, this->valve_points_visited.front());
+	this->SendCommand(0, this->valve_points_visited.front().data());
 }
 
 void CCTRDoc::OnBnClickedGoToLast()
 {
-	this->SendCommand(0, this->valve_points_visited.back());
+	this->SendCommand(0, this->valve_points_visited.back().data());
 }
 
 void CCTRDoc::OnBnClickedGoToPrev()
 {
-	this->SendCommand(0, this->valve_points_visited[--this->index]);
+	this->SendCommand(0, this->valve_points_visited[--this->index].data());
 }
 
 void CCTRDoc::OnBnClickedGoToNext()
 {
-	this->SendCommand(0, this->valve_points_visited[++this->index]);
+	this->SendCommand(0, this->valve_points_visited[++this->index].data());
 }
 
 void CCTRDoc::OnBnClickedStartId()
@@ -3101,4 +3094,28 @@ CCTRDoc::OnBnClickedResetAutomation()
 {
 	this->m_apex_to_valve = false;
 	this->m_circumnavigation = false;
+}
+
+void CCTRDoc::addPointOnValve()
+{
+	int numOfPoints = this->valve_points_visited.size();
+	
+	double dist = 10000;
+	double tmp = 0;
+	::Eigen::VectorXd tmpPoint(5);
+
+	for (int i = 0; i < 5; ++i)
+		tmpPoint(i) = this->m_Status.currJang[0];
+
+	for (int i = 0; i < numOfPoints; ++i)
+	{
+		tmp = (tmpPoint - this->valve_points_visited[i]).norm();
+		if (tmp < dist)
+			dist = tmp;
+	}
+
+	if (dist > 10)
+		this->valve_points_visited.push_back(tmpPoint);
+
+	this->index = this->valve_points_visited.size();
 }

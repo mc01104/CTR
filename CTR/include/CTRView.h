@@ -93,6 +93,7 @@ public:
 	afx_msg void OnBnClickedRadioModesATV();
 	afx_msg void UpdateGainsATV();
 	afx_msg void UpdateGlovalGain();
+	afx_msg void OnBnClickedKillFocusId();
 
 	//afx_msg void GoToApex();
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
@@ -147,6 +148,7 @@ public:
 	LARGE_INTEGER m_Stime, m_Etime, m_Elapsed, m_Freq;
 
 	afx_msg void OnEnKillfocusForget();
+	afx_msg void OnEnKillFocusBias();
 	//afx_msg void OnBnClickedCheckLWPR();
 	//afx_msg void OnBnClickedButtonSave();
 	//afx_msg void OnCheckTraj();
@@ -170,6 +172,7 @@ public:
 	int m_direction;
 
 	int m_apex_wall;
+	bool m_transition;
 };
 
 #ifndef _DEBUG  // debug version in CTRView.cpp

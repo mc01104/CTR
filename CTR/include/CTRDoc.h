@@ -46,10 +46,19 @@ public:
 		TOP,
 		BOTTOM
 	};
+
+	enum CIRCUM_STATUS 
+	{
+		UP,
+		LEFT,
+		RIGHT,
+		DOWN
+	};
+
 private:
 
 	APEX_TO_VALVE_STATUS aStatus;
-
+	CIRCUM_STATUS		cStatus;
 	// CKim - Robot Status
 	CTR_status		m_Status;
 	::std::ofstream adaptiveExperimentLog;
@@ -254,11 +263,15 @@ public:
 	void computeATVTop(Eigen::Matrix<double,6,1>& err);
 	void computeATVBottom(Eigen::Matrix<double,6,1>& err);
 
+	void addPointOnValve();
+
 	bool storeValvePoint;
-	::std::vector<double*> valve_points_visited;
+	::std::vector<::Eigen::VectorXd> valve_points_visited;
 
 	int	 periodsForCRComputation;
 	void	SwitchApexToValveStatus(APEX_TO_VALVE_STATUS sts) {this->aStatus = sts;};
+	void	SwitchCircumStatus(CIRCUM_STATUS sts) {this->cStatus = sts;};
+	void	computeInitialDirection();
 #ifdef _DEBUG
 	virtual void AssertValid() const;
 	virtual void Dump(CDumpContext& dc) const;
@@ -357,6 +370,20 @@ protected:
 	bool	m_contact_response;
 	double	computeInverseApproxJacovianCR(double currentCR);
 	bool	m_useJacobianContactControl;
+
+	// identification variables
+	int		num_of_sins;
+	double	min_frequency;				// 	[BPM]
+	double	max_frequency;				// 	[BPM]
+	double	amplitude;
+	bool	activateIdentification;		// Set this to be true at 'Start' and false at 'Stop'.
+	ChunTimer timerId;					// Reset this at 'Start'.
+	double  reference_translation;		// Set this at 'Start'. Bring the robot back to this point at 'Stop'.
+
+	::std::vector<double> frequencies;	// Set this at 'OnKillFocus..' as linspace(min_frq, max_frq, num_sin).	[BPM]
+	bool	m_idMode;
+	int tangent_updates;
+
 // Generated message map functions
 protected:
 	DECLARE_MESSAGE_MAP()
@@ -381,6 +408,16 @@ public:
 	afx_msg void OnBnClickedGoToPrev();
 	afx_msg void OnBnClickedGoToNext();
 
+	// identification
+	afx_msg void OnBnClickedStartId();
+	afx_msg void OnBnClickedStopId();
+	afx_msg void OnBnClickedKillFocusId();
+	void UpdateIDParams(double min_freq, double max_freq, double amplitude, int num_of_sins);
+	void switchIDMode(bool onoff) {this->m_idMode = onoff;};
 	int index;
 
+	afx_msg void OnBnClickedResetAutomation();
+
+	double m_bias;
+	void SetBias(double bias){this->m_bias = bias;};
 };

@@ -11,7 +11,8 @@ CTRKin::CTRKin(void)
 	// CKim - Coefficient file for Tip
 	//fName = "CTR_TIP_FAC.txt";
 	//fName = "model_FT_2017_3_23_12_44_48_3.txt";
-	fName = "Fourier_newrobot_order3.txt";
+	//fName = "Fourier_newrobot_order3.txt";
+	fName = "Fourier_oldrobot_order3.txt";
 	os.open("conditionNumber.txt");
 	if (readCTR_FAC_file(fName, m_Tip_px, m_Tip_py, m_Tip_pz, m_Tip_ox, m_Tip_oy, m_Tip_oz) == false) //file read error
 	{

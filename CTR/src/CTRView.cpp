@@ -942,19 +942,29 @@ void CCTRView::UpdateTangent()
 void CCTRView::OnBnClickedRadioModesCircum()
 {
 	UpdateData(true);	
-	int dir = 0;
+	CCTRDoc::CIRCUM_STATUS sts;
 	if(m_direction == 0)	
 	{
-		::std::cout << "Circumnavigation direction: CCW" << ::std::endl;
-		dir = -1;
+		::std::cout << "Circumnavigation direction: up" << ::std::endl;
+		sts = CCTRDoc::CIRCUM_STATUS::UP;
 	}
 	else if (m_direction == 1)
 	{
-		::std::cout << "Circumnavigation direction: CW" << ::std::endl;
-		dir = 1;
+		::std::cout << "Circumnavigation direction: left" << ::std::endl;
+		sts = CCTRDoc::CIRCUM_STATUS::LEFT;
+	}
+	else if (m_direction == 2)
+	{
+		::std::cout << "Circumnavigation direction: down" << ::std::endl;
+		sts = CCTRDoc::CIRCUM_STATUS::DOWN;
+	}
+	else if (m_direction == 3)
+	{
+		::std::cout << "Circumnavigation direction: right" << ::std::endl;
+		sts = CCTRDoc::CIRCUM_STATUS::RIGHT;
 	}
 
-	this->GetDocument()->SetDirection(dir);
+	this->GetDocument()->SwitchCircumStatus(sts);
 	return;		
 
 }

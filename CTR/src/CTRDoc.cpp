@@ -241,7 +241,9 @@ CCTRDoc::CCTRDoc()
 
 	m_globalCR_gain = 1.0;
 
-	aStatus = LEFT;
+	aStatus = APEX_TO_VALVE_STATUS::LEFT;
+	cStatus = CIRCUM_STATUS::LEFT;
+
 	storeValvePoint = false;
 	index = 0;
 	switchToCircum = false;
@@ -258,6 +260,7 @@ CCTRDoc::CCTRDoc()
 	m_idMode = false;
 
 	m_bias = 0;
+	tangent_updates = 0;
 }
 
 CCTRDoc::~CCTRDoc()
@@ -685,6 +688,9 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 
 		//::std::cout << mySelf->periodsForCRComputation << ::std::endl;
 		ss << mySelf->periodsForCRComputation << " ";
+
+		for(int i = 0; i < 3; ++i)
+			ss << localStat.currTipPosDir[i] << " ";
 
 		if (mySelf->m_plane_changed)
 		{
@@ -2872,6 +2878,9 @@ void CCTRDoc::ToggleCircumnavigation()
 {
 	this->m_circumnavigation = !this->m_circumnavigation;
 
+	if (!this->m_circumnavigation)
+		this->tangent_updates = 0;
+
 	::std::cout << "circumnavigation: ";
 	(this->m_circumnavigation ?	::std::cout << "ON" : ::std::cout << "OFF");
 	::std::cout << ::std::endl;
@@ -2890,6 +2899,10 @@ void CCTRDoc::ToggleApexToValve()
 void CCTRDoc::UpdateCircumnavigationParams(::std::vector<double>& msg)
 {
 
+
+	if (tangent_updates == 0)
+		computeInitialDirection();
+
 	m_centroid[0] = msg[3];
 	m_centroid[1] = msg[4];
 
@@ -2905,6 +2918,8 @@ void CCTRDoc::UpdateCircumnavigationParams(::std::vector<double>& msg)
 		m_valve_tangent[0] *= -1;
 		m_valve_tangent[1] *= -1;
 	}
+
+	tangent_updates++;
 }
 
 void CCTRDoc::SetVSGains(double gain_center, double gain_tangent) 
@@ -2931,14 +2946,14 @@ void CCTRDoc::computeApexToValveMotion(Eigen::Matrix<double,6,1>& err, APEX_TO_V
 	//::std::cout << "activating circumnavigation" << ::std::endl;
 	switch(aStatus)
 	{
-		case LEFT:
+	case APEX_TO_VALVE_STATUS::LEFT:
 			//::std::cout << "activate left" << ::std::endl;
 			computeATVLeft(err);
 			break;
-		case TOP:
+	case APEX_TO_VALVE_STATUS::TOP:
 			computeATVTop(err);
 			break;
-		case BOTTOM:
+	case APEX_TO_VALVE_STATUS::BOTTOM:
 			computeATVBottom(err);
 			break;
 	}
@@ -3094,6 +3109,7 @@ CCTRDoc::OnBnClickedResetAutomation()
 {
 	this->m_apex_to_valve = false;
 	this->m_circumnavigation = false;
+	this->tangent_updates = 0;
 }
 
 void CCTRDoc::addPointOnValve()
@@ -3118,4 +3134,51 @@ void CCTRDoc::addPointOnValve()
 		this->valve_points_visited.push_back(tmpPoint);
 
 	this->index = this->valve_points_visited.size();
+}
+
+void CCTRDoc::computeInitialDirection()
+{
+	double tmp_position[2];
+	for (int i = 0; i < 2; ++i)
+		tmp_position[i] = this->m_Status.currTipPosDir[i] + m_valve_tangent[i] * 10;
+
+	switch (this->cStatus)
+	{
+		case CIRCUM_STATUS::LEFT:
+		{
+			if (tmp_position[1] > this->m_Status.currTipPosDir[1])
+			{
+				m_valve_tangent[0] *= -1;
+				m_valve_tangent[1] *= -1;
+			}
+			break;
+		}
+		case CIRCUM_STATUS::UP:
+		{
+			if (tmp_position[0] < this->m_Status.currTipPosDir[0])
+			{
+				m_valve_tangent[0] *= -1;
+				m_valve_tangent[1] *= -1;
+			}
+			break;
+		}
+		case CIRCUM_STATUS::RIGHT:
+		{
+			if (tmp_position[1] < this->m_Status.currTipPosDir[1])
+			{
+				m_valve_tangent[0] *= -1;
+				m_valve_tangent[1] *= -1;
+			}
+			break;
+		}
+		case CIRCUM_STATUS::DOWN:
+		{
+			if (tmp_position[0] > this->m_Status.currTipPosDir[0])
+			{
+				m_valve_tangent[0] *= -1;
+				m_valve_tangent[1] *= -1;
+			}
+			break;
+		}
+	}
 }

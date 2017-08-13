@@ -46,10 +46,19 @@ public:
 		TOP,
 		BOTTOM
 	};
+
+	enum CIRCUM_STATUS 
+	{
+		UP,
+		LEFT,
+		RIGHT,
+		DOWN
+	};
+
 private:
 
 	APEX_TO_VALVE_STATUS aStatus;
-
+	CIRCUM_STATUS		cStatus;
 	// CKim - Robot Status
 	CTR_status		m_Status;
 	::std::ofstream adaptiveExperimentLog;
@@ -261,6 +270,8 @@ public:
 
 	int	 periodsForCRComputation;
 	void	SwitchApexToValveStatus(APEX_TO_VALVE_STATUS sts) {this->aStatus = sts;};
+	void	SwitchCircumStatus(CIRCUM_STATUS sts) {this->cStatus = sts;};
+	void	computeInitialDirection();
 #ifdef _DEBUG
 	virtual void AssertValid() const;
 	virtual void Dump(CDumpContext& dc) const;
@@ -371,6 +382,7 @@ protected:
 
 	::std::vector<double> frequencies;	// Set this at 'OnKillFocus..' as linspace(min_frq, max_frq, num_sin).	[BPM]
 	bool	m_idMode;
+	int tangent_updates;
 
 // Generated message map functions
 protected:

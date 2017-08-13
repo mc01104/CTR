@@ -50,7 +50,7 @@ public:
 	enum CIRCUM_STATUS 
 	{
 		UP,
-		LEFT,
+		LEFT_A,
 		RIGHT,
 		DOWN
 	};

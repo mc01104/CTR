@@ -51,6 +51,7 @@ BEGIN_MESSAGE_MAP(CCTRView, CFormView)
 
 	ON_BN_CLICKED(IDC_RADIO_JA, &CCTRView::OnBnClickedRadioModes)	
 	ON_BN_CLICKED(IDC_RADIO_TELE, &CCTRView::OnBnClickedRadioModes)
+	ON_BN_CLICKED(IDC_RADIO_TELE9, &CCTRView::OnBnClickedRadioModes)
 
 	// plane radio controls
 	ON_BN_CLICKED(IDC_RADIO_JA2, &CCTRView::OnBnClickedRadioModesPlane)	
@@ -113,6 +114,8 @@ BEGIN_MESSAGE_MAP(CCTRView, CFormView)
 
 	ON_BN_CLICKED(IDC_RADIO_JA5, &CCTRView::OnBnClickedRadioModesCircum)	
 	ON_BN_CLICKED(IDC_RADIO_TELE6, &CCTRView::OnBnClickedRadioModesCircum)
+	ON_BN_CLICKED(IDC_RADIO_TELE10, &CCTRView::OnBnClickedRadioModesCircum)
+	ON_BN_CLICKED(IDC_RADIO_TELE11, &CCTRView::OnBnClickedRadioModesCircum)
 
 	ON_BN_CLICKED(IDC_RADIO_JA6, &CCTRView::OnBnClickedRadioModesATV)	
 	ON_BN_CLICKED(IDC_RADIO_TELE7, &CCTRView::OnBnClickedRadioModesATV)
@@ -123,11 +126,11 @@ BEGIN_MESSAGE_MAP(CCTRView, CFormView)
 	ON_WM_CTLCOLOR()
 	ON_BN_CLICKED(IDC_BUTTON6, &CCTRView::OnClickedBtnHome)
 
-	ON_BN_KILLFOCUS(IDC_EDIT30, &CCTRView::OnBnClickedKillFocusId)
-	ON_BN_KILLFOCUS(IDC_EDIT31, &CCTRView::OnBnClickedKillFocusId)
-	ON_BN_KILLFOCUS(IDC_EDIT32, &CCTRView::OnBnClickedKillFocusId)
-	ON_BN_KILLFOCUS(IDC_EDIT33, &CCTRView::OnBnClickedKillFocusId)
-	ON_BN_KILLFOCUS(IDC_EDIT34, &CCTRView::OnEnKillFocusBias)
+	ON_EN_KILLFOCUS(IDC_EDIT30, &CCTRView::OnBnClickedKillFocusId)
+	ON_EN_KILLFOCUS(IDC_EDIT31, &CCTRView::OnBnClickedKillFocusId)
+	ON_EN_KILLFOCUS(IDC_EDIT32, &CCTRView::OnBnClickedKillFocusId)
+	ON_EN_KILLFOCUS(IDC_EDIT33, &CCTRView::OnBnClickedKillFocusId)
+	ON_EN_KILLFOCUS(IDC_EDIT34, &CCTRView::OnEnKillFocusBias)
 	
 END_MESSAGE_MAP()
 
@@ -951,7 +954,7 @@ void CCTRView::OnBnClickedRadioModesCircum()
 	else if (m_direction == 1)
 	{
 		::std::cout << "Circumnavigation direction: left" << ::std::endl;
-		sts = CCTRDoc::CIRCUM_STATUS::LEFT;
+		sts = CCTRDoc::CIRCUM_STATUS::LEFT_A;
 	}
 	else if (m_direction == 2)
 	{
@@ -1039,10 +1042,11 @@ void CCTRView::OnBnClickedRadioModesATV()
 		::std::cout << "Apex-to-valve direction: bottom" << ::std::endl;
 		this->GetDocument()->SwitchApexToValveStatus(CCTRDoc::APEX_TO_VALVE_STATUS::BOTTOM);
 	}
-
-	::std::cout << "undefined direction for apex-to-valve navigation -> switching to default (LEFT)" << ::std::endl;
-	this->GetDocument()->SwitchApexToValveStatus(CCTRDoc::APEX_TO_VALVE_STATUS::LEFT);
-	
+	else
+	{
+		::std::cout << "undefined direction for apex-to-valve navigation -> switching to default (LEFT)" << ::std::endl;
+		this->GetDocument()->SwitchApexToValveStatus(CCTRDoc::APEX_TO_VALVE_STATUS::LEFT);
+	}	
 	return;		
 
 }
@@ -1060,6 +1064,8 @@ void CCTRView::OnBnClickedKillFocusId()
 	this->GetDlgItemTextA(IDC_EDIT33, str);	
 	int num_of_sins = atof(str);
 
+	::std::cout << "minimum frequency " <<  min_freq << " " << "max_frq: " << max_freq << ::std::endl;
+	::std::cout << "amplitude: " << amplitude << " num_of_sins: " << num_of_sins << ::std::endl;
 	this->GetDocument()->UpdateIDParams(min_freq, max_freq, amplitude, num_of_sins);
 
 }
@@ -1070,4 +1076,5 @@ void CCTRView::OnEnKillFocusBias()
 	this->GetDlgItemTextA(IDC_EDIT34, str);	
 	double bias = atof(str);
 	this->GetDocument()->SetBias(bias);
+	::std::cout << "bias:" << bias <<::std::endl;
 }

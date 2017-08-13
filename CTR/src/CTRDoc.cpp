@@ -80,7 +80,7 @@ BEGIN_MESSAGE_MAP(CCTRDoc, CDocument)
 	ON_BN_CLICKED(IDC_BTN_MOVE15, &CCTRDoc::OnBnClickedGoToNext)
 
 	ON_BN_CLICKED(IDC_BTN_MOVE18, &CCTRDoc::OnBnClickedStartId)
-	ON_BN_CLICKED(IDC_BTN_MOVE11, &CCTRDoc::OnBnClickedStopId)
+	ON_BN_CLICKED(IDC_BTN_MOVE17, &CCTRDoc::OnBnClickedStopId)
 
 	ON_BN_CLICKED(IDC_BTN_MOVE16, &CCTRDoc::OnBnClickedResetAutomation)
 
@@ -242,7 +242,7 @@ CCTRDoc::CCTRDoc()
 	m_globalCR_gain = 1.0;
 
 	aStatus = APEX_TO_VALVE_STATUS::LEFT;
-	cStatus = CIRCUM_STATUS::LEFT;
+	cStatus = CIRCUM_STATUS::LEFT_A;
 
 	storeValvePoint = false;
 	index = 0;
@@ -1677,7 +1677,7 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 				for(int i=0; i<7; i++)	
 					vel[i] = 0.0;	
 		}
-		else if(mySelf->activateIdentification && mySelf->m_idMode)
+		else if(mySelf->activateIdentification)// && mySelf->m_idMode)
 		{
 			EnterCriticalSection(&m_cSection);
 			
@@ -1704,6 +1704,8 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 
 			LeaveCriticalSection(&m_cSection);
 
+		
+
 			if (safeToTeleOp)
 			{
 				for(int i=0; i<7; i++)	
@@ -1715,7 +1717,7 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 			else
 				for(int i=0; i<7; i++)	
 					vel[i] = 0.0;	
-			
+			//::std::cout << "joint id velocity: " << vel[0] << ::std::endl;
 		}
 		else	// CKim - When control is not running
 		{
@@ -1732,6 +1734,8 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 		// ----------------------------------------------------- //
 		// CKim - Command joint velocity, update shared variable
 		// ----------------------------------------------------- //
+			//for(int i=0; i<7; i++)	
+			//	vel[i] = 0.0;		
 		if(!mySelf->m_motionCtrl->DoTeleOpMotion(vel))	
 		{
 			// CKim - Stop velocity command
@@ -3071,10 +3075,12 @@ void CCTRDoc::OnBnClickedGoToNext()
 
 void CCTRDoc::OnBnClickedStartId()
 {
-
+	
 	activateIdentification = true;
 	timerId.ResetTime();
 	reference_translation = m_Status.currJang[4];
+	::std::cout << m_idMode << " " << activateIdentification << ::std::endl;
+	::std::cout << "reference translation: " << reference_translation << ::std::endl;
 }
 
 void CCTRDoc::OnBnClickedStopId()
@@ -3083,6 +3089,7 @@ void CCTRDoc::OnBnClickedStopId()
 	double joints[5];
 	memcpy(joints, m_Status.currJang, 5*sizeof(double));
 	joints[4] = reference_translation;
+	
 	SendCommand(0, joints);
 }
 
@@ -3100,7 +3107,11 @@ void CCTRDoc::UpdateIDParams(double min_freq, double max_freq, double amplitude,
 		num_of_sins = 2;
 
 	for(int i = 0 ; i < num_of_sins; ++i)
+	{
 		frequencies[i] = min_frequency + (max_frequency - min_frequency) * (double)i / (double)(num_of_sins-1);
+		::std::cout << frequencies[i] << ::std::endl;
+	}
+
 
 }
 
@@ -3144,7 +3155,7 @@ void CCTRDoc::computeInitialDirection()
 
 	switch (this->cStatus)
 	{
-		case CIRCUM_STATUS::LEFT:
+		case CIRCUM_STATUS::LEFT_A:
 		{
 			if (tmp_position[1] > this->m_Status.currTipPosDir[1])
 			{

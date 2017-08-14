@@ -257,6 +257,7 @@ CCTRDoc::CCTRDoc()
 	//reset with play button
 	timerId.ResetTime();
 	reference_translation = 0;
+	reference_translation_inner = 0;
 	m_idMode = false;
 
 	m_bias = 0;
@@ -1655,6 +1656,7 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 	
 			if(safeToTeleOp)	{	for(int i=0; i<7; i++)	{	vel[i] = dCnt[i];	}		}
 			else				{	for(int i=0; i<7; i++)	{	vel[i] = 0.0;		}		}
+
 		}
 		else if (mySelf->m_jointPlayback)
 		{
@@ -1686,6 +1688,7 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 			double tgtTranslation = mySelf->reference_translation;
 			double tgtTranslationVel = 0;
 			double time = (double)mySelf->timerId.GetTime()/1e6;
+			//::std::cout << "time: " << time << ::std::endl;
 			for (int i = 0 ; i < mySelf->num_of_sins; i++)
 			{
 				double freq_rad_per_sec = mySelf->frequencies[i]/60 * 2 * M_PI;
@@ -1693,32 +1696,48 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 
 				tgtTranslationVel += mySelf->amplitude/(double)mySelf->num_of_sins * freq_rad_per_sec * cos(freq_rad_per_sec*time);
 			}
+			double tgtTranslation_inner = tgtTranslation - L31_MAX + mySelf->reference_translation_inner;
 
 			
-			MtrCntSetPt[0] = MtrCntSetPt[1] = tgtTranslation/c_CntToMM;
+			MtrCntSetPt[0] = tgtTranslation/c_CntToMM;
+			MtrCntSetPt[1] = tgtTranslation_inner/c_CntToMM;
 			for(int i=2; i<7; i++)	
 				MtrCntSetPt[i] = localStat.currMotorCnt[i];
 
-			kp = mySelf->m_Status.gain;
+			//kp = mySelf->m_Status.gain;
+			//mySelf->m_Status.gain = 10;
+			double kp_id = 10;
 			
+			//mySelf->m_Status.isTeleOpMoving = true;
 			safeToTeleOp = mySelf->m_Status.isTeleOpMoving;
 
 			LeaveCriticalSection(&m_cSection);
 
 		
 
-			if (safeToTeleOp)
+			//if (safeToTeleOp)
+			if(true)
 			{
 				for(int i=0; i<7; i++)	
-					vel[i] = -kp*(localStat.currMotorCnt[i]-MtrCntSetPt[i]);
+					vel[i] = -kp_id*(localStat.currMotorCnt[i]-MtrCntSetPt[i]);
+
+				//PrintCArray(vel, 7);
 
 				vel[0] += tgtTranslationVel/c_CntToMM;
 				vel[1] += tgtTranslationVel/c_CntToMM;
+
+				//for(int i=2; i<7; i++)
+				//	vel[i] += tgtTranslationVel/c_CntToMM;
 			}
 			else
 				for(int i=0; i<7; i++)	
 					vel[i] = 0.0;	
-			//::std::cout << "joint id velocity: " << vel[0] << ::std::endl;
+			//::std::cout << "joint id velocity: ";
+			//PrintCArray(vel, 7);
+
+			//for(int i=0; i<7; i++)	
+			//	vel[i] = -1.0;	
+
 		}
 		else	// CKim - When control is not running
 		{
@@ -1737,6 +1756,9 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 		// ----------------------------------------------------- //
 			//for(int i=0; i<7; i++)	
 			//	vel[i] = 0.0;		
+
+		//::std::cout << "vel before commanding: ";
+		//PrintCArray(vel,7);
 		if(!mySelf->m_motionCtrl->DoTeleOpMotion(vel))	
 		{
 			// CKim - Stop velocity command
@@ -3101,20 +3123,25 @@ void CCTRDoc::OnBnClickedGoToNext()
 
 void CCTRDoc::OnBnClickedStartId()
 {
-	
+	m_motionCtrl->SetTeleOpMode(true);	
+
 	activateIdentification = true;
 	timerId.ResetTime();
 	reference_translation = m_Status.currJang[4];
+	reference_translation_inner = m_Status.currJang[2];
 	::std::cout << m_idMode << " " << activateIdentification << ::std::endl;
 	::std::cout << "reference translation: " << reference_translation << ::std::endl;
 }
 
 void CCTRDoc::OnBnClickedStopId()
 {
+	m_motionCtrl->SetTeleOpMode(false);	
+
 	activateIdentification = false;
 	double joints[5];
 	memcpy(joints, m_Status.currJang, 5*sizeof(double));
 	joints[4] = reference_translation;
+	joints[2] = reference_translation_inner;
 	
 	SendCommand(0, joints);
 }
@@ -3125,12 +3152,12 @@ void CCTRDoc::UpdateIDParams(double min_freq, double max_freq, double amplitude,
 	this->max_frequency = max_freq;
 	this->amplitude = amplitude;
 	this->num_of_sins = num_of_sins;
+	
+	if (num_of_sins < 2)
+		num_of_sins = 2;
 
 	frequencies.clear();
 	frequencies.resize(num_of_sins);
-
-	if (num_of_sins < 2)
-		num_of_sins = 2;
 
 	for(int i = 0 ; i < num_of_sins; ++i)
 	{

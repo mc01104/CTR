@@ -379,6 +379,7 @@ protected:
 	bool	activateIdentification;		// Set this to be true at 'Start' and false at 'Stop'.
 	ChunTimer timerId;					// Reset this at 'Start'.
 	double  reference_translation;		// Set this at 'Start'. Bring the robot back to this point at 'Stop'.
+	double	reference_translation_inner;
 
 	::std::vector<double> frequencies;	// Set this at 'OnKillFocus..' as linspace(min_frq, max_frq, num_sin).	[BPM]
 	bool	m_idMode;

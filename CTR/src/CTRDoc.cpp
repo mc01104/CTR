@@ -804,7 +804,7 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 
 				end_loop = clock();
 				//PrintCArray(msg.data(), msg.size());
-				//::std::cout << "CR:" << contactRatio << ::std::endl;
+				::std::cout << "CR:" << contactRatio << ::std::endl;
 			}
 			
 		}

@@ -2922,8 +2922,10 @@ void CCTRDoc::ToggleCircumnavigation()
 void CCTRDoc::ToggleApexToValve()
 {
 
+
 	this->m_apex_to_valve = !this->m_apex_to_valve;
-	
+
+
 	::std::cout << "apex-to-valve navigation: ";
 	(this->m_apex_to_valve ?	::std::cout << "ON" : ::std::cout << "OFF");
 	::std::cout << ::std::endl;

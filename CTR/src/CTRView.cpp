@@ -131,6 +131,8 @@ BEGIN_MESSAGE_MAP(CCTRView, CFormView)
 	ON_EN_KILLFOCUS(IDC_EDIT32, &CCTRView::OnBnClickedKillFocusId)
 	ON_EN_KILLFOCUS(IDC_EDIT33, &CCTRView::OnBnClickedKillFocusId)
 	ON_EN_KILLFOCUS(IDC_EDIT34, &CCTRView::OnEnKillFocusBias)
+
+	ON_EN_KILLFOCUS(IDC_EDIT35, &CCTRView::OnEnKillFocusDisturbance)
 	
 END_MESSAGE_MAP()
 
@@ -1077,4 +1079,13 @@ void CCTRView::OnEnKillFocusBias()
 	double bias = atof(str);
 	this->GetDocument()->SetBias(bias);
 	::std::cout << "bias:" << bias <<::std::endl;
+}
+
+void CCTRView::OnEnKillFocusDisturbance()
+{
+	CString str;
+	this->GetDlgItemTextA(IDC_EDIT35, str);	
+	double disturbance = atof(str);
+	this->GetDocument()->SetDisturbance(disturbance);
+	::std::cout << "disturbance amplitude:" << disturbance <<::std::endl;
 }

@@ -262,6 +262,8 @@ CCTRDoc::CCTRDoc()
 
 	m_bias = 0;
 	tangent_updates = 0;
+
+	m_disturbance_amp = 0;
 }
 
 CCTRDoc::~CCTRDoc()
@@ -1477,7 +1479,11 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 	int navg = 50;		
 	timer.ResetTime();	
 
-	long endTime = 0;		
+	long endTime = 0;
+
+	// JHa - disturbance related variables
+	ChunTimer timer_dis;
+	timer_dis.ResetTime();
 
 
 	double	desiredPosition[6];
@@ -1650,6 +1656,12 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 				mySelf->m_kinLib->ApplyKinematicControlNullspace(J,err,dq, localStat.currJang);
 			else if (mySelf->m_control_mode ==1)
 				mySelf->m_kinLib->ApplyKinematicControl(J,err,dq, localStat.currJang);
+
+			// add sinusoidal disturbance
+			double time = (double)timer_dis.GetTime()/1e6;
+			double freq_dis = 6;	// BPM
+			double vel_dis = mySelf->m_disturbance_amp * freq_dis/60 * 2 *M_PI * cos(freq_dis/60 * 2 *M_PI * time);
+			dq[4] += vel_dis;
 
 			// CKim - Convert dotq into motor velocity
 			mySelf->dJangTodCnt(dq, dCnt);

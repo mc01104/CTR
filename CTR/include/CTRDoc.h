@@ -421,4 +421,6 @@ public:
 
 	double m_bias;
 	void SetBias(double bias){this->m_bias = bias;};
+	double m_disturbance_amp;
+	void SetDisturbance(double disturbance){this->m_disturbance_amp = disturbance;};
 };

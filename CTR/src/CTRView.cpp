@@ -913,18 +913,19 @@ void CCTRView::ToggleCircumnavigation()
 
 void CCTRView::ToggleApexToValve()
 {
+	UpdateData(true);
+
+	bool apex_to_valve_status = this->IsDlgButtonChecked(IDC_CHECK4);
+	bool contact_control_status = this->IsDlgButtonChecked(IDC_CHECK1);
+	
 	UpdateData(false);
 
-	int contact_control_status = dynamic_cast<CButton*> (this->GetDlgItem(IDC_CHECK1))->GetCheck();
-	int apex_to_valve_status = dynamic_cast<CButton*> (this->GetDlgItem(IDC_CHECK4))->GetCheck();
-	
-	// toggling in the CCTRDoc class will flip the control status
 	if (apex_to_valve_status == 0)
-		dynamic_cast<CButton*> (this->GetDlgItem(IDC_CHECK4))->SetCheck(1);
+		this->CheckDlgButton(IDC_CHECK1, 0);
 	else
-		dynamic_cast<CButton*> (this->GetDlgItem(IDC_CHECK4))->SetCheck(0);
-
+		this->CheckDlgButton(IDC_CHECK1, 1);
 	this->GetDocument()->ToggleApexToValve();
+	this->GetDocument()->ToggleForceControl();
 }
 
 void CCTRView::UpdateScalingFactor()

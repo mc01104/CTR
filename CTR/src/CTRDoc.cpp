@@ -1649,7 +1649,7 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 			
 				for (int i = 0; i < 3; i++)
 					err(i, 0) += desiredPosition[i];   
-	
+				::std::cout << "contact control is on" << ::std::endl;
 			}
 
 			if (mySelf->m_control_mode == 0)
@@ -1766,8 +1766,8 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 		// ----------------------------------------------------- //
 		// CKim - Command joint velocity, update shared variable
 		// ----------------------------------------------------- //
-			//for(int i=0; i<7; i++)	
-			//	vel[i] = 0.0;		
+			for(int i=0; i<7; i++)	
+				vel[i] = 0.0;		
 
 		//::std::cout << "vel before commanding: ";
 		//PrintCArray(vel,7);
@@ -3016,7 +3016,7 @@ void CCTRDoc::computeATVLeft(Eigen::Matrix<double,6,1>& err)
 
 	// forward velocity
 	err[2] = m_forward_gainATV;    // mm/sec
-	::std::cout <<"centroid in controller  :" <<  this->m_centroid_apex[0] << " " << this->m_centroid_apex[1] << ::std::endl;
+	//::std::cout <<"centroid in controller  :" <<  this->m_centroid_apex[0] << " " << this->m_centroid_apex[1] << ::std::endl;
 	// check controller
 	if (this->m_centroid_apex[1] >= m_apex_theshold_max)
 		err[1] += m_center_gainATV/m_scaling_factor * (this->m_centroid_apex[1] - m_apex_theshold_max);

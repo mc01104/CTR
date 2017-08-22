@@ -10,6 +10,7 @@ class HeartRateMonitor
 	SerialPort sPort;
 
 	double heartRate;
+	double breathingRate;
 
 	bool logData;
 	bool prevLog;
@@ -24,6 +25,8 @@ class HeartRateMonitor
 		void run();
 
 		double getHeartRate();
+
+		double getBreathingRate() {return this->breathingRate;};
 
 		void toggleLog(bool logFlag) 
 		{

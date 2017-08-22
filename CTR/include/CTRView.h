@@ -122,6 +122,7 @@ public:
 	static int		m_idSensConfig[6];		CString		m_sensConfig[6];
 
 	static int		m_id_monitor_freq;		CString		m_monitor_freq;
+	static int		m_id_monitor_freq_breath;		CString		m_monitor_freq_breath;
 
 	static int		manual_point_ENABLE[15];
 	static int		manual_point_DISABLE[15];

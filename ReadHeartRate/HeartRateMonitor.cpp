@@ -59,7 +59,9 @@ void HeartRateMonitor::run()
 		else
 		{
 			heartRate = atof(strings[1].c_str());
+			breathingRate = atof(strings.back().c_str());
 			::std::cout << " Heart rate [bpm]:" << heartRate << ::std::endl;
+			::std::cout << " Breathing rate [bpm]:" << breathingRate << ::std::endl;
 		}
 
 
@@ -104,3 +106,4 @@ bool HeartRateMonitor::checkForConsistency(::std::string& value)
 
 	return sensorsActivated;
 }
+

@@ -201,6 +201,7 @@ public:
 	void StartUIupdate();
 
 	double GetMonitorFreq();
+	double GetMonitorBreathingFreq();
 	void	UpdateGains(double position, double orientation, double position_forward, double orientation_forward);
 	void	UpdateGainsApexToValve(double center, double forward, double threshold_min, double threshold_max);
 	void	UpdateGlobalGain(double gain) {this->m_globalCR_gain = gain; ::std::cout << this->m_globalCR_gain << ::std::endl; };
@@ -385,6 +386,11 @@ protected:
 	bool	m_idMode;
 	int tangent_updates;
 
+	double centroid_prev[2];
+	double centroid_velocity[2];
+	double tip_velocity[2];
+	double tip_position_prev[2];
+
 // Generated message map functions
 protected:
 	DECLARE_MESSAGE_MAP()
@@ -423,4 +429,7 @@ public:
 	void SetBias(double bias){this->m_bias = bias;};
 	double m_disturbance_amp;
 	void SetDisturbance(double disturbance){this->m_disturbance_amp = disturbance;};
+
+	ChunTimer circumTimer;
+	bool retractRobot;
 };

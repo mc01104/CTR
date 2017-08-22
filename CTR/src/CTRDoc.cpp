@@ -264,6 +264,19 @@ CCTRDoc::CCTRDoc()
 	tangent_updates = 0;
 
 	m_disturbance_amp = 0;
+
+	centroid_velocity[0] = 0;
+	centroid_velocity[1] = 0;
+	tip_velocity[0] = 0;
+	tip_velocity[1] = 0;
+
+	centroid_prev[0] = 0;
+	centroid_prev[1] = 0;
+
+	tip_position_prev[0] = 0;
+	tip_position_prev[1] = 0;
+
+	retractRobot = false;
 }
 
 CCTRDoc::~CCTRDoc()
@@ -694,6 +707,10 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 
 		for(int i = 0; i < 3; ++i)
 			ss << localStat.currTipPosDir[i] << " ";
+
+		ss << mySelf->m_contactGain << " " << mySelf->m_contactDGain << " " << mySelf->m_contactIGain << " " << mySelf->m_forceControlActivated << " " << mySelf->m_contactRatioDesired << " ";
+
+		ss << mySelf->GetMonitorBreathingFreq() << " ";
 
 		if (mySelf->m_plane_changed)
 		{
@@ -1649,7 +1666,9 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 			
 				for (int i = 0; i < 3; i++)
 					err(i, 0) += desiredPosition[i];   
-				::std::cout << "contact control is on" << ::std::endl;
+				
+				if (mySelf->retractRobot)
+					err(3, 0) = -1.0; //value?
 			}
 
 			if (mySelf->m_control_mode == 0)
@@ -2919,6 +2938,9 @@ void CCTRDoc::ToggleCircumnavigation()
 	this->m_circumnavigation = !this->m_circumnavigation;
 
 	if (this->m_circumnavigation)
+		memcpy(this->tip_position_prev, this->m_Status.currTipPosDir, 2 *sizeof(double));
+
+	if (this->m_circumnavigation)
 		this->tangent_updates = 0;
 
 	if (this->m_circumnavigation)
@@ -2945,12 +2967,28 @@ void CCTRDoc::ToggleApexToValve()
 
 void CCTRDoc::UpdateCircumnavigationParams(::std::vector<double>& msg)
 {
+	this->retractRobot = false;
 
+	double dt = static_cast<double> (circumTimer.GetTime())/1.e06;
+	circumTimer.ResetTime();
 
+	this->centroid_prev[0] = m_centroid[0];
+	this->centroid_prev[1] = m_centroid[1];
 
+	for (int i = 0; i < 2; ++i)
+		this->tip_velocity[i] = (this->m_Status.currTipPosDir[i] - this->tip_position_prev[i])/dt;
 
 	m_centroid[0] = msg[3];
 	m_centroid[1] = msg[4];
+
+	for (int i = 0; i < 2; ++i)
+		this->centroid_velocity[i] = (this->m_centroid[i] - this->centroid_prev[i])/dt/this->m_scaling_factor; // centroid velocity in mm/sec
+
+	::Eigen::Vector2d vel_cen = ::Eigen::Map<::Eigen::Vector2d> (this->centroid_velocity, 2);
+	::Eigen::Vector2d vel_tip = ::Eigen::Map<::Eigen::Vector2d> (this->tip_velocity, 2);
+
+	if (vel_cen.norm() < 0.5 * vel_tip.norm())
+		this->retractRobot = true;
 
 	memcpy(m_valve_tangent_prev, m_valve_tangent, 2 * sizeof(double));
 
@@ -2967,6 +3005,8 @@ void CCTRDoc::UpdateCircumnavigationParams(::std::vector<double>& msg)
 	if (tangent_updates == 0)
 		computeInitialDirection();
 	tangent_updates++;
+
+	memcpy(this->tip_position_prev, this->m_Status.currTipPosDir, 2 *sizeof(double));
 }
 
 void CCTRDoc::SetVSGains(double gain_center, double gain_tangent) 
@@ -3185,8 +3225,14 @@ void CCTRDoc::UpdateIDParams(double min_freq, double max_freq, double amplitude,
 void 
 CCTRDoc::OnBnClickedResetAutomation()
 {
+	CFrameWnd * pFrame = (CFrameWnd *) (AfxGetApp()->m_pMainWnd);
+	pFrame->GetActiveView()->CheckDlgButton(IDC_EDIT1, 0);
+	pFrame->GetActiveView()->CheckDlgButton(IDC_EDIT2, 0);
+	pFrame->GetActiveView()->CheckDlgButton(IDC_EDIT4, 0);
+
 	this->m_apex_to_valve = false;
 	this->m_circumnavigation = false;
+	this->m_forceControlActivated = false;
 	this->tangent_updates = 0;
 	this->valve_points_visited.clear();
 	this->index = 0;
@@ -3201,7 +3247,7 @@ void CCTRDoc::addPointOnValve()
 	::Eigen::VectorXd tmpPoint(5);
 
 	for (int i = 0; i < 5; ++i)
-		tmpPoint(i) = this->m_Status.currJang[0];
+		tmpPoint(i) = this->m_Status.currJang[i];
 
 	for (int i = 0; i < numOfPoints; ++i)
 	{
@@ -3273,4 +3319,11 @@ void CCTRDoc::computeInitialDirection()
 			break;
 		}
 	}
+}
+
+
+double 
+CCTRDoc::GetMonitorBreathingFreq()
+{
+	return this->m_heartRateMonitor->getBreathingRate();
 }

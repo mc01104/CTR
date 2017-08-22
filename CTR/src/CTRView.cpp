@@ -33,6 +33,7 @@ int CCTRView::online_ENABLE[15] = {IDC_EDIT11, IDC_EDIT12, IDC_EDIT13, IDC_BTN_M
 int CCTRView::online_DISABLE[15] = {IDC_EDIT8, IDC_EDIT9, IDC_EDIT10, IDC_BTN_MOVE8, -1};
 
 int CCTRView::m_id_monitor_freq = IDC_A12_ACT2;
+int CCTRView::m_id_monitor_freq_breath = IDC_A12_ACT3;
 
 IMPLEMENT_DYNCREATE(CCTRView, CFormView)
 
@@ -351,6 +352,7 @@ void CCTRView::OnTimer(UINT_PTR nIDEvent)
 			m_cmdJang[i].Format("%.3f",jAngCmd[i]);
 	}
 	m_monitor_freq.Format("%3.1f", this->GetDocument()->GetMonitorFreq());
+	m_monitor_freq_breath.Format("%2.1f", this->GetDocument()->GetMonitorBreathingFreq());
 
 	UpdateData(false);
 
@@ -908,6 +910,19 @@ void CCTRView::OnBnClickedRadioModesFreq()
 
 void CCTRView::ToggleCircumnavigation()
 {
+	UpdateData(true);
+
+	bool circumnavigation_status = this->IsDlgButtonChecked(IDC_CHECK2);
+	bool contact_control_status = this->IsDlgButtonChecked(IDC_CHECK1);
+	
+	UpdateData(false);
+
+	if (circumnavigation_status == 0)
+		this->CheckDlgButton(IDC_CHECK1, 0);
+	else
+		this->CheckDlgButton(IDC_CHECK1, 1);
+
+	this->GetDocument()->ToggleForceControl();
 	this->GetDocument()->ToggleCircumnavigation();
 }
 

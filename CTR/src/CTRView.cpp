@@ -134,6 +134,7 @@ BEGIN_MESSAGE_MAP(CCTRView, CFormView)
 	ON_EN_KILLFOCUS(IDC_EDIT34, &CCTRView::OnEnKillFocusBias)
 
 	ON_EN_KILLFOCUS(IDC_EDIT35, &CCTRView::OnEnKillFocusDisturbance)
+	ON_BN_CLICKED(IDC_BTN_MOVE16, &CCTRView::OnBnClickedResetAutomation)
 	
 END_MESSAGE_MAP()
 
@@ -1115,4 +1116,12 @@ void CCTRView::OnEnKillFocusDisturbance()
 	double disturbance = atof(str);
 	this->GetDocument()->SetDisturbance(disturbance);
 	::std::cout << "disturbance amplitude:" << disturbance <<::std::endl;
+}
+
+void CCTRView::OnBnClickedResetAutomation()
+{
+	this->CheckDlgButton(IDC_EDIT1, 0);
+	this->CheckDlgButton(IDC_EDIT2, 0);
+	this->CheckDlgButton(IDC_EDIT4, 0);
+	this->GetDocument()->resetAutomation();
 }

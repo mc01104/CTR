@@ -151,6 +151,8 @@ public:
 	afx_msg void OnEnKillfocusForget();
 	afx_msg void OnEnKillFocusBias();
 	afx_msg void OnEnKillFocusDisturbance();
+
+	afx_msg void OnBnClickedResetAutomation();
 	//afx_msg void OnBnClickedCheckLWPR();
 	//afx_msg void OnBnClickedButtonSave();
 	//afx_msg void OnCheckTraj();

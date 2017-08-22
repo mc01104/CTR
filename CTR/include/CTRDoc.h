@@ -423,7 +423,7 @@ public:
 	void switchIDMode(bool onoff) {this->m_idMode = onoff;};
 	int index;
 
-	afx_msg void OnBnClickedResetAutomation();
+	void resetAutomation();
 
 	double m_bias;
 	void SetBias(double bias){this->m_bias = bias;};

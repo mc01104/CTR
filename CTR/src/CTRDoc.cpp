@@ -82,7 +82,7 @@ BEGIN_MESSAGE_MAP(CCTRDoc, CDocument)
 	ON_BN_CLICKED(IDC_BTN_MOVE18, &CCTRDoc::OnBnClickedStartId)
 	ON_BN_CLICKED(IDC_BTN_MOVE17, &CCTRDoc::OnBnClickedStopId)
 
-	ON_BN_CLICKED(IDC_BTN_MOVE16, &CCTRDoc::OnBnClickedResetAutomation)
+	//ON_BN_CLICKED(IDC_BTN_MOVE16, &CCTRDoc::OnBnClickedResetAutomation)
 
 
 END_MESSAGE_MAP()
@@ -3223,12 +3223,12 @@ void CCTRDoc::UpdateIDParams(double min_freq, double max_freq, double amplitude,
 }
 
 void 
-CCTRDoc::OnBnClickedResetAutomation()
+CCTRDoc::resetAutomation()
 {
-	CFrameWnd * pFrame = (CFrameWnd *) (AfxGetApp()->m_pMainWnd);
-	pFrame->GetActiveView()->CheckDlgButton(IDC_EDIT1, 0);
-	pFrame->GetActiveView()->CheckDlgButton(IDC_EDIT2, 0);
-	pFrame->GetActiveView()->CheckDlgButton(IDC_EDIT4, 0);
+	//CFrameWnd * pFrame = (CFrameWnd *) (AfxGetApp()->m_pMainWnd);
+	//pFrame->GetActiveView()->CheckDlgButton(IDC_EDIT1, 0);
+	//pFrame->GetActiveView()->CheckDlgButton(IDC_EDIT2, 0);
+	//pFrame->GetActiveView()->CheckDlgButton(IDC_EDIT4, 0);
 
 	this->m_apex_to_valve = false;
 	this->m_circumnavigation = false;

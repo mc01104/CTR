@@ -915,15 +915,19 @@ void CCTRView::ToggleCircumnavigation()
 
 	bool circumnavigation_status = this->IsDlgButtonChecked(IDC_CHECK2);
 	bool contact_control_status = this->IsDlgButtonChecked(IDC_CHECK1);
+	bool apex_to_valve_status = this->IsDlgButtonChecked(IDC_CHECK4);
 	
 	UpdateData(false);
 
 	if (circumnavigation_status == 0)
 		this->CheckDlgButton(IDC_CHECK1, 0);
 	else
+	{
 		this->CheckDlgButton(IDC_CHECK1, 1);
+		this->CheckDlgButton(IDC_CHECK4, 0);
+	}
 
-	this->GetDocument()->ToggleForceControl();
+	//this->GetDocument()->ToggleForceControl();
 	this->GetDocument()->ToggleCircumnavigation();
 }
 
@@ -933,15 +937,19 @@ void CCTRView::ToggleApexToValve()
 
 	bool apex_to_valve_status = this->IsDlgButtonChecked(IDC_CHECK4);
 	bool contact_control_status = this->IsDlgButtonChecked(IDC_CHECK1);
-	
+	bool circum_status = this->IsDlgButtonChecked(IDC_CHECK2);
+
 	UpdateData(false);
 
 	if (apex_to_valve_status == 0)
 		this->CheckDlgButton(IDC_CHECK1, 0);
 	else
+	{
 		this->CheckDlgButton(IDC_CHECK1, 1);
+		this->CheckDlgButton(IDC_CHECK2, 0);
+	}
 	this->GetDocument()->ToggleApexToValve();
-	this->GetDocument()->ToggleForceControl();
+	//this->GetDocument()->ToggleForceControl();
 }
 
 void CCTRView::UpdateScalingFactor()
@@ -1120,8 +1128,10 @@ void CCTRView::OnEnKillFocusDisturbance()
 
 void CCTRView::OnBnClickedResetAutomation()
 {
-	this->CheckDlgButton(IDC_EDIT1, 0);
-	this->CheckDlgButton(IDC_EDIT2, 0);
-	this->CheckDlgButton(IDC_EDIT4, 0);
+	::std::cout << "resetting " << ::std::endl;
+	UpdateData(false);
+	this->CheckDlgButton(IDC_CHECK1, 0);
+	this->CheckDlgButton(IDC_CHECK2, 0);
+	this->CheckDlgButton(IDC_CHECK4, 0);
 	this->GetDocument()->resetAutomation();
 }

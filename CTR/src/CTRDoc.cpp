@@ -1512,7 +1512,8 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 		//double heart_rate = mySelf->m_heartRateMonitor->getHeartRate();
 		//::std::cout << "Heart Rate [bpm]: " << heart_rate << ::std::endl;
 
-
+		//if (mySelf->m_forceControlActivated)
+		//	::std::cout << "force on" << ::std::endl;
 		// CKim - Read from the motors - blocking function
 		mySelf->m_motionCtrl->GetMotorPos(localStat.currMotorCnt);	
 		mySelf->m_motionCtrl->GetErrorFlag(localStat.errFlag);
@@ -2938,6 +2939,14 @@ void CCTRDoc::ToggleCircumnavigation()
 	this->m_circumnavigation = !this->m_circumnavigation;
 
 	if (this->m_circumnavigation)
+	{
+		this->m_forceControlActivated = true;
+		this->m_apex_to_valve = false;
+	}
+	else
+		this->m_forceControlActivated = false;
+
+	if (this->m_circumnavigation)
 		memcpy(this->tip_position_prev, this->m_Status.currTipPosDir, 2 *sizeof(double));
 
 	if (this->m_circumnavigation)
@@ -2956,10 +2965,14 @@ void CCTRDoc::ToggleCircumnavigation()
 void CCTRDoc::ToggleApexToValve()
 {
 
-
 	this->m_apex_to_valve = !this->m_apex_to_valve;
-
-
+	if (this->m_apex_to_valve)
+	{
+		this->m_forceControlActivated = true;
+		this->m_circumnavigation = false;
+	}
+	else
+		this->m_forceControlActivated = false;
 	::std::cout << "apex-to-valve navigation: ";
 	(this->m_apex_to_valve ?	::std::cout << "ON" : ::std::cout << "OFF");
 	::std::cout << ::std::endl;

@@ -123,6 +123,8 @@ CCTRDoc::CCTRDoc()
 	filters = new RecursiveFilter::MovingAverageFilter[3];
 
 	this->cr_dot_filter = new RecursiveFilter::MovingAverageFilter(11);
+	this->filter_centroid = new RecursiveFilter::MovingAverageFilter(11);
+	this->filter_tip = new RecursiveFilter::MovingAverageFilter(11);
 
 	m_heartRateMonitor = new HeartRateMonitor();
 	m_contactError = 0;
@@ -277,6 +279,7 @@ CCTRDoc::CCTRDoc()
 	tip_position_prev[1] = 0;
 
 	retractRobot = false;
+	m_usePullBack = false;
 }
 
 CCTRDoc::~CCTRDoc()
@@ -293,6 +296,9 @@ CCTRDoc::~CCTRDoc()
 	delete robot;
 	delete kinematics;
 	delete m_kinLWPR;
+	delete filter_centroid;
+	delete filter_tip;
+
 	
 }
 
@@ -1669,7 +1675,7 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 					err(i, 0) += desiredPosition[i];   
 				
 				if (mySelf->retractRobot)
-					err(3, 0) = -1.0; //value?
+					err(3, 0) = -0.5; //value?
 			}
 
 			if (mySelf->m_control_mode == 0)
@@ -1786,8 +1792,8 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 		// ----------------------------------------------------- //
 		// CKim - Command joint velocity, update shared variable
 		// ----------------------------------------------------- //
-			for(int i=0; i<7; i++)	
-				vel[i] = 0.0;		
+			//for(int i=0; i<7; i++)	
+			//	vel[i] = 0.0;		
 
 		//::std::cout << "vel before commanding: ";
 		//PrintCArray(vel,7);
@@ -2757,14 +2763,8 @@ bool CCTRDoc::TeleOpSafetyCheck()
 void CCTRDoc::ToggleForceControl()
 {
 	this->m_forceControlActivated = !this->m_forceControlActivated;
-	::std::cout << this->m_forceControlActivated << ::std::endl;
-	//EnterCriticalSection(&m_cSection);
-	//memcpy(this->m_Status.tgtTipPosDir, this->m_Status.currTipPosDir, 6 * sizeof(double));
-	////memcpy(this->m_Status.refTipPosDir, this->m_Status.currTipPosDir, 6 * sizeof(double));
-	//LeaveCriticalSection(&m_cSection);
-//
-//	this->SlaveToMaster(this->m_Status, 1);		// Updates robotStat.hapticState.slavePos}
-//}
+	::std::cout << "contact controller is" << (this->m_forceControlActivated ? "ON" : "OFF") << ::std::endl;
+
 }
 
 void CCTRDoc::TogglePlaneEstimation()
@@ -2862,14 +2862,11 @@ CCTRDoc::ToggleLog()
 
 	if (this->m_logData)
 	{
-		//this->m_fileStream->close();
 		this->m_heartRateMonitor->toggleLog(false);
 		this->m_logData = false;
 	}
 	else
 	{
-		//::std::string filename = GetDateString() + "1"+ ".txt";
-		//this->m_fileStream = new ::std::ofstream(filename);
 		this->m_logData = true;
 		this->m_heartRateMonitor->toggleLog(true);
 	}
@@ -2903,15 +2900,6 @@ double CCTRDoc::GetMonitorFreq()
 void CCTRDoc::computeCircumnavigationDirection(Eigen::Matrix<double,6,1>& err)
 {
 
-	//if (!m_line_detected)
-	//{
-	//	err.setZero();
-	//	return;
-	//}
-
-	::std::cout << "centroid:[" << m_centroid[0] << "," << m_centroid[1] << "]" << ::std::endl; 
-	::std::cout << "tangent:[" << m_valve_tangent[0] << "," << m_valve_tangent[1] << "]" << ::std::endl; 
-
 	// later this needs to be computed from the plane normal
 	::Eigen::Matrix3d rot = ::Eigen::Matrix3d::Identity();
 
@@ -2929,8 +2917,6 @@ void CCTRDoc::computeCircumnavigationDirection(Eigen::Matrix<double,6,1>& err)
 
 	err.block(0, 0, 3, 1) = rot * error3D;
 	
-	::std::cout << "velocities:" << err.block(0, 0, 3, 1).transpose() << ::std::endl;
-	//err.setZero();
 }
 
 // BE CAREFULL TO SWITCH ON/OFF THE CIRCUM
@@ -2959,20 +2945,20 @@ void CCTRDoc::ToggleCircumnavigation()
 	}
 	::std::cout << "circumnavigation: ";
 	(this->m_circumnavigation ?	::std::cout << "ON" : ::std::cout << "OFF");
-	::std::cout << ::std::endl;
+	::std::cout << ::std::endl; 
+
+	this->filter_centroid->resetFilter();
+	this->filter_tip->resetFilter();
 }
 
 void CCTRDoc::ToggleApexToValve()
 {
 
 	this->m_apex_to_valve = !this->m_apex_to_valve;
+
 	if (this->m_apex_to_valve)
-	{
-		this->m_forceControlActivated = true;
 		this->m_circumnavigation = false;
-	}
-	else
-		this->m_forceControlActivated = false;
+
 	::std::cout << "apex-to-valve navigation: ";
 	(this->m_apex_to_valve ?	::std::cout << "ON" : ::std::cout << "OFF");
 	::std::cout << ::std::endl;
@@ -2980,29 +2966,35 @@ void CCTRDoc::ToggleApexToValve()
 
 void CCTRDoc::UpdateCircumnavigationParams(::std::vector<double>& msg)
 {
-	this->retractRobot = false;
-
-	double dt = static_cast<double> (circumTimer.GetTime())/1.e06;
-	circumTimer.ResetTime();
 
 	this->centroid_prev[0] = m_centroid[0];
 	this->centroid_prev[1] = m_centroid[1];
 
-	for (int i = 0; i < 2; ++i)
-		this->tip_velocity[i] = (this->m_Status.currTipPosDir[i] - this->tip_position_prev[i])/dt;
 
 	m_centroid[0] = msg[3];
 	m_centroid[1] = msg[4];
 
-	for (int i = 0; i < 2; ++i)
-		this->centroid_velocity[i] = (this->m_centroid[i] - this->centroid_prev[i])/dt/this->m_scaling_factor; // centroid velocity in mm/sec
+	this->retractRobot = false;
+	if (m_usePullBack)
+	{
+		
+		double dt = static_cast<double> (circumTimer.GetTime())/1.e06;
+		circumTimer.ResetTime();
 
-	::Eigen::Vector2d vel_cen = ::Eigen::Map<::Eigen::Vector2d> (this->centroid_velocity, 2);
-	::Eigen::Vector2d vel_tip = ::Eigen::Map<::Eigen::Vector2d> (this->tip_velocity, 2);
 
-	if (vel_cen.norm() < 0.5 * vel_tip.norm())
-		this->retractRobot = true;
+		for (int i = 0; i < 2; ++i)
+			this->tip_velocity[i] = this->filter_tip->step((this->m_Status.currTipPosDir[i] - this->tip_position_prev[i])/dt);
 
+
+		for (int i = 0; i < 2; ++i)
+			this->centroid_velocity[i] = this->filter_centroid->step((this->m_centroid[i] - this->centroid_prev[i])/dt/this->m_scaling_factor); // centroid velocity in mm/sec
+
+		::Eigen::Vector2d vel_cen = ::Eigen::Map<::Eigen::Vector2d> (this->centroid_velocity, 2);
+		::Eigen::Vector2d vel_tip = ::Eigen::Map<::Eigen::Vector2d> (this->tip_velocity, 2);
+
+		if (vel_cen.norm() < 0.5 * vel_tip.norm())
+			this->retractRobot = true;
+	}
 	memcpy(m_valve_tangent_prev, m_valve_tangent, 2 * sizeof(double));
 
 	m_valve_tangent[0]  = msg[5];
@@ -3044,7 +3036,7 @@ void CCTRDoc::OnBnClickedGoToApex()
 
 void CCTRDoc::computeApexToValveMotion(Eigen::Matrix<double,6,1>& err, APEX_TO_VALVE_STATUS aStatus)
 {
-	//::std::cout << "activating circumnavigation" << ::std::endl;
+
 	switch(aStatus)
 	{
 	case APEX_TO_VALVE_STATUS::LEFT:
@@ -3063,20 +3055,19 @@ void CCTRDoc::computeApexToValveMotion(Eigen::Matrix<double,6,1>& err, APEX_TO_V
 
 void CCTRDoc::computeATVLeft(Eigen::Matrix<double,6,1>& err)
 {
-	//::std::cout << "left Apex-to-valve" << ::std::endl;
 	// left bias
 	err[1] = -this->m_bias;
 
 	// forward velocity
 	err[2] = m_forward_gainATV;    // mm/sec
-	//::std::cout <<"centroid in controller  :" <<  this->m_centroid_apex[0] << " " << this->m_centroid_apex[1] << ::std::endl;
+
 	// check controller
 	if (this->m_centroid_apex[1] >= m_apex_theshold_max)
 		err[1] += m_center_gainATV/m_scaling_factor * (this->m_centroid_apex[1] - m_apex_theshold_max);
 	else if (this->m_centroid_apex[1] <= m_apex_theshold_min)
 		err[1] += m_center_gainATV/m_scaling_factor * (this->m_centroid_apex[1] - m_apex_theshold_min);
 
-	//::std::cout << "vel from aTV: " << err.transpose() << ::std::endl;
+
 }
 
 
@@ -3238,11 +3229,6 @@ void CCTRDoc::UpdateIDParams(double min_freq, double max_freq, double amplitude,
 void 
 CCTRDoc::resetAutomation()
 {
-	//CFrameWnd * pFrame = (CFrameWnd *) (AfxGetApp()->m_pMainWnd);
-	//pFrame->GetActiveView()->CheckDlgButton(IDC_EDIT1, 0);
-	//pFrame->GetActiveView()->CheckDlgButton(IDC_EDIT2, 0);
-	//pFrame->GetActiveView()->CheckDlgButton(IDC_EDIT4, 0);
-
 	this->m_apex_to_valve = false;
 	this->m_circumnavigation = false;
 	this->m_forceControlActivated = false;
@@ -3280,20 +3266,13 @@ void CCTRDoc::computeInitialDirection()
 	double tmp_position[2];
 	for (int i = 0; i < 2; ++i)
 		tmp_position[i] = this->m_Status.currTipPosDir[i] + m_valve_tangent[i] * 10;
-	//::std::cout << "temp position :";
-	//PrintCArray(tmp_position, 2);
-	//::std::cout << "tangent:";
-	//PrintCArray(m_valve_tangent, 2);
-	//::std::cout << "current:" << this->m_Status.currTipPosDir[0] << " " << this->m_Status.currTipPosDir[1] << ::std::endl;
-	//::std::cout << "direction selection" << ::std::endl;
+
 	switch (this->cStatus)
 	{
 		case CIRCUM_STATUS::LEFT_A:
 		{
-			//::std::cout << " left" << ::std::endl;
 			if (tmp_position[1] > this->m_Status.currTipPosDir[1])
 			{
-				//::std::cout << "flip" << ::std::endl;
 				m_valve_tangent[0] *= -1;
 				m_valve_tangent[1] *= -1;
 				
@@ -3302,10 +3281,8 @@ void CCTRDoc::computeInitialDirection()
 		}
 		case CIRCUM_STATUS::UP:
 		{
-			//::std::cout << " up" << ::std::endl;
 			if (tmp_position[0] < this->m_Status.currTipPosDir[0])
 			{
-								//::std::cout << "flip" << ::std::endl;
 				m_valve_tangent[0] *= -1;
 				m_valve_tangent[1] *= -1;
 			}
@@ -3315,7 +3292,6 @@ void CCTRDoc::computeInitialDirection()
 		{
 			if (tmp_position[1] < this->m_Status.currTipPosDir[1])
 			{
-								//::std::cout << "flip" << ::std::endl;
 				m_valve_tangent[0] *= -1;
 				m_valve_tangent[1] *= -1;
 			}
@@ -3325,7 +3301,6 @@ void CCTRDoc::computeInitialDirection()
 		{
 			if (tmp_position[0] > this->m_Status.currTipPosDir[0])
 			{
-								//::std::cout << "flip" << ::std::endl;
 				m_valve_tangent[0] *= -1;
 				m_valve_tangent[1] *= -1;
 			}
@@ -3334,9 +3309,20 @@ void CCTRDoc::computeInitialDirection()
 	}
 }
 
-
 double 
 CCTRDoc::GetMonitorBreathingFreq()
 {
 	return this->m_heartRateMonitor->getBreathingRate();
+}
+
+void 
+CCTRDoc::TogglePullback()
+{
+	this->m_usePullBack = !this->m_usePullBack;
+
+	if (this->m_usePullBack)
+		::std::cout << "pulling back when line not moving is active" << ::std::endl;
+	else
+		::std::cout << "pulling back when line not moving is NOT active" << ::std::endl;
+
 }

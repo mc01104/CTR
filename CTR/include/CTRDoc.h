@@ -390,6 +390,8 @@ protected:
 	double centroid_velocity[2];
 	double tip_velocity[2];
 	double tip_position_prev[2];
+	RecursiveFilter::Filter* filter_centroid;
+	RecursiveFilter::Filter*	filter_tip;
 
 // Generated message map functions
 protected:
@@ -432,4 +434,7 @@ public:
 
 	ChunTimer circumTimer;
 	bool retractRobot;
+	bool m_usePullBack;
+
+	void TogglePullback();
 };

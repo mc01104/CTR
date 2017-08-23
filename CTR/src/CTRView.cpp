@@ -90,6 +90,7 @@ BEGIN_MESSAGE_MAP(CCTRView, CFormView)
 	ON_BN_CLICKED(IDC_CHECK2, &CCTRView::ToggleCircumnavigation)
 	ON_BN_CLICKED(IDC_CHECK3, &CCTRView::ToggleGlobalGains)
 	ON_BN_CLICKED(IDC_CHECK4, &CCTRView::ToggleApexToValve)
+	ON_BN_CLICKED(IDC_CHECK5, &CCTRView::TogglePullBack)
 
 	ON_EN_KILLFOCUS(IDC_EDIT15, &CCTRView::UpdateGains)
 	ON_EN_KILLFOCUS(IDC_EDIT16, &CCTRView::UpdateGains)
@@ -936,16 +937,17 @@ void CCTRView::ToggleApexToValve()
 	UpdateData(true);
 
 	bool apex_to_valve_status = this->IsDlgButtonChecked(IDC_CHECK4);
-	bool contact_control_status = this->IsDlgButtonChecked(IDC_CHECK1);
+	//bool contact_control_status = this->IsDlgButtonChecked(IDC_CHECK1);
 	bool circum_status = this->IsDlgButtonChecked(IDC_CHECK2);
 
 	UpdateData(false);
 
-	if (apex_to_valve_status == 0)
-		this->CheckDlgButton(IDC_CHECK1, 0);
-	else
+	//if (apex_to_valve_status == 0)
+	//	this->CheckDlgButton(IDC_CHECK1, 0);
+	//else
+	if (apex_to_valve_status == 1)
 	{
-		this->CheckDlgButton(IDC_CHECK1, 1);
+		//this->CheckDlgButton(IDC_CHECK1, 1);
 		this->CheckDlgButton(IDC_CHECK2, 0);
 	}
 	this->GetDocument()->ToggleApexToValve();
@@ -1134,4 +1136,9 @@ void CCTRView::OnBnClickedResetAutomation()
 	this->CheckDlgButton(IDC_CHECK2, 0);
 	this->CheckDlgButton(IDC_CHECK4, 0);
 	this->GetDocument()->resetAutomation();
+}
+
+void CCTRView::TogglePullBack()
+{
+	this->GetDocument()->TogglePullback();
 }

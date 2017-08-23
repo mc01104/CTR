@@ -2763,7 +2763,7 @@ bool CCTRDoc::TeleOpSafetyCheck()
 void CCTRDoc::ToggleForceControl()
 {
 	this->m_forceControlActivated = !this->m_forceControlActivated;
-	::std::cout << "contact controller is" << (this->m_forceControlActivated ? "ON" : "OFF") << ::std::endl;
+	::std::cout << "contact controller is " << (this->m_forceControlActivated ? "ON" : "OFF") << ::std::endl;
 
 }
 
@@ -2957,7 +2957,10 @@ void CCTRDoc::ToggleApexToValve()
 	this->m_apex_to_valve = !this->m_apex_to_valve;
 
 	if (this->m_apex_to_valve)
+	{
 		this->m_circumnavigation = false;
+		this->m_forceControlActivated = false;
+	}
 
 	::std::cout << "apex-to-valve navigation: ";
 	(this->m_apex_to_valve ?	::std::cout << "ON" : ::std::cout << "OFF");

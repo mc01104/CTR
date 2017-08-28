@@ -574,18 +574,147 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 	CTR_status	localStat;
 	localStat.isTeleOpMoving = false;
 	mySelf->m_timer->ResetTime();
+
+	bool teleopOn = false;
+	double force = 0.0;
+	double desiredContactRatio = 0.0;
+	double contactRatio = 0.0;
+	double contactRatioError = 0.0;
+
+	// Receive until the peer shuts down the connection
+	clock_t start_loop, end_loop;
+	start_loop = clock();
+
+	// initialize network related stuff
+	SOCKET ClientSocket = INVALID_SOCKET;
+	int iSendResult = 0, iResult = 0;
+    char recvbuf[DEFAULT_BUFLEN];
+    int recvbuflen = DEFAULT_BUFLEN;
+
+	mySelf->initializeNetwork(ClientSocket);
+
+	double delta_t = 0;
+	int counter = 0;
+
+	::std::ostringstream ss;
+    do {
+
+		// create msgs to send
+		mySelf->buildMap(ss);
+
+        // send data
+        iSendResult = send( ClientSocket, ss.str().c_str(),  ss.str().size() + 1, 0 );
+
+        if (iSendResult == SOCKET_ERROR) {
+            printf("send failed with error: %d\n", WSAGetLastError());
+            closesocket(ClientSocket);
+            WSACleanup();
+            return 1;
+        }
+        else if (iSendResult == 0)
+            printf("Connection closing...\n");
+ 
+		// hand shaking -> receiveing data from client
+		iResult = recv(ClientSocket, recvbuf, DEFAULT_BUFLEN, 0);
+
+		delta_t = (double) mySelf->m_timer->GetTime()/1000000.0;
+		mySelf->m_timer->ResetTime();
+
+		if (iResult > 0)
+		{
+			::std::string receivedStr = string(recvbuf);
+
+			if (receivedStr == "NOF")
+			{
+				EnterCriticalSection(&m_cSection);
+				mySelf->m_ContactUpdateReceived = false;
+				LeaveCriticalSection(&m_cSection);
+
+			}
+			else
+			{
+
+				::std::map<::std::string, double> incoming_msgs = createMapFromKeyValuePairs(::std::string(recvbuf));
+
+				contactRatio = incoming_msgs["CR"];
+				contactRatioError = desiredContactRatio - contactRatio;
+
+
+				EnterCriticalSection(&m_cSection);
+				mySelf->m_ContactUpdateReceived = true;
+				mySelf->m_contactError_prev = contactRatioError;
+				mySelf->m_contactError = contactRatioError;
+				mySelf->m_contactRatio = contactRatio;
+				mySelf->m_contact_error_integral += contactRatioError * delta_t;
+				mySelf->m_line_detected = incoming_msgs["lineDetected"];
+				mySelf->m_contact_response = incoming_msgs["contact"];
+
+
+				mySelf->m_wall_detected = incoming_msgs["wallDetected"];
+				mySelf->switchToCircum = incoming_msgs["switchToCircum"];
+				mySelf->m_apex = incoming_msgs["storeApex"];
+
+				LeaveCriticalSection(&m_cSection);
+
+				if (mySelf->m_line_detected && mySelf->m_circumnavigation)
+				{
+					mySelf->UpdateCircumnavigationParams(incoming_msgs);
+					mySelf->addPointOnValve();
+				}
+
+				if (mySelf->m_wall_detected)
+				{
+					mySelf->m_centroid_apex[0] = incoming_msgs["centroidWall_x"];
+					mySelf->m_centroid_apex[1] = incoming_msgs["centroidWall_y"];
+				}
+
+
+				if (mySelf->switchToCircum)
+				{
+					mySelf->m_apex_to_valve = false;
+					mySelf->m_circumnavigation = true;
+					::std::cout << "switching to circumnavigation" << ::std::endl;
+				}
+
+				if (mySelf->m_apex)
+					for (int i = 0; i < 5; ++i)
+						mySelf->m_apex_coordinates[i] = incoming_msgs["apex_" + num2str(i)];
+
+
+				end_loop = clock();
+
+				::std::cout << "CR:" << contactRatio << ::std::endl;
+			}
+			
+		}
+		EnterCriticalSection(&m_cSection);
+
+		mySelf->m_deltaT = delta_t;
+		LeaveCriticalSection(&m_cSection);
+
+    } while (iResult > 0);
+
+    closesocket(ClientSocket);
+    WSACleanup();
+
+	NetworkCommunication(para);
+    return 0;
+
+}
+
+int CCTRDoc::initializeNetwork(SOCKET& ClientSocket)
+{
 	WSADATA wsaData;
     int iResult;
 
     SOCKET ListenSocket = INVALID_SOCKET;
-    SOCKET ClientSocket = INVALID_SOCKET;
 
     struct addrinfo *result = NULL;
     struct addrinfo hints;
 
-    int iSendResult;
-    char recvbuf[DEFAULT_BUFLEN];
-    int recvbuflen = DEFAULT_BUFLEN;
+    //int iSendResult;
+    //char recvbuf[DEFAULT_BUFLEN];
+    //int recvbuflen = DEFAULT_BUFLEN;
 
 
     // Initialize Winsock
@@ -649,206 +778,100 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 
     // No longer need server socket
     closesocket(ListenSocket);
+	return 0;
+}
 
-	bool teleopOn = false;
-	double force = 0.0;
-	double desiredContactRatio = 0.0;
-	double contactRatio = 0.0;
-	double contactRatioError = 0.0;
-	// Receive until the peer shuts down the connection
-	clock_t start_loop, end_loop;
-	start_loop = clock();
+void CCTRDoc::buildMap(::std::ostream& ss)
+{
 
-	//EnterCriticalSection(&m_cSection);
-	//::std::ofstream* os;
-	//LeaveCriticalSection(&m_cSection);
-	double delta_t = 0;
-	int counter = 0;
-    do {
-		::std::ostringstream ss;
+		CTR_status	localStat;
+		localStat.isTeleOpMoving = false;
+
+		bool teleopOn = false;
+		double desiredContactRatio = 0.0;
+
+		static int counter = 0;
 		// update the local joint variables
 		EnterCriticalSection(&m_cSection);
 		for(int i=0; i<5; i++)
-			localStat.currJang[i] = mySelf->m_Status.currJang[i];		
+			localStat.currJang[i] = this->m_Status.currJang[i];		
 		for(int i = 0; i < 6; i++)
-			localStat.currTipPosDir[i] = mySelf->m_Status.currTipPosDir[i];
-		teleopOn = mySelf->m_Status.isTeleOpMoving;
-		desiredContactRatio = mySelf->m_contactRatioDesired;
+			localStat.currTipPosDir[i] = this->m_Status.currTipPosDir[i];
+		teleopOn = this->m_Status.isTeleOpMoving;
+		desiredContactRatio = this->m_contactRatioDesired;
 
 		for(int i = 0; i < 6; i++)
-			localStat.tgtTipPosDir[i] = mySelf->m_Status.tgtTipPosDir[i];
+			localStat.tgtTipPosDir[i] = this->m_Status.tgtTipPosDir[i];
 
 		LeaveCriticalSection(&m_cSection);
-		//::std::cout << desiredContactRatio << ::std::endl;
 
-		//update the buffer
-		// first send the joint angles to be used for the image rotation and logging
-		for(int i = 0; i < 5; ++i)
-			ss << localStat.currJang[i] << " ";
+		// make member -> we do not need to instantiate all the time
+		::std::map<::std::string, double> msgs;
+
+		// joint values
+		for (int i = 0; i <5; ++i)
+			msgs["joint_" + num2str(i)] = localStat.currJang[i];
+
 		// send whether teleoperation is on/off
-		ss << teleopOn << " ";
-
+		msgs["teleopON"] = teleopOn;
+	
 		// send the frequency from the monitor
-		if (mySelf->m_freq_mode == 1)
-			ss << mySelf->m_heartRateMonitor->getHeartRate() << " ";
+		double freq;
+		if (this->m_freq_mode == 1)
+			freq = this->m_heartRateMonitor->getHeartRate();
 		else
-			ss << mySelf->m_frequency << " ";
+			freq = this->m_frequency;
 
-		// target tip position/orientation
-		for (int i = 0; i < 3; ++i)
-			ss << localStat.tgtTipPosDir[i] << " ";
+		msgs["heartFreauency"] = freq;
 
-		if (mySelf->m_circumnavigation)
-			ss << 1 << " ";
-		else 
-			ss << 0 << " ";
+		// target tip position
+		for (int i = 0; i <3; ++i)
+			msgs["xdes_" + num2str(i)] = localStat.tgtTipPosDir[i];
 
-		if (mySelf->m_apex_to_valve)
-			ss << 1 << " ";
-		else 
-			ss << 0 << " ";
+		// check the bool to double casting
+		msgs["circumActive"] = this->m_circumnavigation;
+		msgs["apexToValveActive"] = this->m_apex_to_valve;
+		msgs["periodsForCRComputation"] = this->periodsForCRComputation;
 
-		//::std::cout << mySelf->periodsForCRComputation << ::std::endl;
-		ss << mySelf->periodsForCRComputation << " ";
+		//tip position
+		for (int i = 0; i <3; ++i)
+			msgs["x_" + num2str(i)] = localStat.currTipPosDir[i];
 
-		for(int i = 0; i < 3; ++i)
-			ss << localStat.currTipPosDir[i] << " ";
+		// contact ratio gains and setpointss
+		msgs["CRPGain"] = this->m_contactGain;
+		msgs["CRDGain"] = this->m_contactDGain;
+		msgs["CRIGain"] = this->m_contactIGain;
+		msgs["CRActive"] = this->m_forceControlActivated;
+		msgs["CRSetPoint"] = this->m_contactRatioDesired;
+		msgs["BreathingRate"] = this->GetMonitorBreathingFreq();
 
-		ss << mySelf->m_contactGain << " " << mySelf->m_contactDGain << " " << mySelf->m_contactIGain << " " << mySelf->m_forceControlActivated << " " << mySelf->m_contactRatioDesired << " ";
+		msgs["planeChanged"] = this->m_plane_changed;
 
-		ss << mySelf->GetMonitorBreathingFreq() << " ";
-
-		if (mySelf->m_plane_changed)
+		if (this->m_plane_changed)
 		{
-			ss << " " << 1 << " ";
-			for (int j = 0; j < 3; ++j)
-				ss << mySelf->m_contact_control_normal[j] << " ";
-			for (int j = 0; j < 3; ++j)
-				ss << mySelf->m_valve_center[j] << " ";
+
+			for (int i = 0; i <3; ++i)
+				msgs["planeNormal_" + num2str(i)] = this->m_contact_control_normal[i];
+
+			for (int i = 0; i <3; ++i)
+				msgs["valveCenter_" + num2str(i)] = this->m_valve_center[i];
 			
-			ss << mySelf->m_radius << " "; 
+			msgs["valveRadius"] = this->m_radius;
+			msgs["pointsForPlaneEstimation"] = this->points_for_plane_estimation.size();
 
-			ss << mySelf->points_for_plane_estimation.size() << " ";
+			for (int i = 0; i < this->points_for_plane_estimation.size(); ++i)
+				for (int j = 0; j < 3; ++j)
+					msgs["x_plane" + num2str(i) + "_" + num2str(j)] = this->points_for_plane_estimation[i](j);
 
-			for (int j = 0; j < mySelf->points_for_plane_estimation.size(); ++j)
-				ss << mySelf->points_for_plane_estimation[j](0) << " " << mySelf->points_for_plane_estimation[j](1) << " " << mySelf->points_for_plane_estimation[j](2) << " "; 
 			if(++counter > 200)
 			{
-				mySelf->m_plane_changed = false;
+				this->m_plane_changed = false;
 			}
 
 		}
-		else
-		{
-			ss << " " << 0 << " ";
-			counter = 0;
-		}
-		ss << ::std::endl;
-
-        // send data
-        iSendResult = send( ClientSocket, ss.str().c_str(),  ss.str().size() + 1, 0 );
-        if (iSendResult == SOCKET_ERROR) {
-            printf("send failed with error: %d\n", WSAGetLastError());
-            closesocket(ClientSocket);
-            WSACleanup();
-            return 1;
-        }
-        else if (iSendResult == 0)
-            printf("Connection closing...\n");
- 
-		iResult = recv(ClientSocket, recvbuf, DEFAULT_BUFLEN, 0);
-
-		delta_t = (double) mySelf->m_timer->GetTime()/1000000.0;
-		mySelf->m_timer->ResetTime();
-
-		if (iResult > 0)
-		{
-			::std::string receivedStr = string(recvbuf);
-			//::std::cout << "received:" << receivedStr <<::std::endl;
-			if (receivedStr == "NOF")
-			{
-				//::std::cout << "NOF" << ::std::endl;
-				EnterCriticalSection(&m_cSection);
-				mySelf->m_ContactUpdateReceived = false;
-				LeaveCriticalSection(&m_cSection);
-				//::std::cout << "NOFORCE:" <<::std::endl;
-
-			}
-			else
-			{
-				//contactRatio = atof(recvbuf);
-				::std::vector<double> msg = DoubleVectorFromString(::std::string(recvbuf));
-				contactRatio = msg[0];
-				contactRatioError = desiredContactRatio - contactRatio;
-
-
-				EnterCriticalSection(&m_cSection);
-				mySelf->m_ContactUpdateReceived = true;
-				mySelf->m_contactError_prev = contactRatioError;
-				mySelf->m_contactError = contactRatioError;
-				mySelf->m_contactRatio = contactRatio;
-				mySelf->m_contact_error_integral += contactRatioError * delta_t;
-				mySelf->m_line_detected = msg[1];
-				mySelf->m_contact_response = msg[2];
-
-
-				mySelf->m_wall_detected = msg[7];
-				mySelf->switchToCircum = msg[10];
-				mySelf->m_apex = msg[11];
-
-				// change all the following network depedencies!!!!!!!!!! //
-				//mySelf->storeValvePoint = msg[10];
-				// update the respective network function on the client side !!!!!///
-
-
-				LeaveCriticalSection(&m_cSection);
-
-				if (mySelf->m_line_detected && mySelf->m_circumnavigation)
-				{
-					mySelf->UpdateCircumnavigationParams(msg);
-					mySelf->addPointOnValve();
-					//::std::cout << "num of valve points added:" << mySelf->index << ::std::endl;
-				}
-
-				if (mySelf->m_wall_detected)
-				{
-					mySelf->m_centroid_apex[0] = msg[8];
-					mySelf->m_centroid_apex[1] = msg[9];
-				}
-
-				//	::std::cout << "in network:" << msg[8] << " " << msg[9] << ::std::endl;
-				if (mySelf->switchToCircum)
-				{
-					mySelf->m_apex_to_valve = false;
-					mySelf->m_circumnavigation = true;
-					::std::cout << "switching to circumnavigation" << ::std::endl;
-				}
-
-				if (mySelf->m_apex)
-					memcpy(mySelf->m_apex_coordinates, &msg.data()[12], 5 * sizeof(double));
-
-				end_loop = clock();
-				//PrintCArray(msg.data(), msg.size());
-				::std::cout << "CR:" << contactRatio << ::std::endl;
-			}
-			
-		}
-		//force *= 0.5;
-		//force = 0.3;
-		EnterCriticalSection(&m_cSection);
-		//mySelf->m_Omni->SetForce(force);
-		//mySelf->m_force = force;
-		mySelf->m_deltaT = delta_t;
-		LeaveCriticalSection(&m_cSection);
-
-    } while (iResult > 0);
-
-    closesocket(ClientSocket);
-    WSACleanup();
-
-	NetworkCommunication(para);
-    return 0;
-
+		
+		ss.clear();
+		ss << msgs << ::std::endl;
 }
 
 unsigned int WINAPI	CCTRDoc::EMLoop(void* para)
@@ -3325,4 +3348,55 @@ CCTRDoc::TogglePullback()
 	else
 		::std::cout << "pulling back when line not moving is NOT active" << ::std::endl;
 
+}
+
+
+void CCTRDoc::UpdateCircumnavigationParams(::std::map<::std::string, double>& msg)
+{
+
+	this->centroid_prev[0] = m_centroid[0];
+	this->centroid_prev[1] = m_centroid[1];
+
+
+	m_centroid[0] = msg["centroidLine_x"];
+	m_centroid[1] = msg["centroidLine_y"];
+
+	this->retractRobot = false;
+	if (m_usePullBack)
+	{
+		
+		double dt = static_cast<double> (circumTimer.GetTime())/1.e06;
+		circumTimer.ResetTime();
+
+
+		for (int i = 0; i < 2; ++i)
+			this->tip_velocity[i] = this->filter_tip->step((this->m_Status.currTipPosDir[i] - this->tip_position_prev[i])/dt);
+
+
+		for (int i = 0; i < 2; ++i)
+			this->centroid_velocity[i] = this->filter_centroid->step((this->m_centroid[i] - this->centroid_prev[i])/dt/this->m_scaling_factor); // centroid velocity in mm/sec
+
+		::Eigen::Vector2d vel_cen = ::Eigen::Map<::Eigen::Vector2d> (this->centroid_velocity, 2);
+		::Eigen::Vector2d vel_tip = ::Eigen::Map<::Eigen::Vector2d> (this->tip_velocity, 2);
+
+		if (vel_cen.norm() < 0.5 * vel_tip.norm())
+			this->retractRobot = true;
+	}
+	memcpy(m_valve_tangent_prev, m_valve_tangent, 2 * sizeof(double));
+
+	m_valve_tangent[0]  = msg["tangentLine_x"];
+	m_valve_tangent[1]  = msg["tangentLine_y"];
+
+	double tmp = m_valve_tangent_prev[0] * m_valve_tangent[0] + m_valve_tangent_prev[1] * m_valve_tangent[1];
+
+	if (tmp < 0)
+	{
+		m_valve_tangent[0] *= -1;
+		m_valve_tangent[1] *= -1;
+	}
+	if (tangent_updates == 0)
+		computeInitialDirection();
+	tangent_updates++;
+
+	memcpy(this->tip_position_prev, this->m_Status.currTipPosDir, 2 *sizeof(double));
 }

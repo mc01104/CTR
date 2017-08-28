@@ -6,6 +6,7 @@
 #pragma once
 
 #include <queue>
+#include <map>
 #include "CTR_Common.h"
 #include <fstream>
 #include <Eigen/Dense>
@@ -89,6 +90,7 @@ private:
 	ChunTracker*		m_Tracker;
 	TrjGenerator*		m_TrjGen;
 	ChunTimer*			m_timer;
+
 
 	// visual servoing stuff - these need to be read from the network
 	double				m_centroid[2];
@@ -244,6 +246,7 @@ public:
 	void	SetContactRatio(double ratio);
 
 	void	UpdateCircumnavigationParams(::std::vector<double>& msg);
+	void	UpdateCircumnavigationParams(::std::map<::std::string, double>& msg);
 
 	void	SaveModel();
 	void	ClearCommandQueue();
@@ -437,4 +440,7 @@ public:
 	bool m_usePullBack;
 
 	void TogglePullback();
+
+	int initializeNetwork(SOCKET& ListenSocket);
+	void buildMap(::std::ostream& ss);
 };

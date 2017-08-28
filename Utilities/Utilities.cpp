@@ -16,6 +16,20 @@
 	return linesVector;
 }
 
+::std::vector<::std::string> splitString(const ::std::string& inputStr)
+{
+	::std::istringstream ss(inputStr);
+
+	::std::vector<::std::string> result;
+	while(!ss.eof())
+	{
+		::std::string tmp;
+		ss >> tmp;
+		result.push_back(tmp);
+	}
+
+	return result;
+}
 
 ::std::vector< double> DoubleVectorFromString(const ::std::string& inputString)
 {
@@ -220,4 +234,18 @@ void removeColumn(Eigen::MatrixXd& matrix, unsigned int colToRemove)
         matrix.block(0,colToRemove,numRows,numCols-colToRemove) = matrix.block(0,colToRemove+1,numRows,numCols-colToRemove);
 
     matrix.conservativeResize(numRows,numCols);
+}
+
+
+::std::map<::std::string, double>  createMapFromKeyValuePairs(const ::std::string& msgToParse)
+{
+	::std::vector<::std::string> strVector = splitString(msgToParse);
+
+	assert(strVector.size() % 2 == 0);
+
+	::std::map<::std::string, double> result;
+	for (int i = 0; i < strVector.size(); ++i)
+		result[strVector[i].c_str()] = (double) atof(strVector[++i].c_str());
+
+	return result;
 }

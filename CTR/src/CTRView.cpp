@@ -222,6 +222,7 @@ void CCTRView::DoDataExchange(CDataExchange* pDX)
 	for(int i=0; i<5; i++)	{	DDX_Text(pDX, m_idActJang[i], m_actJang[i]);	}
 
 	DDX_Text(pDX, m_id_monitor_freq, m_monitor_freq);
+	DDX_Text(pDX, m_id_monitor_freq_breath, m_monitor_freq_breath);
 
 	if(m_ctrlMode!= 0)	// CKim - 0: joint angle, 1: tip orientation, 2: teleoperation
 	{

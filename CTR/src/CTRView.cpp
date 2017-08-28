@@ -948,7 +948,7 @@ void CCTRView::ToggleApexToValve()
 	//else
 	if (apex_to_valve_status == 1)
 	{
-		//this->CheckDlgButton(IDC_CHECK1, 1);
+		this->CheckDlgButton(IDC_CHECK1, 0);
 		this->CheckDlgButton(IDC_CHECK2, 0);
 	}
 	this->GetDocument()->ToggleApexToValve();

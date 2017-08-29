@@ -199,7 +199,7 @@ binary_from_string(::std::string& sHex, ::std::string& sReturn)
 	{
 		result.push_back(tmp);
 	}
-
+	result.pop_back();
 	return result;
 }
 

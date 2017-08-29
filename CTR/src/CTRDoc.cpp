@@ -280,6 +280,7 @@ CCTRDoc::CCTRDoc()
 
 	retractRobot = false;
 	m_usePullBack = false;
+	
 }
 
 CCTRDoc::~CCTRDoc()
@@ -596,12 +597,15 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 	double delta_t = 0;
 	int counter = 0;
 
-	::std::ostringstream ss;
+
     do {
 
 		// create msgs to send
-		mySelf->buildMap(ss);
 
+		::std::ostringstream ss;
+		mySelf->buildMap(ss);
+		::std::cout << "outgoing msgs:" << ::std::endl;
+		::std::cout << ss.str().c_str() << ::std::endl;
         // send data
         iSendResult = send( ClientSocket, ss.str().c_str(),  ss.str().size() + 1, 0 );
 
@@ -635,7 +639,8 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 			{
 
 				::std::map<::std::string, double> incoming_msgs = createMapFromKeyValuePairs(::std::string(recvbuf));
-
+				::std::cout << "incoming_msgs" << ::std::endl;
+				::std::cout << incoming_msgs.size() << ::std::endl;
 				contactRatio = incoming_msgs["CR"];
 				contactRatioError = desiredContactRatio - contactRatio;
 
@@ -870,8 +875,11 @@ void CCTRDoc::buildMap(::std::ostream& ss)
 
 		}
 		
-		ss.clear();
+
 		ss << msgs << ::std::endl;
+		//::std::cout << "outgoing" << ::std::endl;
+		//::std::cout <<  msgs << ::std::endl;
+		//::std::cout << ::std::endl;
 }
 
 unsigned int WINAPI	CCTRDoc::EMLoop(void* para)

@@ -200,10 +200,18 @@ template <typename K, typename V>
 ::std::ostream& operator <<(::std::ostream& lhs, const ::std::map<K, V>& rhs)
 {
 	::std::map<K, V>::const_iterator it = rhs.begin();
-	for (it; it != rhs.end(); ++it)
-		lhs << it->first << " " << it->second << " ";
+	::std::map<K, V>::const_iterator it_end = rhs.end();
 
-	lhs << ::std::endl;
+	int num_of_elements = rhs.size();
+	int i = 0;
+	for (it; it != it_end; ++it)
+	{
+		if (i < num_of_elements - 1)
+			lhs << it->first << " " << it->second << " ";
+		else
+			lhs << it->first << " " << it->second;
+		++i;
+	}
 
 	return lhs;
 };

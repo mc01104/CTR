@@ -246,7 +246,6 @@ public:
 	void	SetContactRatio(double ratio);
 
 	void	UpdateCircumnavigationParams(::std::vector<double>& msg);
-	void	UpdateCircumnavigationParams(::std::map<::std::string, double>& msg);
 
 	void	SaveModel();
 	void	ClearCommandQueue();
@@ -440,7 +439,4 @@ public:
 	bool m_usePullBack;
 
 	void TogglePullback();
-
-	int initializeNetwork(SOCKET& ListenSocket);
-	void buildMap(::std::ostream& ss);
 };

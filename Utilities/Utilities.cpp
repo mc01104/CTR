@@ -27,7 +27,7 @@
 		ss >> tmp;
 		result.push_back(tmp);
 	}
-
+	result.pop_back();
 	return result;
 }
 

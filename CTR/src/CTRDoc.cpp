@@ -604,8 +604,8 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 
 		::std::ostringstream ss;
 		mySelf->buildMap(ss);
-		::std::cout << "outgoing msgs:" << ::std::endl;
-		::std::cout << ss.str().c_str() << ::std::endl;
+		//::std::cout << "outgoing msgs:" << ::std::endl;
+		//::std::cout << ss.str().c_str() << ::std::endl;
         // send data
         iSendResult = send( ClientSocket, ss.str().c_str(),  ss.str().size() + 1, 0 );
 
@@ -637,10 +637,11 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 			}
 			else
 			{
-
+				//::std::cout << "incoming string:\n " << ::std::string(recvbuf) << ::std::endl;
 				::std::map<::std::string, double> incoming_msgs = createMapFromKeyValuePairs(::std::string(recvbuf));
-				::std::cout << "incoming_msgs" << ::std::endl;
-				::std::cout << incoming_msgs.size() << ::std::endl;
+				//::std::cout << "incoming_msgs" << ::std::endl;
+				//::std::cout << incoming_msgs << ::std::endl;
+				//::std::cout << incoming_msgs.size() << ::std::endl;
 				contactRatio = incoming_msgs["CR"];
 				contactRatioError = desiredContactRatio - contactRatio;
 

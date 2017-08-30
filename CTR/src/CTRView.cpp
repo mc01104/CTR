@@ -222,6 +222,7 @@ void CCTRView::DoDataExchange(CDataExchange* pDX)
 	for(int i=0; i<5; i++)	{	DDX_Text(pDX, m_idActJang[i], m_actJang[i]);	}
 
 	DDX_Text(pDX, m_id_monitor_freq, m_monitor_freq);
+	DDX_Text(pDX, m_id_monitor_freq_breath, m_monitor_freq_breath);
 
 	if(m_ctrlMode!= 0)	// CKim - 0: joint angle, 1: tip orientation, 2: teleoperation
 	{
@@ -947,7 +948,7 @@ void CCTRView::ToggleApexToValve()
 	//else
 	if (apex_to_valve_status == 1)
 	{
-		//this->CheckDlgButton(IDC_CHECK1, 1);
+		this->CheckDlgButton(IDC_CHECK1, 0);
 		this->CheckDlgButton(IDC_CHECK2, 0);
 	}
 	this->GetDocument()->ToggleApexToValve();

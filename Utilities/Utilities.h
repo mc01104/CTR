@@ -2,6 +2,7 @@
 #include "time.h"
 #include <string>
 #include <vector>
+#include <map>
 #include <deque>
 #include <iostream>
 #include <Eigen/Dense>
@@ -12,6 +13,7 @@
 
 ::std::vector< double> DoubleVectorFromString(const ::std::string& inputString);
 
+::std::vector<::std::string> splitString(const ::std::string& inputStr);
 
 template <class T>
 ::std::vector<T> operator-(const ::std::vector<T>& lhs, const ::std::vector<T>& rhs)
@@ -193,3 +195,35 @@ void binary_from_string(::std::string& sHex, ::std::string& sReturn);
 void fitCircle(::std::vector<::Eigen::Vector3d>& points, ::Eigen::Vector3d& center, double& radius); 
 
 void removeColumn(Eigen::MatrixXd& matrix, unsigned int colToRemove);
+
+template <typename K, typename V>
+::std::ostream& operator <<(::std::ostream& lhs, const ::std::map<K, V>& rhs)
+{
+	::std::map<K, V>::const_iterator it = rhs.begin();
+	::std::map<K, V>::const_iterator it_end = rhs.end();
+
+	int num_of_elements = rhs.size();
+	int i = 0;
+	for (it; it != it_end; ++it)
+	{
+		if (i < num_of_elements - 1)
+			lhs << it->first << " " << it->second << " ";
+		else
+			lhs << it->first << " " << it->second;
+		++i;
+	}
+
+	return lhs;
+};
+
+::std::map<::std::string, double>  createMapFromKeyValuePairs(const ::std::string& msgToParse);
+
+template <typename T>
+::std::string num2str(T& inputVariable)
+{
+	::std::ostringstream convert;   
+
+	convert << inputVariable;   
+
+	return convert.str();
+}

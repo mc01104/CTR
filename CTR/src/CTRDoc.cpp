@@ -673,7 +673,7 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 			localStat.currJang[i] = mySelf->m_Status.currJang[i];		
 		for(int i = 0; i < 6; i++)
 			localStat.currTipPosDir[i] = mySelf->m_Status.currTipPosDir[i];
-		teleopOn = mySelf->m_Status.isTeleOpMoving;
+		teleopOn = mySelf->m_teleOpMode && mySelf->m_Status.isTeleOpMoving;
 		desiredContactRatio = mySelf->m_contactRatioDesired;
 
 		for(int i = 0; i < 6; i++)
@@ -1793,8 +1793,8 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 		// ----------------------------------------------------- //
 		// CKim - Command joint velocity, update shared variable
 		// ----------------------------------------------------- //
-			//for(int i=0; i<7; i++)	
-			//	vel[i] = 0.0;		
+	/*		for(int i=0; i<7; i++)	
+				vel[i] = 0.0;		*/
 
 		//::std::cout << "vel before commanding: ";
 		//PrintCArray(vel,7);
@@ -2917,6 +2917,9 @@ void CCTRDoc::computeCircumnavigationDirection(Eigen::Matrix<double,6,1>& err)
 	error3D(2) = 0.0;
 
 	err.block(0, 0, 3, 1) = rot * error3D;
+
+	//::std::cout << "centroid x:" << m_centroid[0] << " centroid y:" << m_centroid[1] << " tangent x:" << m_valve_tangent[0] << " tangent y:" << m_valve_tangent[1] << ::std::endl;
+	//::std::cout << "velocities :" << err.block(0, 0, 3, 1).transpose() << ::std::endl;
 	
 }
 
@@ -3054,7 +3057,7 @@ void CCTRDoc::computeApexToValveMotion(Eigen::Matrix<double,6,1>& err, APEX_TO_V
 			computeATVBottom(err);
 			break;
 	}
-
+	//::std::cout << "centroid_x:" << m_centroid_apex[0] << "  centroid_y:" << m_centroid_apex[1] << "  velocities:" << err.block(0,0, 3, 1).transpose() << ::std::endl;
 }
 
 void CCTRDoc::computeATVLeft(Eigen::Matrix<double,6,1>& err)
@@ -3086,9 +3089,9 @@ void CCTRDoc::computeATVTop(Eigen::Matrix<double,6,1>& err)
 	// check controller
 
 	if (this->m_centroid_apex[0] <= 250 - m_apex_theshold_max)
-		err[0] += m_center_gainATV/m_scaling_factor * (this->m_centroid_apex[0] - 255 + m_apex_theshold_max);
-	else if (this->m_centroid_apex[0] >= m_apex_theshold_min)
-		err[0] += m_center_gainATV/m_scaling_factor * (this->m_centroid_apex[0] - 255 + m_apex_theshold_min);
+		err[0] += m_center_gainATV/m_scaling_factor * (this->m_centroid_apex[0] - 250 + m_apex_theshold_max);
+	else if (this->m_centroid_apex[0] >= 250 - m_apex_theshold_min)
+		err[0] += m_center_gainATV/m_scaling_factor * (this->m_centroid_apex[0] - 250 + m_apex_theshold_min);
 }
 
 void CCTRDoc::computeATVBottom(Eigen::Matrix<double,6,1>& err)

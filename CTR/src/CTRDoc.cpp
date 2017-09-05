@@ -821,7 +821,8 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 				if (mySelf->switchToCircum)
 				{
 					mySelf->m_apex_to_valve = false;
-					mySelf->m_circumnavigation = true;
+					mySelf->ToggleCircumnavigation();
+					//mySelf->m_circumnavigation = true;
 					::std::cout << "switching to circumnavigation" << ::std::endl;
 				}
 
@@ -3062,6 +3063,9 @@ void CCTRDoc::computeApexToValveMotion(Eigen::Matrix<double,6,1>& err, APEX_TO_V
 
 void CCTRDoc::computeATVLeft(Eigen::Matrix<double,6,1>& err)
 {
+	if (!this->m_wall_detected)
+		this->m_centroid_apex[1] = 0;
+
 	// left bias
 	err[1] = -this->m_bias;
 
@@ -3080,6 +3084,9 @@ void CCTRDoc::computeATVLeft(Eigen::Matrix<double,6,1>& err)
 
 void CCTRDoc::computeATVTop(Eigen::Matrix<double,6,1>& err)
 {
+	if (!this->m_wall_detected)
+		this->m_centroid_apex[0] = 250;
+
 	// Upward bias
 	err[0] = this->m_bias;
 
@@ -3096,6 +3103,9 @@ void CCTRDoc::computeATVTop(Eigen::Matrix<double,6,1>& err)
 
 void CCTRDoc::computeATVBottom(Eigen::Matrix<double,6,1>& err)
 {
+	if (!this->m_wall_detected)
+		this->m_centroid_apex[0] = 0;
+
 	// Downward bias
 	err[0] = -this->m_bias;
 

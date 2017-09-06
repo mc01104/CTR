@@ -3058,13 +3058,13 @@ void CCTRDoc::computeApexToValveMotion(Eigen::Matrix<double,6,1>& err, APEX_TO_V
 			computeATVBottom(err);
 			break;
 	}
-	//::std::cout << "centroid_x:" << m_centroid_apex[0] << "  centroid_y:" << m_centroid_apex[1] << "  velocities:" << err.block(0,0, 3, 1).transpose() << ::std::endl;
+	::std::cout << "centroid_x:" << m_centroid_apex[0] << "  centroid_y:" << m_centroid_apex[1] << "  velocities:" << err.block(0,0, 3, 1).transpose() << ::std::endl;
 }
 
 void CCTRDoc::computeATVLeft(Eigen::Matrix<double,6,1>& err)
 {
-	if (!this->m_wall_detected)
-		this->m_centroid_apex[1] = 0;
+	//if (!this->m_wall_detected)
+	//	this->m_centroid_apex[1] = 0;
 
 	// left bias
 	err[1] = -this->m_bias;
@@ -3084,8 +3084,8 @@ void CCTRDoc::computeATVLeft(Eigen::Matrix<double,6,1>& err)
 
 void CCTRDoc::computeATVTop(Eigen::Matrix<double,6,1>& err)
 {
-	if (!this->m_wall_detected)
-		this->m_centroid_apex[0] = 250;
+	//if (!this->m_wall_detected)
+	//	this->m_centroid_apex[0] = 250;
 
 	// Upward bias
 	err[0] = this->m_bias;
@@ -3103,8 +3103,8 @@ void CCTRDoc::computeATVTop(Eigen::Matrix<double,6,1>& err)
 
 void CCTRDoc::computeATVBottom(Eigen::Matrix<double,6,1>& err)
 {
-	if (!this->m_wall_detected)
-		this->m_centroid_apex[0] = 0;
+	//if (!this->m_wall_detected)
+	//	this->m_centroid_apex[0] = 0;
 
 	// Downward bias
 	err[0] = -this->m_bias;

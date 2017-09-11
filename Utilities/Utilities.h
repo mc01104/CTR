@@ -13,6 +13,8 @@
 
 ::std::vector< double> DoubleVectorFromString(const ::std::string& inputString);
 
+::std::vector< double> DoubleVectorFromString(const ::std::string& inputString, char delim);
+
 ::std::vector<::std::string> splitString(const ::std::string& inputStr);
 
 template <class T>
@@ -30,6 +32,7 @@ template <class T>
 	return result;
 };
 
+std::vector<std::string> splitString(const std::string &s, char delim); 
 
 template <class T>
 ::std::vector<T>& operator/=(::std::vector< T>& lhs, const ::std::vector< T>& rhs)
@@ -226,4 +229,15 @@ template <typename T>
 	convert << inputVariable;   
 
 	return convert.str();
+}
+
+template<typename Out>
+void splitString(const std::string &s, char delim, Out result) 
+{
+    std::stringstream ss;
+    ss.str(s);
+    std::string item;
+    while (std::getline(ss, item, delim)) 
+        *(result++) = item;
+
 }

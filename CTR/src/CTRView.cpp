@@ -168,6 +168,22 @@ CCTRView::CCTRView()
 	m_apex_wall = 0;
 
 	m_transition = false;
+	::std::ifstream f("plane_points.txt");
+	::std::vector<::std::string> points_on_plane;
+	::std::vector<double> tmp_values;
+	if (f.good())
+	{
+		points_on_plane = ReadLinesFromFile("plane_points.txt");
+		this->points_for_plane_estimation.clear();
+		for (int i = 0; i < points_on_plane.size(); ++i)
+		{
+			tmp_values = DoubleVectorFromString(points_on_plane[i], ',');
+			this->points_for_plane_estimation.push_back(::Eigen::Map<::Eigen::Vector3d> (tmp_values.data(), 3));
+		}
+
+	}
+	::std::remove("plane_points.txt");
+
 }
 
 CCTRView::~CCTRView()
@@ -732,6 +748,8 @@ void CCTRView::OnClickedBtnComputePlane()
 	::std::cout << "valve center:" << this->center.transpose() << ::std::endl;
 	this->radius = radius;
 	::std::cout << "valve radius:" << this->radius << ::std::endl;
+
+	this->dumpPlanePoints();
 }
 
 void CCTRView::computeCircle(::Eigen::Matrix3d rot, ::Eigen::Vector3d& center, double& radius)
@@ -1142,4 +1160,14 @@ void CCTRView::OnBnClickedResetAutomation()
 void CCTRView::TogglePullBack()
 {
 	this->GetDocument()->TogglePullback();
+}
+
+void
+CCTRView::dumpPlanePoints()
+{
+	::std::ofstream os("plane_points.txt");
+	for (int i = 0; i < this->points_for_plane_estimation.size(); ++i)
+		os << this->points_for_plane_estimation[i](0) << ", " << this->points_for_plane_estimation[i](1) << ", " << this->points_for_plane_estimation[i](2) <<::std::endl;
+
+	os.close();
 }

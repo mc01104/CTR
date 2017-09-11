@@ -164,7 +164,7 @@ public:
 	void ToggleCircumnavigation();
 	void ToggleApexToValve();
 	void ToggleGlobalGains();
-
+	void dumpPlanePoints();
 	void computeCircle(::Eigen::Matrix3d rot, ::Eigen::Vector3d& center, double& radius);
 	bool m_freqUpdated;
 

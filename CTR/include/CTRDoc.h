@@ -419,6 +419,8 @@ public:
 	afx_msg void OnBnClickedGoToPrev();
 	afx_msg void OnBnClickedGoToNext();
 
+	afx_msg void OnBnClickedDumpConf();
+
 	// identification
 	afx_msg void OnBnClickedStartId();
 	afx_msg void OnBnClickedStopId();

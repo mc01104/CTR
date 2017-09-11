@@ -82,6 +82,8 @@ BEGIN_MESSAGE_MAP(CCTRDoc, CDocument)
 	ON_BN_CLICKED(IDC_BTN_MOVE18, &CCTRDoc::OnBnClickedStartId)
 	ON_BN_CLICKED(IDC_BTN_MOVE17, &CCTRDoc::OnBnClickedStopId)
 
+	ON_BN_CLICKED(IDC_BTN_MOVE10, &CCTRDoc::OnBnClickedDumpConf)
+
 	//ON_BN_CLICKED(IDC_BTN_MOVE16, &CCTRDoc::OnBnClickedResetAutomation)
 
 
@@ -1803,7 +1805,8 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 		{
 			// CKim - Stop velocity command
 			AfxMessageBox("Motion Error!!");
-			mySelf->m_motionCtrl->DumpConfiguration();
+			//mySelf->m_motionCtrl->DumpConfiguration();
+			mySelf->OnBnClickedDumpConf();
 			break;
 		}
 
@@ -3058,16 +3061,14 @@ void CCTRDoc::computeApexToValveMotion(Eigen::Matrix<double,6,1>& err, APEX_TO_V
 			computeATVBottom(err);
 			break;
 	}
-	::std::cout << "centroid_x:" << m_centroid_apex[0] << "  centroid_y:" << m_centroid_apex[1] << "  velocities:" << err.block(0,0, 3, 1).transpose() << ::std::endl;
+	//::std::cout << "centroid_x:" << m_centroid_apex[0] << "  centroid_y:" << m_centroid_apex[1] << "  velocities:" << err.block(0,0, 3, 1).transpose() << ::std::endl;
 }
 
 void CCTRDoc::computeATVLeft(Eigen::Matrix<double,6,1>& err)
 {
-	//if (!this->m_wall_detected)
-	//	this->m_centroid_apex[1] = 0;
 
 	// left bias
-	err[1] = -this->m_bias;
+	(this->m_wall_detected ? err[1] = 0 : err[1] = -this->m_bias );
 
 	// forward velocity
 	err[2] = m_forward_gainATV;    // mm/sec
@@ -3084,11 +3085,9 @@ void CCTRDoc::computeATVLeft(Eigen::Matrix<double,6,1>& err)
 
 void CCTRDoc::computeATVTop(Eigen::Matrix<double,6,1>& err)
 {
-	//if (!this->m_wall_detected)
-	//	this->m_centroid_apex[0] = 250;
-
+	
 	// Upward bias
-	err[0] = this->m_bias;
+	(this->m_wall_detected ? err[0] = 0 : err[0] = this->m_bias);
 
 	// forward velocity
 	err[2] = m_forward_gainATV;    // mm/sec
@@ -3103,11 +3102,8 @@ void CCTRDoc::computeATVTop(Eigen::Matrix<double,6,1>& err)
 
 void CCTRDoc::computeATVBottom(Eigen::Matrix<double,6,1>& err)
 {
-	//if (!this->m_wall_detected)
-	//	this->m_centroid_apex[0] = 0;
-
 	// Downward bias
-	err[0] = -this->m_bias;
+	(this->m_wall_detected ? err[0] = 0 : err[0] = -this->m_bias);
 
 	// forward velocity
 	err[2] = m_forward_gainATV;    // mm/sec
@@ -3343,3 +3339,11 @@ CCTRDoc::TogglePullback()
 		::std::cout << "pulling back when line not moving is NOT active" << ::std::endl;
 
 }
+
+void 
+CCTRDoc::OnBnClickedDumpConf()
+{
+	this->m_motionCtrl->DumpConfiguration();
+
+}
+

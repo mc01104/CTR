@@ -241,3 +241,10 @@ void splitString(const std::string &s, char delim, Out result)
         *(result++) = item;
 
 }
+
+template <typename T>
+void clear( ::std::queue<T> &q )
+{
+   ::std::queue<T> empty;
+   std::swap( q, empty );
+}

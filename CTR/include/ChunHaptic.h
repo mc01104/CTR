@@ -34,7 +34,7 @@ public:
 	// the devic state will be copied to the passed state
 	void SynchState(CTR_status& state);
 	void SetForce(double force);
-
+	void ClearEvents();
 private:
 	static HHD m_hHD;
 	HDSchedulerHandle hSchedule;

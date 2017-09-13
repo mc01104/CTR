@@ -15,6 +15,7 @@
 #include "ChunHaptic.h"
 #include "ChunMotion.h"
 #include "Utilities.h"
+#include <filesystem>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -182,6 +183,7 @@ CCTRView::CCTRView()
 		}
 
 	}
+	::std::string filename = "plane_coordinates_" + GetDateString() + ".txt";
 	::std::remove("plane_points.txt");
 
 }
@@ -1166,8 +1168,14 @@ void
 CCTRView::dumpPlanePoints()
 {
 	::std::ofstream os("plane_points.txt");
+	::std::ofstream os2("plane_" + GetDateString() + ".txt");
 	for (int i = 0; i < this->points_for_plane_estimation.size(); ++i)
+	{
 		os << this->points_for_plane_estimation[i](0) << ", " << this->points_for_plane_estimation[i](1) << ", " << this->points_for_plane_estimation[i](2) <<::std::endl;
+		os2 << this->points_for_plane_estimation[i](0) << ", " << this->points_for_plane_estimation[i](1) << ", " << this->points_for_plane_estimation[i](2) <<::std::endl;
+		
+	}
 
 	os.close();
+	os2.close();
 }

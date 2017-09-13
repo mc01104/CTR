@@ -268,3 +268,4 @@ void removeColumn(Eigen::MatrixXd& matrix, unsigned int colToRemove)
 
 	return result;
 }
+

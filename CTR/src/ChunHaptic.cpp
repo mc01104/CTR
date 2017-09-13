@@ -250,6 +250,11 @@ void ChunHaptic::handleEvent(ChunHaptic::EventType evtId)
 	m_currentState.eventQueue.push(ev);
 }
 	
+
+void ChunHaptic::ClearEvents()
+{
+	clear(this->m_currentState.eventQueue);
+}
 	//    /* Check if there's a callback to be called. */
 //    HapticDeviceCallback *pCallback = (HapticDeviceCallback *) m_aCallbackFunc[event];
 //    if (pCallback)

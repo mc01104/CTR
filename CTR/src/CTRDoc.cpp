@@ -82,7 +82,7 @@ BEGIN_MESSAGE_MAP(CCTRDoc, CDocument)
 	ON_BN_CLICKED(IDC_BTN_MOVE18, &CCTRDoc::OnBnClickedStartId)
 	ON_BN_CLICKED(IDC_BTN_MOVE17, &CCTRDoc::OnBnClickedStopId)
 
-	ON_BN_CLICKED(IDC_BTN_MOVE10, &CCTRDoc::OnBnClickedDumpConf)
+	ON_BN_CLICKED(IDC_BTN_MOVE20, &CCTRDoc::OnBnClickedDumpConf)
 
 	//ON_BN_CLICKED(IDC_BTN_MOVE16, &CCTRDoc::OnBnClickedResetAutomation)
 
@@ -1019,6 +1019,8 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 	//ofstream os("debug_control_no_scaling.txt");
 	RecursiveFilter::Filter* filters = new RecursiveFilter::MovingAverageFilter[3];
 
+	//GEORGE - clear previous events from omni - NOT tested
+	mySelf->m_Omni->ClearEvents();
 
 	// CKim - The Loop
 	bool prevControl=false;
@@ -1037,8 +1039,11 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 
 		// CKim - Synch with haptic device by executing function in haptic device scheduler
 		// Exchange state with the device
+		// George - empty the event queque when starting teleoperation
+		
 #ifdef OMNI_PLUGGED		
 		mySelf->m_Omni->SynchState(localStat);
+		
 #endif
 		// CKim - Haptic device error handling		
 		if (localStat.hapticState.err.errorCode != 0)
@@ -1068,6 +1073,9 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 					for(int i=0; i<6; i++)	
 						localStat.refTipPosDir[i] = localStat.currTipPosDir[i];	
 									
+					for(int i=0; i<6; i++)	
+						localStat.tgtTipPosDir[i] = localStat.currTipPosDir[i];	
+
 					// CKim - Initial point for the inverse kinematics 
 					for(int i=0; i<5; i++)	{	localStat.initJang[i] = localStat.currJang[i];			}
 					for(int i=0; i<5; i++)	{	localStat.initJAngLWPR[i] = localStat.currJang[i];			}

@@ -351,15 +351,11 @@ void CCTRDoc::ComputeDesiredVelocity()
 	if (m_deltaT > 0)
 		contact_error_deriv = this->cr_dot_filter->step((m_contactError - m_contactError_prev)/m_deltaT);
 
-	// this is the PD controller -> need to correctly propagate this goal to the position controller
-
-
 	::Eigen::Vector3d local_vel = this->m_contact_control_normal *  (m_contactGain * m_contactError + m_contactDGain * contact_error_deriv + m_contactIGain * m_contact_error_integral);
 
 	if (m_useJacobianContactControl)
 		local_vel *= this->m_globalCR_gain * this->computeInverseApproxJacovianCR(this->m_contactRatio);
 
-	//::std::cout << local_vel.transpose() << ::std::endl;
 	memcpy(m_desiredPosition, local_vel.data(), 3 * sizeof(double));
 
 	m_ContactUpdateReceived = !m_ContactUpdateReceived;
@@ -574,9 +570,12 @@ unsigned int WINAPI	CCTRDoc::HeartRateMonitorThread(void* para)
 unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 {
 	CCTRDoc* mySelf = (CCTRDoc*) para;	
+
 	CTR_status	localStat;
 	localStat.isTeleOpMoving = false;
+
 	mySelf->m_timer->ResetTime();
+
 	WSADATA wsaData;
     int iResult;
 
@@ -593,12 +592,15 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 
     // Initialize Winsock
     iResult = WSAStartup(MAKEWORD(2,2), &wsaData);
-    if (iResult != 0) {
+    if (iResult != 0) 
+	{
         printf("WSAStartup failed with error: %d\n", iResult);
         return 1;
     }
+
 	::std::cout << "in network" << ::std::endl;
-    ZeroMemory(&hints, sizeof(hints));
+
+	ZeroMemory(&hints, sizeof(hints));
     hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_protocol = IPPROTO_TCP;
@@ -606,7 +608,8 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 
     // Resolve the server address and port
     iResult = getaddrinfo(NULL, DEFAULT_PORT, &hints, &result);
-    if ( iResult != 0 ) {
+    if ( iResult != 0 ) 
+	{
         printf("getaddrinfo failed with error: %d\n", iResult);
         WSACleanup();
         return 1;
@@ -614,7 +617,8 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 
     // Create a SOCKET for connecting to server
     ListenSocket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
-    if (ListenSocket == INVALID_SOCKET) {
+    if (ListenSocket == INVALID_SOCKET) 
+	{
         printf("socket failed with error: %ld\n", WSAGetLastError());
         freeaddrinfo(result);
         WSACleanup();
@@ -623,7 +627,8 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 
     // Setup the TCP listening socket // this conflicts with using namespace std in LieGroup -> FIX IT!
     iResult = ::bind( ListenSocket, result->ai_addr, (int)result->ai_addrlen);
-    if (iResult == SOCKET_ERROR) {
+    if (iResult == SOCKET_ERROR) 
+	{
         printf("bind failed with error: %d\n", WSAGetLastError());
         freeaddrinfo(result);
         closesocket(ListenSocket);
@@ -634,7 +639,8 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
     freeaddrinfo(result);
 
     iResult = listen(ListenSocket, SOMAXCONN);
-    if (iResult == SOCKET_ERROR) {
+    if (iResult == SOCKET_ERROR) 
+	{
         printf("listen failed with error: %d\n", WSAGetLastError());
         closesocket(ListenSocket);
         WSACleanup();
@@ -643,7 +649,8 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 
     // Accept a client socket
     ClientSocket = accept(ListenSocket, NULL, NULL);
-    if (ClientSocket == INVALID_SOCKET) {
+    if (ClientSocket == INVALID_SOCKET) 
+	{
         printf("accept failed with error: %d\n", WSAGetLastError());
         closesocket(ListenSocket);
         WSACleanup();
@@ -662,13 +669,12 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 	clock_t start_loop, end_loop;
 	start_loop = clock();
 
-	//EnterCriticalSection(&m_cSection);
-	//::std::ofstream* os;
-	//LeaveCriticalSection(&m_cSection);
 	double delta_t = 0;
 	int counter = 0;
     do {
+
 		::std::ostringstream ss;
+
 		// update the local joint variables
 		EnterCriticalSection(&m_cSection);
 		for(int i=0; i<5; i++)
@@ -682,12 +688,12 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 			localStat.tgtTipPosDir[i] = mySelf->m_Status.tgtTipPosDir[i];
 
 		LeaveCriticalSection(&m_cSection);
-		//::std::cout << desiredContactRatio << ::std::endl;
 
 		//update the buffer
 		// first send the joint angles to be used for the image rotation and logging
 		for(int i = 0; i < 5; ++i)
 			ss << localStat.currJang[i] << " ";
+
 		// send whether teleoperation is on/off
 		ss << teleopOn << " ";
 
@@ -736,9 +742,7 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 			for (int j = 0; j < mySelf->points_for_plane_estimation.size(); ++j)
 				ss << mySelf->points_for_plane_estimation[j](0) << " " << mySelf->points_for_plane_estimation[j](1) << " " << mySelf->points_for_plane_estimation[j](2) << " "; 
 			if(++counter > 200)
-			{
 				mySelf->m_plane_changed = false;
-			}
 
 		}
 		else
@@ -767,23 +771,18 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 		if (iResult > 0)
 		{
 			::std::string receivedStr = string(recvbuf);
-			//::std::cout << "received:" << receivedStr <<::std::endl;
+
 			if (receivedStr == "NOF")
 			{
-				//::std::cout << "NOF" << ::std::endl;
 				EnterCriticalSection(&m_cSection);
 				mySelf->m_ContactUpdateReceived = false;
 				LeaveCriticalSection(&m_cSection);
-				//::std::cout << "NOFORCE:" <<::std::endl;
-
 			}
 			else
 			{
-				//contactRatio = atof(recvbuf);
 				::std::vector<double> msg = DoubleVectorFromString(::std::string(recvbuf));
 				contactRatio = msg[0];
 				contactRatioError = desiredContactRatio - contactRatio;
-
 
 				EnterCriticalSection(&m_cSection);
 				mySelf->m_ContactUpdateReceived = true;
@@ -791,17 +790,13 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 				mySelf->m_contactError = contactRatioError;
 				mySelf->m_contactRatio = contactRatio;
 				mySelf->m_contact_error_integral += contactRatioError * delta_t;
+
 				mySelf->m_line_detected = msg[1];
 				mySelf->m_contact_response = msg[2];
-
 
 				mySelf->m_wall_detected = msg[7];
 				mySelf->switchToCircum = msg[10];
 				mySelf->m_apex = msg[11];
-
-				// change all the following network depedencies!!!!!!!!!! //
-				//mySelf->storeValvePoint = msg[10];
-				// update the respective network function on the client side !!!!!///
 
 
 				LeaveCriticalSection(&m_cSection);
@@ -810,21 +805,20 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 				{
 					mySelf->UpdateCircumnavigationParams(msg);
 					mySelf->addPointOnValve();
-					//::std::cout << "num of valve points added:" << mySelf->index << ::std::endl;
 				}
 
-				if (mySelf->m_wall_detected)
+				if (mySelf->m_wall_detected && mySelf->m_apex_to_valve)
 				{
 					mySelf->m_centroid_apex[0] = msg[8];
 					mySelf->m_centroid_apex[1] = msg[9];
 				}
 
-				//	::std::cout << "in network:" << msg[8] << " " << msg[9] << ::std::endl;
+
 				if (mySelf->switchToCircum)
 				{
 					mySelf->m_apex_to_valve = false;
 					mySelf->ToggleCircumnavigation();
-					//mySelf->m_circumnavigation = true;
+
 					::std::cout << "switching to circumnavigation" << ::std::endl;
 				}
 
@@ -832,16 +826,13 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 					memcpy(mySelf->m_apex_coordinates, &msg.data()[12], 5 * sizeof(double));
 
 				end_loop = clock();
-				//PrintCArray(msg.data(), msg.size());
+
 				::std::cout << "CR:" << contactRatio << ::std::endl;
 			}
 			
 		}
-		//force *= 0.5;
-		//force = 0.3;
 		EnterCriticalSection(&m_cSection);
-		//mySelf->m_Omni->SetForce(force);
-		//mySelf->m_force = force;
+
 		mySelf->m_deltaT = delta_t;
 		LeaveCriticalSection(&m_cSection);
 
@@ -988,6 +979,7 @@ void CCTRDoc::OnBnClickedRegst()
 unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 {
 	CCTRDoc* mySelf = (CCTRDoc*) para;		
+
 	double tempSolution[5] = {0};
 	// CKim - Robot status and Haptic device status
 	CTR_status localStat;		
@@ -1004,19 +996,6 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 	// CKim - Parameters for loop speed measurement
 	ChunTimer timer;	int perfcnt = 0;	int navg = 5;		long loopTime = 0;
 
-	//::std::string gainStr;
-	//std::ostringstream strs;
-	//strs << mySelf->m_contactGain;
-	//gainStr = strs.str();
-	//::std::string filename = "ExperimentData/" + GetDateString() + "-Gain" + gainStr + ".txt";
-	
-	//EnterCriticalSection(&m_cSection);
-	//if (mySelf->m_fileStream)
-	//	delete mySelf->m_fileStream;
-
-	//mySelf->m_fileStream = new ::std::ofstream(filename);   
-	//LeaveCriticalSection(&m_cSection);
-	//ofstream os("debug_control_no_scaling.txt");
 	RecursiveFilter::Filter* filters = new RecursiveFilter::MovingAverageFilter[3];
 
 	//GEORGE - clear previous events from omni - NOT tested
@@ -1025,6 +1004,7 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 	// CKim - The Loop
 	bool prevControl=false;
 	bool currentControl = false;
+
 	while(mySelf->m_teleOpMode)
 	{
 		prevControl = currentControl;
@@ -1043,7 +1023,6 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 		
 #ifdef OMNI_PLUGGED		
 		mySelf->m_Omni->SynchState(localStat);
-		
 #endif
 		// CKim - Haptic device error handling		
 		if (localStat.hapticState.err.errorCode != 0)
@@ -1126,12 +1105,8 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 			{
 				mySelf->MasterToSlave(localStat, scl);		// Updates robotStat.tgtTipPosDir
 			
-				//mySelf->UpdateDesiredPosition();
 				mySelf->ComputeDesiredVelocity();
 
-				// TODO
-				//if (mySelf->m_compute_plane)
-				//	mySelf->IncrementalPlaneUpdate();
 				if (!currentControl && prevControl)
 				{
 					for(int i=0; i<6; i++)	
@@ -1171,13 +1146,14 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 			}
 			if (mySelf->m_circumnavigation || mySelf->m_apex_to_valve)
 			{
-								for(int i=0; i<6; i++)	
+				for(int i=0; i<6; i++)	
 				{
 					localStat.tgtTipPosDir[i] = localStat.currTipPosDir[i];	
 					localStat.refTipPosDir[i] = localStat.currTipPosDir[i];	
 				}
 				for(int i=0; i<16; i++)	
 					localStat.M_T0[i] = localStat.hapticState.tfMat[i];	
+	
 				mySelf->SlaveToMaster(localStat, scl);
 			}
 		}
@@ -1222,7 +1198,7 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 
 	mySelf->m_ref_set = false;
 	mySelf->m_InvKinOn = false;
-	//os.close();
+
 	return 0;
 
 }
@@ -1520,34 +1496,26 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 	ChunTimer timer_dis;
 	timer_dis.ResetTime();
 
+	::Eigen::Vector3d planeNormal;
+	::Eigen::Vector3d currentTangent;
+	::Eigen::Vector3d tangentVelocity;
+	::Eigen::Matrix3d PlaneNullProjection;
+
+	::Eigen::Matrix<double, 6, 1> tmpVelocities;
+	tmpVelocities.setZero();
 
 	double	desiredPosition[6];
 
 	while(mySelf->m_motorConnected)
 	{
-
-		// george -> test heart rate monitor
-		//double heart_rate = mySelf->m_heartRateMonitor->getHeartRate();
-		//::std::cout << "Heart Rate [bpm]: " << heart_rate << ::std::endl;
-
-		//if (mySelf->m_forceControlActivated)
-		//	::std::cout << "force on" << ::std::endl;
 		// CKim - Read from the motors - blocking function
 		mySelf->m_motionCtrl->GetMotorPos(localStat.currMotorCnt);	
 		mySelf->m_motionCtrl->GetErrorFlag(localStat.errFlag);
 
-		// CKim - Calculate current joint angle
+		// CKim - Calculate current joint angle -> convert counts to radians
 		mySelf->MtrToJang(localStat.currMotorCnt, localStat.currJang);
 
-		// TODO: learn an LWPR model for the balanced pair as well
-		// CKim - Evaluate Kinematics Model for balanced pair position and orientation
-		//mySelf->m_kinLib->BalancedPairFwdKin(localStat.currJang, localStat.bpTipPosDir);
-		//mySelf->m_kinLWPR_BP->TipFwdKin(localStat.currJang, localStat.bpTipPosDir);
-
-		// CKim - Apply Control Law to calculate joint velocity
-		// CKim - Position FeedForward Control.
-		
-		//if(mySelf->m_InvKinOn || mySelf->m_teleOpMode)
+		// this is used for root finding
 		if(mySelf->m_InvKinOn)
 		{
 			// CKim - Read shared variable (Motor Count Setpoint and gain)
@@ -1563,19 +1531,12 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 			LeaveCriticalSection(&m_cSection);
 
 			// CKim - Evaluate model
-			//mySelf->m_kinLWPR->TipFwdKin(localStat.currJang, localStat.currTipPosDir);
 			mySelf->m_kinLib->EvalCurrentKinematicsModelNumeric(localStat.currJang, localStat.currTipPosDir, J, mySelf->m_bCLIK);
 
 			// CKim - Apply simple control law : vel = kp(target pos - current pos)
 			if(safeToTeleOp)	
 				for(int i=0; i<7; i++)	
-				{
 					vel[i] = -kp*(localStat.currMotorCnt[i]-MtrCntSetPt[i]);
-	/*				if (vel[i] > 5.0)
-						vel[i] = 5.0;
-					else if (vel[i] < -5.0)
-						vel[i] = -5.0;*/
-				}
 			else				
 				for(int i=0; i<7; i++)	
 					vel[i] = 0.0;									
@@ -1583,21 +1544,17 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 		// CKim - Differential Inverse Kinematics Control.
 		else if(mySelf->m_bCLIK )	
 		{
-			::Eigen::Matrix<double, 3, 1> actualForce;
-			actualForce.setZero();
-			
 
-			::Eigen::Vector3d planeNormal;
-			// CKim - Read shared variables (sensed / target posdir and kinematics model)
-			// Sensed posdir and kinematics model is updated from EM tracker loop,
-			// target posdir is updated from 'Playback' loop  or 'TeleOp' loop
 			EnterCriticalSection(&m_cSection);
 			for (int i = 0; i < 6; ++i)
 				desiredPosition[i] = mySelf->m_desiredPosition[i];
+
 			for(int i=0; i<6; i++)
 				localStat.tgtTipPosDir[i] = mySelf->m_Status.tgtTipPosDir[i];			
+
 			for(int i=0; i<6; i++)	
 				localStat.sensedTipPosDir[i] = mySelf->m_Status.sensedTipPosDir[i];		
+
 			for(int i=0; i<6; i++)	
 				localStat.tgtMotorVel[i] = mySelf->m_Status.tgtMotorVel[i];	
 
@@ -1607,22 +1564,22 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 			for (int i = 0; i < 3; i++)
 				localStat.tgtWorkspaceAngVelocity[i] = mySelf->m_Status.tgtWorkspaceAngVelocity[i];
 
-			actualForce[2] = mySelf->m_force;
 			safeToTeleOp = mySelf->m_Status.isTeleOpMoving;
+
 			for (int i = 0; i < 3; ++i)
 				planeNormal(i) = mySelf->m_contact_control_normal(i);
 
 			circumnavigation = mySelf->m_circumnavigation;
-			apex_to_valve = mySelf->m_apex_to_valve;
-			isInContact = mySelf->m_contact_response;
-			LeaveCriticalSection(&m_cSection);
-			//PrintCArray(localStat.tgtWorkspaceVelocity, 3);
-			//PrintCArray(localStat.tgtWorkspaceAngVelocity, 3);
-			::Eigen::Vector3d currentTangent = ::Eigen::Map<::Eigen::Vector3d> (&localStat.currTipPosDir[3], 3);
-			::Eigen::Vector3d tangentVelocity = ::Eigen::Map<::Eigen::Vector3d> (localStat.tgtWorkspaceAngVelocity, 3).cross(currentTangent);
-			//PrintCArray(tangentVelocity.data(), 3);
 
-			//mySelf->m_kinLWPR->TipFwdKinJac(localStat.currJang, localStat.currTipPosDir, J,true);
+			apex_to_valve = mySelf->m_apex_to_valve;
+
+			isInContact = mySelf->m_contact_response;	// do i need to filter that?
+
+			LeaveCriticalSection(&m_cSection);
+
+			currentTangent = ::Eigen::Map<::Eigen::Vector3d> (&localStat.currTipPosDir[3], 3);
+			tangentVelocity = ::Eigen::Map<::Eigen::Vector3d> (localStat.tgtWorkspaceAngVelocity, 3).cross(currentTangent);
+
 			mySelf->m_kinLib->EvalCurrentKinematicsModelNumeric(localStat.currJang, localStat.currTipPosDir, J, mySelf->m_bCLIK);
 
 			// Use sensor feedback
@@ -1636,58 +1593,48 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 			{
 
 				if (mySelf->m_forceControlActivated)
-				{
-					//localStat.tgtTipPosDir[3] = 0;
-					//localStat.tgtTipPosDir[4] = 0;
-					//localStat.tgtTipPosDir[5] = 1;
 					tangentVelocity.setZero();
-				}
 
-				//PrintCArray(localStat.tgtWorkspaceVelocity, 3);
-				double sum = 0;
-				for(int i=0; i<3; i++)	
+				// computing translational velocities
+				for(int i = 0; i < 3; ++i)	
 				{	
-					if (!mySelf->m_camera_control)
+					if (!mySelf->m_camera_control) // regular teleoperation
 						err(i,0) = mySelf->m_position_gain * K[i]*(localStat.tgtTipPosDir[i] - localStat.currTipPosDir[i]) + mySelf->m_position_gain_feedforward * localStat.tgtWorkspaceVelocity[i];
-					else
+					else if (mySelf->m_camera_control) 
 						err(i, 0) = K_image[i] * localStat.tgtWorkspaceVelocity[i];   // this is to control the robot at the image-frame of the cardioscope
-					::Eigen::Matrix<double, 6, 1> tmpVelocities;
+
+					tmpVelocities.setZero();
 					if (circumnavigation)
 					{
 						mySelf->computeCircumnavigationDirection(tmpVelocities);
-						if (!isInContact) // tmp_fix
-							err.block(0,0, 3, 1) = tmpVelocities;
+
+						if (!isInContact) // move using the most recent computed velocities when not in contact
+							err.block(0, 0, 3, 1) = tmpVelocities;
 						else
 							err.setZero();
-						//err.block(0,0, 3, 1) = tmpVelocities;
 					}
 					else if (apex_to_valve)
-					{
-						//::std::cout << "right before activating" << ::std::endl;
-						//::std::cout << mySelf->aStatus << ::std::endl;
 						mySelf->computeApexToValveMotion(err, mySelf->aStatus);
-					}
+
 				}
-				for(int i=3; i<6; i++)
-				{
+
+				// orientation velocities
+				for(int i = 3; i < 6; ++i)
 					err(i,0) = mySelf->m_orientation_gain * K[i]*(localStat.tgtTipPosDir[i] - localStat.currTipPosDir[i]) + mySelf->m_orientation_gain_feedforward * tangentVelocity[i-3];
-				}
-				//::std::cout << "err from main loop: " << err.col(0).transpose() << ::std::endl;
+
 			}
-			// temporarily for debugging the higher level features
-			//err.setZero();
 
 			//project the error on the plane
 			if (mySelf->m_forceControlActivated)
 			{
-				::Eigen::Matrix3d PlaneNullProjection = ::Eigen::Matrix3d::Identity() - planeNormal * planeNormal.transpose();
-				err.block(0,0, 3, 1) = PlaneNullProjection * err.block(0,0, 3, 1);
+				PlaneNullProjection = ::Eigen::Matrix3d::Identity() - planeNormal * planeNormal.transpose();
+				err.block(0, 0, 3, 1) = PlaneNullProjection * err.block(0, 0, 3, 1);
 			
 				for (int i = 0; i < 3; i++)
 					err(i, 0) += desiredPosition[i];   
 				
 				if (mySelf->retractRobot)
-					err(3, 0) = -0.5; //value?
+					err(2, 0) = -0.5; //value?
 			}
 
 			if (mySelf->m_control_mode == 0)
@@ -1695,11 +1642,11 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 			else if (mySelf->m_control_mode ==1)
 				mySelf->m_kinLib->ApplyKinematicControl(J,err,dq, localStat.currJang);
 
-			// add sinusoidal disturbance
-			double time = (double)timer_dis.GetTime()/1e6;
-			double freq_dis = 6;	// BPM
-			double vel_dis = mySelf->m_disturbance_amp * freq_dis/60 * 2 *M_PI * cos(freq_dis/60 * 2 *M_PI * time);
-			dq[4] += vel_dis;
+			//// add sinusoidal disturbance
+			//double time = (double)timer_dis.GetTime()/1e6;
+			//double freq_dis = 6;	// BPM
+			//double vel_dis = mySelf->m_disturbance_amp * freq_dis/60 * 2 *M_PI * cos(freq_dis/60 * 2 *M_PI * time);
+			//dq[4] += vel_dis;
 
 			// CKim - Convert dotq into motor velocity
 			mySelf->dJangTodCnt(dq, dCnt);
@@ -1791,47 +1738,47 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 		}
 		else	// CKim - When control is not running
 		{
-			//mySelf->m_kinLWPR->TipFwdKin(localStat.currJang, localStat.currTipPosDir);
+
 			mySelf->m_kinLib->EvalCurrentKinematicsModel(localStat.currJang, localStat.currTipPosDir, J, mySelf->m_bCLIK);
-			//PrintCArray(localStat.currTipPosDir, 3);
+
 			for(int i=0; i<7; i++)	
 				vel[i] = 0.0;		
 	
 			// CKim - Process user commands... should be in separate threads..
 			mySelf->ProcessCommand(localStat);	
 		}
-		//PrintCArray(localStat.currTipPosDir, 6);
-		// ----------------------------------------------------- //
-		// CKim - Command joint velocity, update shared variable
-		// ----------------------------------------------------- //
-	/*		for(int i=0; i<7; i++)	
-				vel[i] = 0.0;		*/
 
-		//::std::cout << "vel before commanding: ";
-		//PrintCArray(vel,7);
 		if(!mySelf->m_motionCtrl->DoTeleOpMotion(vel))	
 		{
 			// CKim - Stop velocity command
 			AfxMessageBox("Motion Error!!");
-			//mySelf->m_motionCtrl->DumpConfiguration();
 			mySelf->OnBnClickedDumpConf();
+
 			break;
 		}
 
 		EnterCriticalSection(&m_cSection);
-		for(int i=0; i<7; i++)	{
-			mySelf->m_Status.currMotorCnt[i] = localStat.currMotorCnt[i];		mySelf->m_Status.errFlag[i] = localStat.errFlag[i];			}
-		for(int i=0; i<5; i++)	{	mySelf->m_Status.currJang[i] = localStat.currJang[i];		}
+
+		for(int i=0; i<7; i++)	
+		{
+			mySelf->m_Status.currMotorCnt[i] = localStat.currMotorCnt[i];		
+			mySelf->m_Status.errFlag[i] = localStat.errFlag[i];			
+		}
+
+		for(int i=0; i<5; i++)	
+			mySelf->m_Status.currJang[i] = localStat.currJang[i];		
 		for(int i=0; i<6; i++)	
 		{	
-			mySelf->m_Status.currTipPosDir[i] = localStat.currTipPosDir[i];		mySelf->m_Status.bpTipPosDir[i] = localStat.bpTipPosDir[i];	
+			mySelf->m_Status.currTipPosDir[i] = localStat.currTipPosDir[i];		
+			mySelf->m_Status.bpTipPosDir[i] = localStat.bpTipPosDir[i];	
 		}
+
 		mySelf->m_Status.loopTime =  endTime / navg;
+
 		LeaveCriticalSection(&m_cSection);
-		//::std::cout << 1000000.0/(timer.GetTime()) << ::std::endl;
+
 		timer.ResetTime();
-		//if (timer.GetTime() < 2500)
-		//	Sleep(1);
+
 		// CKim - Measure loop speed
 		if(perfcnt==navg)	{		endTime = timer.GetTime();		perfcnt = 0;		timer.ResetTime();		}
 		else				{		perfcnt++;																	}
@@ -2910,6 +2857,7 @@ double CCTRDoc::GetMonitorFreq()
 	return this->m_heartRateMonitor->getHeartRate();
 }
 
+// QQ: need to use the rotation matrix?
 void CCTRDoc::computeCircumnavigationDirection(Eigen::Matrix<double,6,1>& err)
 {
 
@@ -2948,6 +2896,7 @@ void CCTRDoc::ToggleCircumnavigation()
 	else
 		this->m_forceControlActivated = false;
 
+
 	if (this->m_circumnavigation)
 		memcpy(this->tip_position_prev, this->m_Status.currTipPosDir, 2 *sizeof(double));
 
@@ -2959,9 +2908,7 @@ void CCTRDoc::ToggleCircumnavigation()
 		this->valve_points_visited.clear();
 		this->index = 0;
 	}
-	::std::cout << "circumnavigation: ";
-	(this->m_circumnavigation ?	::std::cout << "ON" : ::std::cout << "OFF");
-	::std::cout << ::std::endl; 
+	::std::cout << "circumnavigation: " << (this->m_circumnavigation ?	"ON" : "OFF") << ::std::cout << ::std::endl; 
 
 	this->filter_centroid->resetFilter();
 	this->filter_tip->resetFilter();
@@ -2978,9 +2925,7 @@ void CCTRDoc::ToggleApexToValve()
 		this->m_forceControlActivated = false;
 	}
 
-	::std::cout << "apex-to-valve navigation: ";
-	(this->m_apex_to_valve ?	::std::cout << "ON" : ::std::cout << "OFF");
-	::std::cout << ::std::endl;
+	::std::cout << "apex-to-valve navigation: " << 	(this->m_apex_to_valve ? "ON" :  "OFF") << ::std::endl;
 }
 
 void CCTRDoc::UpdateCircumnavigationParams(::std::vector<double>& msg)
@@ -3256,6 +3201,11 @@ CCTRDoc::resetAutomation()
 	this->tangent_updates = 0;
 	this->valve_points_visited.clear();
 	this->index = 0;
+
+	// add stuff here for resetting
+	this->m_wall_detected = false;
+	this->m_line_detected = false;
+
 }
 
 void CCTRDoc::addPointOnValve()

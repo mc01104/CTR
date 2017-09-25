@@ -292,7 +292,7 @@ void CCTRView::OnInitialUpdate()
 	this->SetDlgItemTextA(m_idCmdJang[0],"180");		this->SetDlgItemTextA(m_idCmdJang[1],"0");	
 	this->SetDlgItemTextA(m_idCmdJang[2],"5");			this->SetDlgItemTextA(m_idCmdJang[3],"0");			this->SetDlgItemTextA(m_idCmdJang[4],"0");
 	
-	this->updateGUIActivationState(manual_point_ENABLE, manual_point_DISABLE);
+	//this->updateGUIActivationState(manual_point_ENABLE, manual_point_DISABLE);
 
 	this->SetTimer(100,30,NULL);
 	QueryPerformanceFrequency(&m_Freq);
@@ -781,17 +781,17 @@ void CCTRView::OnBnClickedRadioModesPlane()
 	if(m_PlaneEstimationMode == 0)	
 	{
 		::std::cout << "Estimate plane from number of points" << ::std::endl;
-		this->updateGUIActivationState(manual_point_ENABLE, manual_point_DISABLE);
+		//this->updateGUIActivationState(manual_point_ENABLE, manual_point_DISABLE);
 	}
 	else if (m_PlaneEstimationMode == 1)
 	{
 		::std::cout << "Manual input of plane normal" << ::std::endl;
-		this->updateGUIActivationState(manual_ENABLE, manual_DISABLE);
+		//this->updateGUIActivationState(manual_ENABLE, manual_DISABLE);
 	}
 	else if (m_PlaneEstimationMode == 2)
 	{
 		::std::cout << "Online plane estimation!" << ::std::endl;
-		this->updateGUIActivationState(manual_point_ENABLE, manual_point_DISABLE);
+		//this->updateGUIActivationState(manual_point_ENABLE, manual_point_DISABLE);
 	}
 
 	return;		

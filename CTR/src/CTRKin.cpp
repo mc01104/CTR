@@ -1095,8 +1095,8 @@ void CTRKin::ComputeJointspaceVelocities(const ::Eigen::MatrixXd& J, const ::Eig
 	::Eigen::JacobiSVD<::Eigen::MatrixXd> svdOr(tmpOrientPseudo, ::Eigen::ComputeThinU | ::Eigen::ComputeThinV);
 	::Eigen::VectorXd singValOr = svdOr.singularValues();
 
-	double lambda_orientation = 0.00001;
-	double lambda_orientation_max = 0.01;
+	double lambda_orientation = 0.0;
+	double lambda_orientation_max = 0.0001;
 
 	if (nCol == 4)
 		lambda_orientation_max *= 100;

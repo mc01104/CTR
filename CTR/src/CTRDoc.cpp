@@ -83,6 +83,8 @@ BEGIN_MESSAGE_MAP(CCTRDoc, CDocument)
 	ON_BN_CLICKED(IDC_BTN_MOVE17, &CCTRDoc::OnBnClickedStopId)
 
 	ON_BN_CLICKED(IDC_BTN_MOVE20, &CCTRDoc::OnBnClickedDumpConf)
+	ON_BN_CLICKED(IDC_BUTTON12, &CCTRDoc::OnBnClickedStraight)
+	ON_BN_CLICKED(IDC_BUTTON13, &CCTRDoc::OnBnClickedHome)
 
 	//ON_BN_CLICKED(IDC_BTN_MOVE16, &CCTRDoc::OnBnClickedResetAutomation)
 
@@ -305,16 +307,9 @@ CCTRDoc::~CCTRDoc()
 	
 }
 
-void CCTRDoc::ChangeForceForTuning(double force)
-{
-	//this->m_Omni->SetForce(force);
-	//std::cout << "set force in Doc" << force << ::std::endl;
-	//m_force = force;
-}
 
-void CCTRDoc::SetForceGain(double forceGain, double forceGainD, double forceGainI)
+void CCTRDoc::SetContacControlGains(double forceGain, double forceGainD, double forceGainI)
 {
-	//this->m_kinLib->SetForceGain(forceGain);
 	m_contactGain = forceGain;
 	m_contactDGain = forceGainD;
 	m_contactIGain = forceGainI;
@@ -323,26 +318,10 @@ void CCTRDoc::SetForceGain(double forceGain, double forceGainD, double forceGain
 void CCTRDoc::SetContactRatio(double ratio)
 {
 	m_contactRatioDesired = ratio;
+
 	this->resetIntegral();
+
 	::std::cout << "Contact Ratio was set to:" << m_contactRatioDesired << ::std::endl;
-}
-
-void CCTRDoc::UpdateDesiredPosition()
-{
-	double targetTmp[6];
-	//EnterCriticalSection(&m_cSection);
-	//memcpy(targetTmp, this->m_Status.tgtTipPosDir, 6 * sizeof(double));
-	//LeaveCriticalSection(&m_cSection);
-
-	//::std::cout << "initial target:" << targetTmp[2] << ::std::endl;
-
-	//if (m_forceControlActivated)
-	this->ComputeDesiredPosition(targetTmp);
-
-	//::std::cout << "updated target:" << targetTmp[2] << ::std::endl;
-
-	memcpy(m_desiredPosition, targetTmp, 6 * sizeof(double));
-	//PrintCArray(m_desiredPosition, 6);
 }
 
 void CCTRDoc::ComputeDesiredVelocity()
@@ -530,18 +509,18 @@ void CCTRDoc::OnViewTeleop()
 	// CKim - Start TeleOp thread
 	if(!m_ioRunning)	
 	{
-		if(m_motorConnected)	{												}
-		else					
+		if(!m_motorConnected)
 		{	
 			AfxMessageBox("Motor not ready!");	
-			//_beginthreadex(NULL, 0, CCTRDoc::NetworkCommunication, this, 0, NULL);
 
 			return;	
 		}
+
 		m_ioRunning = true; 	
-		m_hMtrCtrl = (HANDLE) _beginthreadex(NULL, 0, CCTRDoc::MotorLoop, this, 0, NULL);
-		_beginthreadex(NULL, 0, CCTRDoc::NetworkCommunication, this, 0, NULL);
-		_beginthreadex(NULL, 0, CCTRDoc::HeartRateMonitorThread, this, 0, NULL);
+
+		m_hMtrCtrl = (HANDLE) _beginthreadex(NULL, 0, CCTRDoc::MotorLoop, this, 0, NULL);	// hardware communication thread
+		_beginthreadex(NULL, 0, CCTRDoc::NetworkCommunication, this, 0, NULL);				// network between camera and robot computers
+		_beginthreadex(NULL, 0, CCTRDoc::HeartRateMonitorThread, this, 0, NULL);			// thread reading vitals from Surgivet
 	}
 }
 
@@ -677,11 +656,15 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 
 		// update the local joint variables
 		EnterCriticalSection(&m_cSection);
+
 		for(int i=0; i<5; i++)
 			localStat.currJang[i] = mySelf->m_Status.currJang[i];		
+
 		for(int i = 0; i < 6; i++)
 			localStat.currTipPosDir[i] = mySelf->m_Status.currTipPosDir[i];
+
 		teleopOn = mySelf->m_teleOpMode && mySelf->m_Status.isTeleOpMoving;
+
 		desiredContactRatio = mySelf->m_contactRatioDesired;
 
 		for(int i = 0; i < 6; i++)
@@ -717,7 +700,6 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 		else 
 			ss << 0 << " ";
 
-		//::std::cout << mySelf->periodsForCRComputation << ::std::endl;
 		ss << mySelf->periodsForCRComputation << " ";
 
 		for(int i = 0; i < 3; ++i)
@@ -772,15 +754,18 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 		{
 			::std::string receivedStr = string(recvbuf);
 
-			if (receivedStr == "NOF")
+			if (receivedStr == "NOF")   // when we receive NOF we ignore the information
 			{
 				EnterCriticalSection(&m_cSection);
+
 				mySelf->m_ContactUpdateReceived = false;
+
 				LeaveCriticalSection(&m_cSection);
 			}
 			else
 			{
 				::std::vector<double> msg = DoubleVectorFromString(::std::string(recvbuf));
+
 				contactRatio = msg[0];
 				contactRatioError = desiredContactRatio - contactRatio;
 
@@ -1473,16 +1458,9 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 	double dq[5];		
 	double dCnt[7];		
 	
-	//double K[6] = {5.0, 5.0, 5.0, 0.5, 0.5, 0.5 };	// working
-	//double K[6] = {10.0, 10.0, 10.0, 1.0, 1.0, 1.0 };		// working
 	
 	double K_image[6] = {1000.0, 1000.0, 1000.0, 10.0, 10.0, 10.0 };		// for image frame control
 	double K[6] = {2.0, 2.0, 2.0, 5.0, 5.0, 5.0};		// working
-	//double K[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};		// working
-	//double K[6] = { 5.0, 5.0, 5.0, 50.0, 50.0, 50.0 };	
-	//double K[6] = { 5.0, 5.0, 5.0, 5.0, 5.0, 5.0 };				// For sensor feedback + estimator
-	//double K[6] = { 1.5, 1.5, 1.5, 0.1, 0.1, 0.1 };				// For sensor feedback + estimator
-	//double K[6] = {1.0, 1.0, 1.0, 0.5, 0.5, 0.5 };	// working	
 
 	// CKim - Parameters for loop speed measurement
 	ChunTimer timer;	
@@ -3305,3 +3283,16 @@ CCTRDoc::OnBnClickedDumpConf()
 
 }
 
+void
+CCTRDoc::OnBnClickedStraight()
+{
+	double joints[5] = {M_PI, 0, 5, 0, this->m_Status.currJang[4]};
+	this->SendCommand(0, joints);
+}
+
+void
+CCTRDoc::OnBnClickedHome()
+{
+	double joints[5] = {0, 0, 35, 0, this->m_Status.currJang[4]};
+	this->SendCommand(0, joints);
+}

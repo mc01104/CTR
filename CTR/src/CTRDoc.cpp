@@ -1726,6 +1726,7 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 			mySelf->ProcessCommand(localStat);	
 		}
 
+
 		if(!mySelf->m_motionCtrl->DoTeleOpMotion(vel))	
 		{
 			// CKim - Stop velocity command
@@ -2886,7 +2887,7 @@ void CCTRDoc::ToggleCircumnavigation()
 		this->valve_points_visited.clear();
 		this->index = 0;
 	}
-	::std::cout << "circumnavigation: " << (this->m_circumnavigation ?	"ON" : "OFF") << ::std::cout << ::std::endl; 
+	::std::cout << "circumnavigation: " << (this->m_circumnavigation ?	"ON" : "OFF") << ::std::endl; 
 
 	this->filter_centroid->resetFilter();
 	this->filter_tip->resetFilter();

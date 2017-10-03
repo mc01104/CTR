@@ -714,7 +714,7 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 		ss << mySelf->GetMonitorBreathingFreq() << " ";
 
 		ss << mySelf->commanded_vel[0] << " " << mySelf->commanded_vel[1] << " ";
-
+		//::std::cout << mySelf->commanded_vel[0] << ",  " << mySelf->commanded_vel[1] << ::std::endl;
 		if (mySelf->m_plane_changed)
 		{
 			ss << " " << 1 << " ";
@@ -818,7 +818,7 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 
 				end_loop = clock();
 
-				::std::cout << "CR:" << contactRatio << ::std::endl;
+				//::std::cout << "CR:" << contactRatio << ::std::endl;
 			}
 			
 		}
@@ -1731,7 +1731,8 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 			// CKim - Process user commands... should be in separate threads..
 			mySelf->ProcessCommand(localStat);	
 		}
-
+			for(int i=0; i<7; i++)	
+				vel[i] = 0.0;		
 
 		if(!mySelf->m_motionCtrl->DoTeleOpMotion(vel))	
 		{
@@ -2864,6 +2865,7 @@ void CCTRDoc::computeCircumnavigationDirection(Eigen::Matrix<double,6,1>& err)
 	err.block(0, 0, 3, 1) = rot * error3D;
 	commanded_vel[0] = err(0, 0);
 	commanded_vel[1] = err(1, 0);
+	//::std::cout << commanded_vel[0] << "., " << commanded_vel[1] << ::std::endl;
 	//::std::cout << "centroid x:" << m_centroid[0] << " centroid y:" << m_centroid[1] << " tangent x:" << m_valve_tangent[0] << " tangent y:" << m_valve_tangent[1] << ::std::endl;
 	//::std::cout << "velocities :" << err.block(0, 0, 3, 1).transpose() << ::std::endl;
 	

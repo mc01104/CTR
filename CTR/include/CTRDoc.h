@@ -392,6 +392,7 @@ protected:
 	double centroid_velocity[2];
 	double tip_velocity[2];
 	double tip_position_prev[2];
+	double commanded_vel[2];
 	RecursiveFilter::Filter* filter_centroid;
 	RecursiveFilter::Filter*	filter_tip;
 

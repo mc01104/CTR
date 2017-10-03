@@ -284,6 +284,10 @@ CCTRDoc::CCTRDoc()
 
 	retractRobot = false;
 	m_usePullBack = false;
+
+	commanded_vel[0] = 0;
+	commanded_vel[1] = 0;
+
 	
 }
 
@@ -708,6 +712,8 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 		ss << mySelf->m_contactGain << " " << mySelf->m_contactDGain << " " << mySelf->m_contactIGain << " " << mySelf->m_forceControlActivated << " " << mySelf->m_contactRatioDesired << " ";
 
 		ss << mySelf->GetMonitorBreathingFreq() << " ";
+
+		ss << mySelf->commanded_vel[0] << " " << mySelf->commanded_vel[1] << " ";
 
 		if (mySelf->m_plane_changed)
 		{
@@ -2856,7 +2862,8 @@ void CCTRDoc::computeCircumnavigationDirection(Eigen::Matrix<double,6,1>& err)
 	error3D(2) = 0.0;
 
 	err.block(0, 0, 3, 1) = rot * error3D;
-
+	commanded_vel[0] = err(0, 0);
+	commanded_vel[1] = err(1, 0);
 	//::std::cout << "centroid x:" << m_centroid[0] << " centroid y:" << m_centroid[1] << " tangent x:" << m_valve_tangent[0] << " tangent y:" << m_valve_tangent[1] << ::std::endl;
 	//::std::cout << "velocities :" << err.block(0, 0, 3, 1).transpose() << ::std::endl;
 	
@@ -2993,6 +3000,8 @@ void CCTRDoc::computeApexToValveMotion(Eigen::Matrix<double,6,1>& err, APEX_TO_V
 			computeATVBottom(err);
 			break;
 	}
+	commanded_vel[0] = err(0, 0);
+	commanded_vel[1] = err(1, 0);
 	//::std::cout << "centroid_x:" << m_centroid_apex[0] << "  centroid_y:" << m_centroid_apex[1] << "  velocities:" << err.block(0,0, 3, 1).transpose() << ::std::endl;
 }
 

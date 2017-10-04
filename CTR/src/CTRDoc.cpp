@@ -818,7 +818,7 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 
 				end_loop = clock();
 
-				//::std::cout << "CR:" << contactRatio << ::std::endl;
+				::std::cout << "CR:" << contactRatio << ::std::endl;
 			}
 			
 		}
@@ -1618,7 +1618,7 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 					err(i, 0) += desiredPosition[i];   
 				
 				if (mySelf->retractRobot)
-					err(2, 0) = -0.5; //value?
+					err(2, 0) = -2.5; //value?
 			}
 
 			if (mySelf->m_control_mode == 0)
@@ -2947,6 +2947,9 @@ void CCTRDoc::UpdateCircumnavigationParams(::std::vector<double>& msg)
 		if (vel_cen.norm() < 0.5 * vel_tip.norm())
 			this->retractRobot = true;
 	}
+	if (tangent_updates == 0)
+		computeInitialDirection();
+	tangent_updates++;
 	memcpy(m_valve_tangent_prev, m_valve_tangent, 2 * sizeof(double));
 
 	m_valve_tangent[0]  = msg[5];
@@ -2959,9 +2962,7 @@ void CCTRDoc::UpdateCircumnavigationParams(::std::vector<double>& msg)
 		m_valve_tangent[0] *= -1;
 		m_valve_tangent[1] *= -1;
 	}
-	if (tangent_updates == 0)
-		computeInitialDirection();
-	tangent_updates++;
+
 
 	memcpy(this->tip_position_prev, this->m_Status.currTipPosDir, 2 *sizeof(double));
 }

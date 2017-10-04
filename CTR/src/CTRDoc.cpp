@@ -1731,8 +1731,8 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 			// CKim - Process user commands... should be in separate threads..
 			mySelf->ProcessCommand(localStat);	
 		}
-			for(int i=0; i<7; i++)	
-				vel[i] = 0.0;		
+			//for(int i=0; i<7; i++)	
+			//	vel[i] = 0.0;		
 
 		if(!mySelf->m_motionCtrl->DoTeleOpMotion(vel))	
 		{

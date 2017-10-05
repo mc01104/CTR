@@ -2955,7 +2955,13 @@ void CCTRDoc::UpdateCircumnavigationParams(::std::vector<double>& msg)
 			this->retractRobot = true;
 	}
 
-	memcpy(m_valve_tangent_prev, m_valve_tangent, 2 * sizeof(double));
+	if (tangent_updates == 0)
+		computeInitialDirection();
+	else 
+		memcpy(m_valve_tangent_prev, m_valve_tangent, 2 * sizeof(double));
+
+	tangent_updates++;
+
 
 	m_valve_tangent[0]  = msg[5];
 	m_valve_tangent[1]  = msg[6];
@@ -2968,9 +2974,7 @@ void CCTRDoc::UpdateCircumnavigationParams(::std::vector<double>& msg)
 		m_valve_tangent[1] *= -1;
 	}
 
-	if (tangent_updates == 0)
-		computeInitialDirection();
-	tangent_updates++;
+
 	memcpy(this->tip_position_prev, this->m_Status.currTipPosDir, 2 *sizeof(double));
 }
 
@@ -3230,53 +3234,76 @@ void CCTRDoc::addPointOnValve()
 	this->index = this->valve_points_visited.size();
 }
 
+//void CCTRDoc::computeInitialDirection()
+//{
+//	double tmp_position[2];
+//	for (int i = 0; i < 2; ++i)
+//		tmp_position[i] = this->m_Status.currTipPosDir[i] + m_valve_tangent[i] * 10;
+//
+//	switch (this->cStatus)
+//	{
+//		case CIRCUM_STATUS::LEFT_A:
+//		{
+//			if (tmp_position[1] > this->m_Status.currTipPosDir[1])
+//			{
+//				m_valve_tangent[0] *= -1;
+//				m_valve_tangent[1] *= -1;
+//				
+//			}
+//			break;
+//		}
+//		case CIRCUM_STATUS::UP:
+//		{
+//			if (tmp_position[0] < this->m_Status.currTipPosDir[0])
+//			{
+//				m_valve_tangent[0] *= -1;
+//				m_valve_tangent[1] *= -1;
+//			}
+//			break;
+//		}
+//		case CIRCUM_STATUS::RIGHT:
+//		{
+//			if (tmp_position[1] < this->m_Status.currTipPosDir[1])
+//			{
+//				m_valve_tangent[0] *= -1;
+//				m_valve_tangent[1] *= -1;
+//			}
+//			break;
+//		}
+//		case CIRCUM_STATUS::DOWN:
+//		{
+//			if (tmp_position[0] > this->m_Status.currTipPosDir[0])
+//			{
+//				m_valve_tangent[0] *= -1;
+//				m_valve_tangent[1] *= -1;
+//			}
+//			break;
+//		}
+//	}
+//}
+
 void CCTRDoc::computeInitialDirection()
 {
-	double tmp_position[2];
-	for (int i = 0; i < 2; ++i)
-		tmp_position[i] = this->m_Status.currTipPosDir[i] + m_valve_tangent[i] * 10;
+	m_valve_tangent_prev[0] = 0;
+	m_valve_tangent_prev[1] = 0;
 
 	switch (this->cStatus)
 	{
 		case CIRCUM_STATUS::LEFT_A:
-		{
-			if (tmp_position[1] > this->m_Status.currTipPosDir[1])
-			{
-				m_valve_tangent[0] *= -1;
-				m_valve_tangent[1] *= -1;
-				
-			}
+			m_valve_tangent_prev[1] = -1;
 			break;
-		}
 		case CIRCUM_STATUS::UP:
-		{
-			if (tmp_position[0] < this->m_Status.currTipPosDir[0])
-			{
-				m_valve_tangent[0] *= -1;
-				m_valve_tangent[1] *= -1;
-			}
+			m_valve_tangent_prev[0] = 1;
 			break;
-		}
 		case CIRCUM_STATUS::RIGHT:
-		{
-			if (tmp_position[1] < this->m_Status.currTipPosDir[1])
-			{
-				m_valve_tangent[0] *= -1;
-				m_valve_tangent[1] *= -1;
-			}
+			m_valve_tangent_prev[1] = 1;
 			break;
-		}
 		case CIRCUM_STATUS::DOWN:
-		{
-			if (tmp_position[0] > this->m_Status.currTipPosDir[0])
-			{
-				m_valve_tangent[0] *= -1;
-				m_valve_tangent[1] *= -1;
-			}
+			m_valve_tangent_prev[0] = -1;
 			break;
-		}
 	}
 }
+
 
 double 
 CCTRDoc::GetMonitorBreathingFreq()

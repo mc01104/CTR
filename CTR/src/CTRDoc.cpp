@@ -1591,6 +1591,7 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 					if (circumnavigation)
 					{
 						mySelf->computeCircumnavigationDirection(tmpVelocities);
+						//mySelf->computeCircumnavigationDirection(err);
 
 						if (!isInContact) // move using the most recent computed velocities when not in contact
 							err.block(0, 0, 3, 1) = tmpVelocities;
@@ -1602,6 +1603,12 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 
 				}
 
+				if (circumnavigation)
+				{
+					localStat.tgtTipPosDir[3] = 0;
+					localStat.tgtTipPosDir[4] = 0;
+					localStat.tgtTipPosDir[5] =	1;
+				}
 				// orientation velocities
 				for(int i = 3; i < 6; ++i)
 					err(i,0) = mySelf->m_orientation_gain * K[i]*(localStat.tgtTipPosDir[i] - localStat.currTipPosDir[i]) + mySelf->m_orientation_gain_feedforward * tangentVelocity[i-3];
@@ -2947,9 +2954,7 @@ void CCTRDoc::UpdateCircumnavigationParams(::std::vector<double>& msg)
 		if (vel_cen.norm() < 0.5 * vel_tip.norm())
 			this->retractRobot = true;
 	}
-	if (tangent_updates == 0)
-		computeInitialDirection();
-	tangent_updates++;
+
 	memcpy(m_valve_tangent_prev, m_valve_tangent, 2 * sizeof(double));
 
 	m_valve_tangent[0]  = msg[5];
@@ -2963,7 +2968,9 @@ void CCTRDoc::UpdateCircumnavigationParams(::std::vector<double>& msg)
 		m_valve_tangent[1] *= -1;
 	}
 
-
+	if (tangent_updates == 0)
+		computeInitialDirection();
+	tangent_updates++;
 	memcpy(this->tip_position_prev, this->m_Status.currTipPosDir, 2 *sizeof(double));
 }
 

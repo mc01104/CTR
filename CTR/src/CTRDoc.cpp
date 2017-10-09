@@ -1605,9 +1605,12 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 
 				if (circumnavigation)
 				{
-					localStat.tgtTipPosDir[3] = 0;
-					localStat.tgtTipPosDir[4] = 0;
-					localStat.tgtTipPosDir[5] =	1;
+					//localStat.tgtTipPosDir[3] = 0;
+					//localStat.tgtTipPosDir[4] = 0;
+					//localStat.tgtTipPosDir[5] =	1;
+					localStat.tgtTipPosDir[3] = mySelf->m_contact_control_normal[0];
+					localStat.tgtTipPosDir[4] = mySelf->m_contact_control_normal[1];
+					localStat.tgtTipPosDir[5] = mySelf->m_contact_control_normal[2];
 				}
 				// orientation velocities
 				for(int i = 3; i < 6; ++i)

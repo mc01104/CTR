@@ -818,7 +818,7 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 
 				end_loop = clock();
 
-				::std::cout << "CR:" << contactRatio << ::std::endl;
+				//::std::cout << "CR:" << contactRatio << ::std::endl;
 			}
 			
 		}
@@ -3005,17 +3005,25 @@ void CCTRDoc::computeApexToValveMotion(Eigen::Matrix<double,6,1>& err, APEX_TO_V
 	}
 	commanded_vel[0] = err(0, 0);
 	commanded_vel[1] = err(1, 0);
-	//::std::cout << "centroid_x:" << m_centroid_apex[0] << "  centroid_y:" << m_centroid_apex[1] << "  velocities:" << err.block(0,0, 3, 1).transpose() << ::std::endl;
+
+	::std::cout << "velocities:" << commanded_vel[0] << ", " << commanded_vel[1] << ::std::endl;
+	::std::cout << "centroid_x:" << m_centroid_apex[0] << "  centroid_y:" << m_centroid_apex[1] << "  velocities:" << err.block(0,0, 3, 1).transpose() << ::std::endl;
+	::std::cout << "m_wall_detected:" << m_wall_detected << ::std::endl;
 }
 
 void CCTRDoc::computeATVLeft(Eigen::Matrix<double,6,1>& err)
 {
-
-	// left bias
-	(this->m_wall_detected ? err[1] = 0 : err[1] = -this->m_bias );
-
 	// forward velocity
 	err[2] = m_forward_gainATV;    // mm/sec
+
+	// left bias
+	if (!this->m_wall_detected)
+	{
+		err[1] = -this->m_bias;
+		return;
+	}
+
+	err[1] = 0;
 
 	// check controller
 	if (this->m_centroid_apex[1] >= m_apex_theshold_max)

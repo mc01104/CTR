@@ -242,7 +242,7 @@ public:
 	void	SetVSGains(double gain_center, double gain_tangent);
 	void	SetSamplingPeriod(int samplingPeriod) {this->periodsForCRComputation = samplingPeriod;};
 	void	ChangeForceForTuning(double force);
-	void	SetForceGain(double forceGain, double forceGainD = 0, double forceGainI = 0);
+	void	SetContacControlGains(double forceGain, double forceGainD = 0, double forceGainI = 0);
 	void	SetContactRatio(double ratio);
 
 	void	UpdateCircumnavigationParams(::std::vector<double>& msg);
@@ -252,7 +252,7 @@ public:
 	ChunMotion*	GetMotionController() {return this->m_motionCtrl;};
 
 	/////////////// CONTACT ////////////
-	void	UpdateDesiredPosition();
+
 	void	ComputeDesiredPosition(double tmpPosition[6]);
 	void	ComputeDesiredVelocity();
 	::std::vector<::Eigen::Vector3d> points_for_plane_estimation;
@@ -392,6 +392,7 @@ protected:
 	double centroid_velocity[2];
 	double tip_velocity[2];
 	double tip_position_prev[2];
+	double commanded_vel[2];
 	RecursiveFilter::Filter* filter_centroid;
 	RecursiveFilter::Filter*	filter_tip;
 
@@ -425,6 +426,8 @@ public:
 	afx_msg void OnBnClickedStartId();
 	afx_msg void OnBnClickedStopId();
 	afx_msg void OnBnClickedKillFocusId();
+	afx_msg void OnBnClickedStraight();
+	afx_msg void OnBnClickedHome();
 	void UpdateIDParams(double min_freq, double max_freq, double amplitude, int num_of_sins);
 	void switchIDMode(bool onoff) {this->m_idMode = onoff;};
 	int index;

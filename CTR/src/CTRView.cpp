@@ -15,6 +15,7 @@
 #include "ChunHaptic.h"
 #include "ChunMotion.h"
 #include "Utilities.h"
+#include <filesystem>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -182,6 +183,7 @@ CCTRView::CCTRView()
 		}
 
 	}
+	::std::string filename = "plane_coordinates_" + GetDateString() + ".txt";
 	::std::remove("plane_points.txt");
 
 }
@@ -206,7 +208,7 @@ void CCTRView::OnKillFocusGain()
 	::std::cout << "requested D-gain: " << forceGainD << ::std::endl;
 	::std::cout << "requested I-gain: " << forceGainI << ::std::endl;
 
-	this->GetDocument()->SetForceGain(forceGain, forceGainD, forceGainI);
+	this->GetDocument()->SetContacControlGains(forceGain, forceGainD, forceGainI);
 
 }
 
@@ -224,7 +226,7 @@ void CCTRView::OnKillFocusForce()
 	CString str;
 	this->GetDlgItemTextA(IDC_EDIT3, str);
 	double force = atof(str);
-	this->GetDocument()->ChangeForceForTuning(force);
+	//this->GetDocument()->ChangeForceForTuning(force);
 	std::cout << "set force" <<  force << ::std::endl;
 }
 
@@ -290,7 +292,7 @@ void CCTRView::OnInitialUpdate()
 	this->SetDlgItemTextA(m_idCmdJang[0],"180");		this->SetDlgItemTextA(m_idCmdJang[1],"0");	
 	this->SetDlgItemTextA(m_idCmdJang[2],"5");			this->SetDlgItemTextA(m_idCmdJang[3],"0");			this->SetDlgItemTextA(m_idCmdJang[4],"0");
 	
-	this->updateGUIActivationState(manual_point_ENABLE, manual_point_DISABLE);
+	//this->updateGUIActivationState(manual_point_ENABLE, manual_point_DISABLE);
 
 	this->SetTimer(100,30,NULL);
 	QueryPerformanceFrequency(&m_Freq);
@@ -720,10 +722,11 @@ void CCTRView::ToggleCameraControl()
 void CCTRView::OnClickedBtnComputePlane()
 {
 	::Eigen::MatrixXd data(3, this->points_for_plane_estimation.size());
+
 	for (int i = 0; i < this->points_for_plane_estimation.size(); ++i)
 		data.col(i) = this->points_for_plane_estimation[i];
 	
-	// not sure if this is correct
+
 	::Eigen::Vector3d mu = data.rowwise().mean();
 	::Eigen::Matrix3Xd points_centered = data.colwise() - mu;
 
@@ -732,12 +735,11 @@ void CCTRView::OnClickedBtnComputePlane()
 	::Eigen::MatrixXd U = svd.matrixU();
 	Eigen::Vector3d normal_tmp = U.col(2);
 
+	// the computed plane normal is always pointing to the positive z-direction 
 	if (normal_tmp(2) < 0)
 		normal_tmp = -normal_tmp;
 
-	::std::cout << normal_tmp << ::std::endl;
 	this->normal = normal_tmp;;
-	::std::cout << this->normal << ::std::endl;
 
 	::Eigen::Vector3d center;
 	double radius;
@@ -745,9 +747,8 @@ void CCTRView::OnClickedBtnComputePlane()
 	center += mu;
 
 	this->center = center;
-	::std::cout << "valve center:" << this->center.transpose() << ::std::endl;
+
 	this->radius = radius;
-	::std::cout << "valve radius:" << this->radius << ::std::endl;
 
 	this->dumpPlanePoints();
 }
@@ -780,17 +781,17 @@ void CCTRView::OnBnClickedRadioModesPlane()
 	if(m_PlaneEstimationMode == 0)	
 	{
 		::std::cout << "Estimate plane from number of points" << ::std::endl;
-		this->updateGUIActivationState(manual_point_ENABLE, manual_point_DISABLE);
+		//this->updateGUIActivationState(manual_point_ENABLE, manual_point_DISABLE);
 	}
 	else if (m_PlaneEstimationMode == 1)
 	{
 		::std::cout << "Manual input of plane normal" << ::std::endl;
-		this->updateGUIActivationState(manual_ENABLE, manual_DISABLE);
+		//this->updateGUIActivationState(manual_ENABLE, manual_DISABLE);
 	}
 	else if (m_PlaneEstimationMode == 2)
 	{
 		::std::cout << "Online plane estimation!" << ::std::endl;
-		this->updateGUIActivationState(manual_point_ENABLE, manual_point_DISABLE);
+		//this->updateGUIActivationState(manual_point_ENABLE, manual_point_DISABLE);
 	}
 
 	return;		
@@ -1166,8 +1167,14 @@ void
 CCTRView::dumpPlanePoints()
 {
 	::std::ofstream os("plane_points.txt");
+	::std::ofstream os2("plane_" + GetDateString() + ".txt");
 	for (int i = 0; i < this->points_for_plane_estimation.size(); ++i)
+	{
 		os << this->points_for_plane_estimation[i](0) << ", " << this->points_for_plane_estimation[i](1) << ", " << this->points_for_plane_estimation[i](2) <<::std::endl;
+		os2 << this->points_for_plane_estimation[i](0) << ", " << this->points_for_plane_estimation[i](1) << ", " << this->points_for_plane_estimation[i](2) <<::std::endl;
+		
+	}
 
 	os.close();
+	os2.close();
 }

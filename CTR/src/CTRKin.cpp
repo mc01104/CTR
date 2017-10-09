@@ -1016,148 +1016,8 @@ void CTRKin::EvalCurrentKinematicsModel_NEW(const double* jAng,  const double* t
 void CTRKin::ApplyKinematicControlNullspace(const Eigen::MatrixXd& J, const Eigen::MatrixXd& err, double* dq, double* q)
 {
 	
-	////::std::cout << err.transpose() << ::std::endl;
-
-	//::Eigen::VectorXd dotq(5);
-	//::Eigen::Matrix<double, 6, 5> Jtemp = J;
-	//double scl_jacobian = M_PI / 180.0 * 3;
-	////scl_jacobian *= 2;
-	//Jtemp.col(0) *= scl_jacobian;
-	//Jtemp.col(1) *= scl_jacobian;
-	//Jtemp.col(3) *= scl_jacobian;
-
-	//// position and orientation jacobian
-	//::Eigen::Matrix<double, 3, 5> Jp  = Jtemp.block(0,0, 3, 5);
-	//::Eigen::Matrix<double, 3, 5> Jo = Jtemp.block(3,0, 3, 5);
-
-	//// condition matrix for pseudo inverse
-	//::Eigen::Matrix<double, 3, 3> tmpMat (Jp * Jp.transpose());
-
-	//double lambda_position = 0.0;
-	//double epsilon = 0.01;
-	//double lambda_position_max = 0.01;
-	//::Eigen::JacobiSVD<::Eigen::MatrixXd> svd(tmpMat, ::Eigen::ComputeThinU | ::Eigen::ComputeThinV);
-	//::Eigen::VectorXd singVal = svd.singularValues();
-
-	////::std::cout << singVal[singVal.size() - 1] << ::std::endl;
-	//if (singVal[singVal.size() - 1] <= epsilon)
-	//	lambda_position = (1.0 - ::std::pow(singVal[singVal.size() - 1]/epsilon, 2)) * lambda_position_max;
-
-	//for (int i = 0; i < 3; ++i)
-	//	tmpMat(i, i) += lambda_position;
-
-	//// task 1: control position
-	//::Eigen::MatrixXd task1_pseudo = Jp.transpose() * tmpMat.inverse();
-	//dotq = task1_pseudo * err.block(0, 0, 3, 1);
-	////::std::cout << "1st: "<< dotq.transpose() << ::std::endl;
-
-	//// task 2: control orientation
-	//::Eigen::Matrix<double, 5, 5> IdMat;
-	//IdMat.setIdentity();
-
-	//::Eigen::Matrix<double, 3, 5> tmpOrient;
-	//::Eigen::Matrix<double, 3, 3> tmpOrientPseudo;
-
-	////double orientationGain = 10.0;
-	//tmpOrient = Jo * (IdMat - task1_pseudo * Jp);
-	////tmpOrient = Jo;
-	//tmpOrientPseudo = tmpOrient * tmpOrient.transpose();
-
-	////::std::cout << tmpOrientPseudo << ::std::endl;
-	//double lambda_orientation = 0.00001;
-	////double lambda_orientation_max = 1.0e-04;
-	////epsilon = 1.0e-04;
-	////::Eigen::JacobiSVD<::Eigen::MatrixXd> svd_orient(tmpOrientPseudo, ::Eigen::ComputeThinU | ::Eigen::ComputeThinV);
-	////::Eigen::VectorXd singValOrient = svd_orient.singularValues();
-	////::std::cout << "orientation singular value" << singValOrient[singValOrient.size() - 3] << ::std::endl;
-	////if (singValOrient[singValOrient.size() - 2] <= epsilon)
-	////	lambda_orientation = (1.0 - ::std::pow(singValOrient[singValOrient.size() - 1]/epsilon, 2)) * lambda_orientation_max;
-
-	//for (int i = 0; i < 3; ++i)
-	//	tmpOrientPseudo(i, i) += lambda_orientation;
-	//
-	//::Eigen::MatrixXd orientPseudo = tmpOrient.transpose() * tmpOrientPseudo.inverse();
-	//dotq += orientPseudo * ( err.block(3, 0, 3, 1) - Jo * task1_pseudo * err.block(0, 0, 3, 1));
-
-	//dotq[0] *= scl_jacobian;
-	//dotq[1] *= scl_jacobian;
-	//dotq[3] *= scl_jacobian;
-	//
-	//
-	////::std::cout << dotq.transpose() << ::std::endl;
-	//// overall gain
-	////dotq *= 0.3; 
-
-	//// Joint limit avoidance using potential-field method 
-	//// why add this to the existing value and not just assign the velocity to the joint-limit avoidance potential field?
-	//double upperSoft = L31_MAX - 5;
-	//double lowerSoft = L31_MIN + 5;
-	//double jointLimitGain = 0.2;
-
-	//if (q[2] >= upperSoft)
-	//	dotq[2] += max(-5.0, -jointLimitGain/::std::pow(q[2] - L31_MAX, 2) + jointLimitGain/::std::pow(upperSoft - L31_MAX, 2));
-
-	//if (q[2] <= lowerSoft )
-	//	dotq[2] += min(5.0, jointLimitGain/::std::pow(q[2] - L31_MIN, 2) - jointLimitGain/::std::pow(lowerSoft - L31_MIN, 2));
-
-
-	//if (q[2] >= L31_MAX && dotq[2] > 0) 
-	//	dotq[2] = -5.0;
-	//else if (q[2] <= L31_MIN && dotq[2] < 0)
-	//	dotq[2] = 5.0;
-
-	//for(int i=0; i<5; i++)	{	dq[i] = dotq(i,0);	}
-
-
-
-	//static ofstream vel_log("vel_log.txt");
 	::Eigen::VectorXd dotq(5);
 	this->ComputeJointspaceVelocities(J, err, dotq);
-
-	//double scale = 1.0;
-	//double a = 0, b = 1.0;
-
-	//double soft_ub = L31_MAX - 2.0;
-	//double soft_lb = L31_MIN + 2.0;
-
-	//if (q[2] >= soft_ub && dotq[2] > 0)
-	//{
-	//	//a = 1.0/(soft_ub - L31_MAX);
-	//	//b = -L31_MAX*a;
-	//	//scale = a*q[2] + b;
-	//	//
-	//	//::Eigen::VectorXd dotq(5);
-	//	//::Eigen::MatrixXd Jtemp = J;
-	//	//Jtemp.col(2) /= (scale+0.1);
-	//	//this->ComputeJointspaceVelocities(Jtemp, err, dotq);
-
-	//	a = (2.71828182846 - 1) / (soft_ub - L31_MAX);
-	//	b = 1 - a*L31_MAX;
-
-	//	scale = max(0.0, log(a*q[2] + b));
-
-	//	dotq *= scale;
-	//}
-	//else if (q[2] <= soft_lb && dotq[2] < 0)
-	//{
-	//	//a = 1.0/(soft_lb - L31_MIN);
-	//	//b = -L31_MIN*a;
-	//	//scale = a*q[2] + b;
-
-	//	//::Eigen::VectorXd dotq(5);
-	//	//::Eigen::MatrixXd Jtemp = J;
-	//	//Jtemp.col(2) /= (scale+0.1);
-	//	//this->ComputeJointspaceVelocities(Jtemp, err, dotq);
-
-	//	a = (2.71828182846 - 1) / (soft_lb - L31_MIN);
-	//	b = 1 - a*L31_MIN;
-
-	//	scale = max(0.0, log(a*q[2] + b));
-
-	//	dotq *= scale;
-	//}
-
-
 
 	double limit_margin = 2.0;
 	if ((q[2] >= L31_MAX - limit_margin && dotq[2] > 0) || (q[2] <= L31_MIN && dotq[2] < 0))
@@ -1167,49 +1027,14 @@ void CTRKin::ApplyKinematicControlNullspace(const Eigen::MatrixXd& J, const Eige
 		this->ComputeJointspaceVelocities(Jlocal, err, dotq);
 
 		if(q[2] >= L31_MAX - limit_margin)
-			dotq[2] = 10*(L31_MAX - limit_margin - q[2]);
+			dotq[2] = 10*(L31_MAX - limit_margin - q[2]) - 0.1 * dotq[2];
 		else if(q[2] <= L31_MIN)
-			dotq[2] = 10*(L31_MIN - q[2]);
+			dotq[2] = 10*(L31_MIN - q[2]) - 0.1 * dotq[2];
 	}
 
-	//::std::cout << dotq.transpose() << ::std::endl;
+	for(int i=0; i<5; i++)
+		dq[i] = dotq(i,0);	
 
-	// Joint limit avoidance using potential-field method 
-	// why add this to the existing value and not just assign the velocity to the joint-limit avoidance potential field?
-	//double upperSoft = L31_MAX - 5;
-	//double lowerSoft = L31_MIN + 5;
-	//double jointLimitGain = 0.2;
-
-	//if (q[2] >= upperSoft)
-	//	dotq[2] += max(-5.0, -jointLimitGain/::std::pow(q[2] - L31_MAX, 2) + jointLimitGain/::std::pow(upperSoft - L31_MAX, 2));
-
-	//if (q[2] <= lowerSoft )
-	//	dotq[2] += min(5.0, jointLimitGain/::std::pow(q[2] - L31_MIN, 2) - jointLimitGain/::std::pow(lowerSoft - L31_MIN, 2));
-
-
-	//if (q[2] >= L31_MAX && dotq[2] > 0) 
-	//	dotq[2] = -5.0;
-	//else if (q[2] <= L31_MIN && dotq[2] < 0)
-	//	dotq[2] = 5.0;
-
-	for(int i=0; i<5; i++)	{	dq[i] = dotq(i,0);	}
-
-	/*static int counter = 0;
-	counter++;
-*/
-
-	//static ChunTimer timer;
-
-	//if (counter == 1000)
-	//{
-	//	long time = timer.GetTime();
-	//	::std::cout << time << ::std::endl;
-	//}
-
-	//for (int i = 0; i < 5; ++i)
-	//	vel_log << q[i] << " " << dq[i] << " ";
-
-	//vel_log << ::std::endl;
 }
 
 void CTRKin::ComputeJointspaceVelocities(const ::Eigen::MatrixXd& J, const ::Eigen::MatrixXd& err, ::Eigen::VectorXd& qdot)
@@ -1230,8 +1055,8 @@ void CTRKin::ComputeJointspaceVelocities(const ::Eigen::MatrixXd& J, const ::Eig
 		Jtemp.col(3) *= scl_jacobian;
 
 	// position and orientation jacobian
-	::Eigen::MatrixXd Jp  = Jtemp.block(0,0, 3, nCol);
-	::Eigen::MatrixXd Jo = Jtemp.block(3,0, 3, nCol);
+	::Eigen::MatrixXd Jp  = Jtemp.block(0, 0, 3, nCol);
+	::Eigen::MatrixXd Jo = Jtemp.block(3, 0, 3, nCol);
 
 	// condition matrix for pseudo inverse
 	::Eigen::Matrix<double, 3, 3> tmpMat (Jp * Jp.transpose());
@@ -1241,7 +1066,7 @@ void CTRKin::ComputeJointspaceVelocities(const ::Eigen::MatrixXd& J, const ::Eig
 	double lambda_position_max = 0.01;
 
 	if (nCol == 4)
-		lambda_position_max *= 10;
+		lambda_position_max *= 10; //is that necessary?
 
 	::Eigen::JacobiSVD<::Eigen::MatrixXd> svd(tmpMat, ::Eigen::ComputeThinU | ::Eigen::ComputeThinV);
 	::Eigen::VectorXd singVal = svd.singularValues();
@@ -1263,23 +1088,26 @@ void CTRKin::ComputeJointspaceVelocities(const ::Eigen::MatrixXd& J, const ::Eig
 	::Eigen::MatrixXd tmpOrient;
 	::Eigen::Matrix<double, 3, 3> tmpOrientPseudo;
 
-
+	// do the same thing for orientation here
 	tmpOrient = Jo * (IdMat - task1_pseudo * Jp);
 	tmpOrientPseudo = tmpOrient * tmpOrient.transpose();
 
-	double lambda_orientation = 0.00001;
+	::Eigen::JacobiSVD<::Eigen::MatrixXd> svdOr(tmpOrientPseudo, ::Eigen::ComputeThinU | ::Eigen::ComputeThinV);
+	::Eigen::VectorXd singValOr = svdOr.singularValues();
+
+	double lambda_orientation = 0.0;
+	double lambda_orientation_max = 0.0001;
+
 	if (nCol == 4)
-		lambda_orientation *= 100;
-	//double lambda_orientation_max = 1.0e-04;
-	//epsilon = 1.0e-04;
-	//::Eigen::JacobiSVD<::Eigen::MatrixXd> svd_orient(tmpOrientPseudo, ::Eigen::ComputeThinU | ::Eigen::ComputeThinV);
-	//::Eigen::VectorXd singValOrient = svd_orient.singularValues();
-	//::std::cout << "orientation singular value" << singValOrient[singValOrient.size() - 3] << ::std::endl;
-	//if (singValOrient[singValOrient.size() - 2] <= epsilon)
-	//	lambda_orientation = (1.0 - ::std::pow(singValOrient[singValOrient.size() - 1]/epsilon, 2)) * lambda_orientation_max;
+		lambda_orientation_max *= 100;
+
+
+	if (singValOr[singValOr.size() - 1] <= epsilon)
+		lambda_orientation = (1.0 - ::std::pow(singValOr[singValOr.size() - 1]/epsilon, 2)) * lambda_orientation_max;
 
 	for (int i = 0; i < 3; ++i)
 		tmpOrientPseudo(i, i) += lambda_orientation;
+
 	
 	::Eigen::MatrixXd orientPseudo = tmpOrient.transpose() * tmpOrientPseudo.inverse();
 	qdotTemp += orientPseudo * ( err.block(3, 0, 3, 1) - Jo * task1_pseudo * err.block(0, 0, 3, 1));

@@ -7,6 +7,7 @@
 #include <iostream>
 #include <Eigen/Dense>
 #include "LieGroup.h"
+#include <queue>
 
 ::std::vector< ::std::string> ReadLinesFromFile(const ::std::string& pathToFile);
 

@@ -3246,50 +3246,76 @@ void CCTRDoc::addPointOnValve()
 
 void CCTRDoc::computeInitialDirection()
 {
-	double tmp_position[2];
-	for (int i = 0; i < 2; ++i)
-		tmp_position[i] = this->m_Status.currTipPosDir[i] + m_valve_tangent[i] * 10;
+	this->m_valve_tangent_prev[0] = 0;
+	this->m_valve_tangent_prev[1] = 0;
 
 	switch (this->cStatus)
 	{
 		case CIRCUM_STATUS::LEFT_A:
 		{
-			if (tmp_position[1] > this->m_Status.currTipPosDir[1])
-			{
-				m_valve_tangent[0] *= -1;
-				m_valve_tangent[1] *= -1;
-				
-			}
+			this->m_valve_tangent_prev[1] = -1;
 			break;
 		}
 		case CIRCUM_STATUS::UP:
 		{
-			if (tmp_position[0] < this->m_Status.currTipPosDir[0])
-			{
-				m_valve_tangent[0] *= -1;
-				m_valve_tangent[1] *= -1;
-			}
+			this->m_valve_tangent_prev[0] = 1;
 			break;
 		}
 		case CIRCUM_STATUS::RIGHT:
 		{
-			if (tmp_position[1] < this->m_Status.currTipPosDir[1])
-			{
-				m_valve_tangent[0] *= -1;
-				m_valve_tangent[1] *= -1;
-			}
+			this->m_valve_tangent_prev[1] = 1;
 			break;
 		}
 		case CIRCUM_STATUS::DOWN:
 		{
-			if (tmp_position[0] > this->m_Status.currTipPosDir[0])
-			{
-				m_valve_tangent[0] *= -1;
-				m_valve_tangent[1] *= -1;
-			}
+			this->m_valve_tangent_prev[0] = -1;
 			break;
 		}
 	}
+	//double tmp_position[2];
+	//for (int i = 0; i < 2; ++i)
+	//	tmp_position[i] = this->m_Status.currTipPosDir[i] + m_valve_tangent[i] * 10;
+
+	//switch (this->cStatus)
+	//{
+	//	case CIRCUM_STATUS::LEFT_A:
+	//	{
+	//		if (tmp_position[1] > this->m_Status.currTipPosDir[1])
+	//		{
+	//			m_valve_tangent[0] *= -1;
+	//			m_valve_tangent[1] *= -1;
+	//			
+	//		}
+	//		break;
+	//	}
+	//	case CIRCUM_STATUS::UP:
+	//	{
+	//		if (tmp_position[0] < this->m_Status.currTipPosDir[0])
+	//		{
+	//			m_valve_tangent[0] *= -1;
+	//			m_valve_tangent[1] *= -1;
+	//		}
+	//		break;
+	//	}
+	//	case CIRCUM_STATUS::RIGHT:
+	//	{
+	//		if (tmp_position[1] < this->m_Status.currTipPosDir[1])
+	//		{
+	//			m_valve_tangent[0] *= -1;
+	//			m_valve_tangent[1] *= -1;
+	//		}
+	//		break;
+	//	}
+	//	case CIRCUM_STATUS::DOWN:
+	//	{
+	//		if (tmp_position[0] > this->m_Status.currTipPosDir[0])
+	//		{
+	//			m_valve_tangent[0] *= -1;
+	//			m_valve_tangent[1] *= -1;
+	//		}
+	//		break;
+	//	}
+	//}
 }
 
 double 

@@ -818,7 +818,7 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 
 				end_loop = clock();
 
-				//::std::cout << "CR:" << contactRatio << ::std::endl;
+				::std::cout << "CR:" << contactRatio << ::std::endl;
 			}
 			
 		}
@@ -2949,8 +2949,11 @@ void CCTRDoc::UpdateCircumnavigationParams(::std::vector<double>& msg)
 	}
 	if (tangent_updates == 0)
 		computeInitialDirection();
+	else
+		memcpy(m_valve_tangent_prev, m_valve_tangent, 2 * sizeof(double));
+
 	tangent_updates++;
-	memcpy(m_valve_tangent_prev, m_valve_tangent, 2 * sizeof(double));
+
 
 	m_valve_tangent[0]  = msg[5];
 	m_valve_tangent[1]  = msg[6];
@@ -3006,9 +3009,9 @@ void CCTRDoc::computeApexToValveMotion(Eigen::Matrix<double,6,1>& err, APEX_TO_V
 	commanded_vel[0] = err(0, 0);
 	commanded_vel[1] = err(1, 0);
 
-	::std::cout << "velocities:" << commanded_vel[0] << ", " << commanded_vel[1] << ::std::endl;
-	::std::cout << "centroid_x:" << m_centroid_apex[0] << "  centroid_y:" << m_centroid_apex[1] << "  velocities:" << err.block(0,0, 3, 1).transpose() << ::std::endl;
-	::std::cout << "m_wall_detected:" << m_wall_detected << ::std::endl;
+	//::std::cout << "velocities:" << commanded_vel[0] << ", " << commanded_vel[1] << ::std::endl;
+	//::std::cout << "centroid_x:" << m_centroid_apex[0] << "  centroid_y:" << m_centroid_apex[1] << "  velocities:" << err.block(0,0, 3, 1).transpose() << ::std::endl;
+	//::std::cout << "m_wall_detected:" << m_wall_detected << ::std::endl;
 }
 
 void CCTRDoc::computeATVLeft(Eigen::Matrix<double,6,1>& err)
@@ -3037,15 +3040,19 @@ void CCTRDoc::computeATVLeft(Eigen::Matrix<double,6,1>& err)
 
 void CCTRDoc::computeATVTop(Eigen::Matrix<double,6,1>& err)
 {
-	
-	// Upward bias
-	(this->m_wall_detected ? err[0] = 0 : err[0] = this->m_bias);
-
 	// forward velocity
 	err[2] = m_forward_gainATV;    // mm/sec
 
-	// check controller
+	// top bias
+	if (!this->m_wall_detected)
+	{
+		err[0] = this->m_bias;
+		return;
+	}
+	
+	err[0] = 0.0;
 
+	// check controller
 	if (this->m_centroid_apex[0] <= 250 - m_apex_theshold_max)
 		err[0] += m_center_gainATV/m_scaling_factor * (this->m_centroid_apex[0] - 250 + m_apex_theshold_max);
 	else if (this->m_centroid_apex[0] >= 250 - m_apex_theshold_min)
@@ -3054,11 +3061,17 @@ void CCTRDoc::computeATVTop(Eigen::Matrix<double,6,1>& err)
 
 void CCTRDoc::computeATVBottom(Eigen::Matrix<double,6,1>& err)
 {
-	// Downward bias
-	(this->m_wall_detected ? err[0] = 0 : err[0] = -this->m_bias);
-
 	// forward velocity
 	err[2] = m_forward_gainATV;    // mm/sec
+
+	// bottom bias
+	if (!this->m_wall_detected)
+	{
+		err[0] = -this->m_bias;
+		return;
+	}
+	
+	err[0] = 0.0;
 
 	// check controller
 	if (this->m_centroid_apex[0] >= m_apex_theshold_max)

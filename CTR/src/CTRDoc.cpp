@@ -2949,8 +2949,11 @@ void CCTRDoc::UpdateCircumnavigationParams(::std::vector<double>& msg)
 	}
 	if (tangent_updates == 0)
 		computeInitialDirection();
+	else
+		memcpy(m_valve_tangent_prev, m_valve_tangent, 2 * sizeof(double));
+
 	tangent_updates++;
-	memcpy(m_valve_tangent_prev, m_valve_tangent, 2 * sizeof(double));
+
 
 	m_valve_tangent[0]  = msg[5];
 	m_valve_tangent[1]  = msg[6];
@@ -3005,17 +3008,25 @@ void CCTRDoc::computeApexToValveMotion(Eigen::Matrix<double,6,1>& err, APEX_TO_V
 	}
 	commanded_vel[0] = err(0, 0);
 	commanded_vel[1] = err(1, 0);
+
+	//::std::cout << "velocities:" << commanded_vel[0] << ", " << commanded_vel[1] << ::std::endl;
 	//::std::cout << "centroid_x:" << m_centroid_apex[0] << "  centroid_y:" << m_centroid_apex[1] << "  velocities:" << err.block(0,0, 3, 1).transpose() << ::std::endl;
+	//::std::cout << "m_wall_detected:" << m_wall_detected << ::std::endl;
 }
 
 void CCTRDoc::computeATVLeft(Eigen::Matrix<double,6,1>& err)
 {
-
-	// left bias
-	(this->m_wall_detected ? err[1] = 0 : err[1] = -this->m_bias );
-
 	// forward velocity
 	err[2] = m_forward_gainATV;    // mm/sec
+
+	// left bias
+	if (!this->m_wall_detected)
+	{
+		err[1] = -this->m_bias;
+		return;
+	}
+
+	err[1] = 0;
 
 	// check controller
 	if (this->m_centroid_apex[1] >= m_apex_theshold_max)
@@ -3029,15 +3040,19 @@ void CCTRDoc::computeATVLeft(Eigen::Matrix<double,6,1>& err)
 
 void CCTRDoc::computeATVTop(Eigen::Matrix<double,6,1>& err)
 {
-	
-	// Upward bias
-	(this->m_wall_detected ? err[0] = 0 : err[0] = this->m_bias);
-
 	// forward velocity
 	err[2] = m_forward_gainATV;    // mm/sec
 
-	// check controller
+	// top bias
+	if (!this->m_wall_detected)
+	{
+		err[0] = this->m_bias;
+		return;
+	}
+	
+	err[0] = 0.0;
 
+	// check controller
 	if (this->m_centroid_apex[0] <= 250 - m_apex_theshold_max)
 		err[0] += m_center_gainATV/m_scaling_factor * (this->m_centroid_apex[0] - 250 + m_apex_theshold_max);
 	else if (this->m_centroid_apex[0] >= 250 - m_apex_theshold_min)
@@ -3046,11 +3061,17 @@ void CCTRDoc::computeATVTop(Eigen::Matrix<double,6,1>& err)
 
 void CCTRDoc::computeATVBottom(Eigen::Matrix<double,6,1>& err)
 {
-	// Downward bias
-	(this->m_wall_detected ? err[0] = 0 : err[0] = -this->m_bias);
-
 	// forward velocity
 	err[2] = m_forward_gainATV;    // mm/sec
+
+	// bottom bias
+	if (!this->m_wall_detected)
+	{
+		err[0] = -this->m_bias;
+		return;
+	}
+	
+	err[0] = 0.0;
 
 	// check controller
 	if (this->m_centroid_apex[0] >= m_apex_theshold_max)
@@ -3225,50 +3246,76 @@ void CCTRDoc::addPointOnValve()
 
 void CCTRDoc::computeInitialDirection()
 {
-	double tmp_position[2];
-	for (int i = 0; i < 2; ++i)
-		tmp_position[i] = this->m_Status.currTipPosDir[i] + m_valve_tangent[i] * 10;
+	this->m_valve_tangent_prev[0] = 0;
+	this->m_valve_tangent_prev[1] = 0;
 
 	switch (this->cStatus)
 	{
 		case CIRCUM_STATUS::LEFT_A:
 		{
-			if (tmp_position[1] > this->m_Status.currTipPosDir[1])
-			{
-				m_valve_tangent[0] *= -1;
-				m_valve_tangent[1] *= -1;
-				
-			}
+			this->m_valve_tangent_prev[1] = -1;
 			break;
 		}
 		case CIRCUM_STATUS::UP:
 		{
-			if (tmp_position[0] < this->m_Status.currTipPosDir[0])
-			{
-				m_valve_tangent[0] *= -1;
-				m_valve_tangent[1] *= -1;
-			}
+			this->m_valve_tangent_prev[0] = 1;
 			break;
 		}
 		case CIRCUM_STATUS::RIGHT:
 		{
-			if (tmp_position[1] < this->m_Status.currTipPosDir[1])
-			{
-				m_valve_tangent[0] *= -1;
-				m_valve_tangent[1] *= -1;
-			}
+			this->m_valve_tangent_prev[1] = 1;
 			break;
 		}
 		case CIRCUM_STATUS::DOWN:
 		{
-			if (tmp_position[0] > this->m_Status.currTipPosDir[0])
-			{
-				m_valve_tangent[0] *= -1;
-				m_valve_tangent[1] *= -1;
-			}
+			this->m_valve_tangent_prev[0] = -1;
 			break;
 		}
 	}
+	//double tmp_position[2];
+	//for (int i = 0; i < 2; ++i)
+	//	tmp_position[i] = this->m_Status.currTipPosDir[i] + m_valve_tangent[i] * 10;
+
+	//switch (this->cStatus)
+	//{
+	//	case CIRCUM_STATUS::LEFT_A:
+	//	{
+	//		if (tmp_position[1] > this->m_Status.currTipPosDir[1])
+	//		{
+	//			m_valve_tangent[0] *= -1;
+	//			m_valve_tangent[1] *= -1;
+	//			
+	//		}
+	//		break;
+	//	}
+	//	case CIRCUM_STATUS::UP:
+	//	{
+	//		if (tmp_position[0] < this->m_Status.currTipPosDir[0])
+	//		{
+	//			m_valve_tangent[0] *= -1;
+	//			m_valve_tangent[1] *= -1;
+	//		}
+	//		break;
+	//	}
+	//	case CIRCUM_STATUS::RIGHT:
+	//	{
+	//		if (tmp_position[1] < this->m_Status.currTipPosDir[1])
+	//		{
+	//			m_valve_tangent[0] *= -1;
+	//			m_valve_tangent[1] *= -1;
+	//		}
+	//		break;
+	//	}
+	//	case CIRCUM_STATUS::DOWN:
+	//	{
+	//		if (tmp_position[0] > this->m_Status.currTipPosDir[0])
+	//		{
+	//			m_valve_tangent[0] *= -1;
+	//			m_valve_tangent[1] *= -1;
+	//		}
+	//		break;
+	//	}
+	//}
 }
 
 double 

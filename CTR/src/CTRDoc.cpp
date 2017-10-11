@@ -215,8 +215,8 @@ CCTRDoc::CCTRDoc()
 	m_scaling_factor = 26.27;
 	m_circumnavigation = false;
 
-	m_valve_tangent_prev[0] = 0;
-	m_valve_tangent_prev[1] = -1;
+	m_valve_tangent_prev[0] = 1;
+	m_valve_tangent_prev[1] = 0;
 
 	m_valve_tangent[0] = 0;
 	m_valve_tangent[1] = 0;

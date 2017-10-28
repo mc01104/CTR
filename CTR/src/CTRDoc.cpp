@@ -288,6 +288,9 @@ CCTRDoc::CCTRDoc()
 	commanded_vel[0] = 0;
 	commanded_vel[1] = 0;
 
+	desiredClockfacePosition = 0;
+	actualClockfacePosition = 0;			// read from network
+	goToClockFace = false;
 	
 }
 
@@ -787,7 +790,10 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 
 				mySelf->m_wall_detected = msg[7];
 				mySelf->switchToCircum = msg[10];
-				mySelf->m_apex = msg[11];
+
+				mySelf->actualClockfacePosition = msg[11];
+
+				mySelf->m_apex = msg[12];
 
 
 				LeaveCriticalSection(&m_cSection);
@@ -814,7 +820,7 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 				}
 
 				if (mySelf->m_apex)
-					memcpy(mySelf->m_apex_coordinates, &msg.data()[12], 5 * sizeof(double));
+					memcpy(mySelf->m_apex_coordinates, &msg.data()[13], 5 * sizeof(double));
 
 				end_loop = clock();
 
@@ -2861,7 +2867,14 @@ void CCTRDoc::computeCircumnavigationDirection(Eigen::Matrix<double,6,1>& err)
 	::Eigen::Vector3d error3D;
 	error3D.segment(0, 2) = error;
 	error3D(2) = 0.0;
-
+	
+	double epsilon = 0.2;
+	if (this->goToClockFace)
+	{
+		if (::std::abs(this->desiredClockfacePosition - this->actualClockfacePosition) < epsilon)
+			error3D.segment(0, 3) = ::Eigen::Vector3d::Zero();
+	}
+	
 	err.block(0, 0, 3, 1) = rot * error3D;
 	commanded_vel[0] = err(0, 0);
 	commanded_vel[1] = err(1, 0);
@@ -3218,6 +3231,8 @@ CCTRDoc::resetAutomation()
 	this->m_wall_detected = false;
 	this->m_line_detected = false;
 
+	this->goToClockFace = false;
+
 }
 
 void CCTRDoc::addPointOnValve()
@@ -3246,6 +3261,15 @@ void CCTRDoc::addPointOnValve()
 
 void CCTRDoc::computeInitialDirection()
 {
+
+	if (this->goToClockFace)
+	{
+		this->computeShortestDirection();
+		return;
+	}
+
+
+
 	this->m_valve_tangent_prev[0] = 0;
 	this->m_valve_tangent_prev[1] = 0;
 
@@ -3272,50 +3296,6 @@ void CCTRDoc::computeInitialDirection()
 			break;
 		}
 	}
-	//double tmp_position[2];
-	//for (int i = 0; i < 2; ++i)
-	//	tmp_position[i] = this->m_Status.currTipPosDir[i] + m_valve_tangent[i] * 10;
-
-	//switch (this->cStatus)
-	//{
-	//	case CIRCUM_STATUS::LEFT_A:
-	//	{
-	//		if (tmp_position[1] > this->m_Status.currTipPosDir[1])
-	//		{
-	//			m_valve_tangent[0] *= -1;
-	//			m_valve_tangent[1] *= -1;
-	//			
-	//		}
-	//		break;
-	//	}
-	//	case CIRCUM_STATUS::UP:
-	//	{
-	//		if (tmp_position[0] < this->m_Status.currTipPosDir[0])
-	//		{
-	//			m_valve_tangent[0] *= -1;
-	//			m_valve_tangent[1] *= -1;
-	//		}
-	//		break;
-	//	}
-	//	case CIRCUM_STATUS::RIGHT:
-	//	{
-	//		if (tmp_position[1] < this->m_Status.currTipPosDir[1])
-	//		{
-	//			m_valve_tangent[0] *= -1;
-	//			m_valve_tangent[1] *= -1;
-	//		}
-	//		break;
-	//	}
-	//	case CIRCUM_STATUS::DOWN:
-	//	{
-	//		if (tmp_position[0] > this->m_Status.currTipPosDir[0])
-	//		{
-	//			m_valve_tangent[0] *= -1;
-	//			m_valve_tangent[1] *= -1;
-	//		}
-	//		break;
-	//	}
-	//}
 }
 
 double 
@@ -3355,4 +3335,35 @@ CCTRDoc::OnBnClickedHome()
 {
 	double joints[5] = {0, 0, 35, 0, this->m_Status.currJang[4]};
 	this->SendCommand(0, joints);
+}
+
+
+void CCTRDoc::computeShortestDirection()
+{
+
+	// convert clockface positions to angles
+	double actualAngle = 0, desAngle = 0;
+	actualAngle = this->actualClockfacePosition;
+	desAngle = this->desiredClockfacePosition;
+
+	// compute unit vectors
+	::Eigen::Vector3d p1(cos(actualAngle * M_PI/180.0), sin(actualAngle * M_PI/180.0), 0);
+	::Eigen::Vector3d p2(cos(desAngle * M_PI/180.0), sin(desAngle * M_PI/180.0), 0);
+
+	// compute direction
+	::Eigen::Vector3d res = p2.cross(p1);
+
+	// compute tangent
+	::Eigen::Vector3d tmp = res.cross(p1);
+	::Eigen::Vector2d tang = tmp.segment(0, 2);
+	tang.normalize();
+
+	this->m_valve_tangent_prev[0] = tang[0];
+	this->m_valve_tangent_prev[1] = tang[1];
+}
+
+double
+CCTRDoc::computeAngle(double clockfacePosition)
+{
+	double angle = 0.5*  60 * clockfacePosition; // + this->registrationRotation; 
 }

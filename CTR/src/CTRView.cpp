@@ -137,7 +137,9 @@ BEGIN_MESSAGE_MAP(CCTRView, CFormView)
 
 	ON_EN_KILLFOCUS(IDC_EDIT35, &CCTRView::OnEnKillFocusDisturbance)
 	ON_BN_CLICKED(IDC_BTN_MOVE16, &CCTRView::OnBnClickedResetAutomation)
-	
+
+	ON_EN_KILLFOCUS(IDC_EDIT36, &CCTRView::OnKillFocusHour)
+	ON_BN_CLICKED(IDC_BTN_MOVE13, &CCTRView::OnClickedBtnGo)
 END_MESSAGE_MAP()
 
 
@@ -1177,4 +1179,21 @@ CCTRView::dumpPlanePoints()
 
 	os.close();
 	os2.close();
+}
+
+void 
+CCTRView::OnKillFocusHour()
+{
+	CString str;
+	this->GetDlgItemTextA(IDC_EDIT36, str);	
+	double desClockPosition = atof(str);
+
+	this->GetDocument()->setDesiredClockfacePosition(desClockPosition);
+}
+
+
+void 
+CCTRView::OnClickedBtnGo()
+{
+	this->GetDocument()->activateClockfaceTask();
 }

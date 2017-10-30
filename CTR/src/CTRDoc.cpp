@@ -215,8 +215,8 @@ CCTRDoc::CCTRDoc()
 	m_scaling_factor = 26.27;
 	m_circumnavigation = false;
 
-	m_valve_tangent_prev[0] = 0;
-	m_valve_tangent_prev[1] = -1;
+	m_valve_tangent_prev[0] = 1;
+	m_valve_tangent_prev[1] = 0;
 
 	m_valve_tangent[0] = 0;
 	m_valve_tangent[1] = 0;
@@ -288,6 +288,9 @@ CCTRDoc::CCTRDoc()
 	commanded_vel[0] = 0;
 	commanded_vel[1] = 0;
 
+	desiredClockfacePosition = 0;
+	actualClockfacePosition = 0;			// read from network
+	goToClockFace = false;
 	
 }
 
@@ -714,7 +717,20 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 		ss << mySelf->GetMonitorBreathingFreq() << " ";
 
 		ss << mySelf->commanded_vel[0] << " " << mySelf->commanded_vel[1] << " ";
-		//::std::cout << mySelf->commanded_vel[0] << ",  " << mySelf->commanded_vel[1] << ::std::endl;
+
+		switch (mySelf->aStatus)
+		{
+			case APEX_TO_VALVE_STATUS::LEFT:
+				ss << 0 << " ";
+				break;
+			case APEX_TO_VALVE_STATUS::TOP:
+				ss << 1 << " ";
+				break;
+			case APEX_TO_VALVE_STATUS::BOTTOM:
+				ss << 2 << " ";
+				break;
+		}
+
 		if (mySelf->m_plane_changed)
 		{
 			ss << " " << 1 << " ";
@@ -787,7 +803,10 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 
 				mySelf->m_wall_detected = msg[7];
 				mySelf->switchToCircum = msg[10];
-				mySelf->m_apex = msg[11];
+
+				mySelf->actualClockfacePosition = msg[11];
+
+				mySelf->m_apex = msg[12];
 
 
 				LeaveCriticalSection(&m_cSection);
@@ -814,7 +833,7 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 				}
 
 				if (mySelf->m_apex)
-					memcpy(mySelf->m_apex_coordinates, &msg.data()[12], 5 * sizeof(double));
+					memcpy(mySelf->m_apex_coordinates, &msg.data()[13], 5 * sizeof(double));
 
 				end_loop = clock();
 
@@ -1591,7 +1610,6 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 					if (circumnavigation)
 					{
 						mySelf->computeCircumnavigationDirection(tmpVelocities);
-						//mySelf->computeCircumnavigationDirection(err);
 
 						if (!isInContact) // move using the most recent computed velocities when not in contact
 							err.block(0, 0, 3, 1) = tmpVelocities;
@@ -1603,15 +1621,6 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 
 				}
 
-				if (circumnavigation)
-				{
-					//localStat.tgtTipPosDir[3] = 0;
-					//localStat.tgtTipPosDir[4] = 0;
-					//localStat.tgtTipPosDir[5] =	1;
-					localStat.tgtTipPosDir[3] = mySelf->m_contact_control_normal[0];
-					localStat.tgtTipPosDir[4] = mySelf->m_contact_control_normal[1];
-					localStat.tgtTipPosDir[5] = mySelf->m_contact_control_normal[2];
-				}
 				// orientation velocities
 				for(int i = 3; i < 6; ++i)
 					err(i,0) = mySelf->m_orientation_gain * K[i]*(localStat.tgtTipPosDir[i] - localStat.currTipPosDir[i]) + mySelf->m_orientation_gain_feedforward * tangentVelocity[i-3];
@@ -2871,7 +2880,14 @@ void CCTRDoc::computeCircumnavigationDirection(Eigen::Matrix<double,6,1>& err)
 	::Eigen::Vector3d error3D;
 	error3D.segment(0, 2) = error;
 	error3D(2) = 0.0;
-
+	
+	double epsilon = 0.2;
+	if (this->goToClockFace)
+	{
+		if (::std::abs(this->desiredClockfacePosition - this->actualClockfacePosition) < epsilon)
+			error3D.segment(0, 3) = ::Eigen::Vector3d::Zero();
+	}
+	
 	err.block(0, 0, 3, 1) = rot * error3D;
 	commanded_vel[0] = err(0, 0);
 	commanded_vel[1] = err(1, 0);
@@ -2957,10 +2973,9 @@ void CCTRDoc::UpdateCircumnavigationParams(::std::vector<double>& msg)
 		if (vel_cen.norm() < 0.5 * vel_tip.norm())
 			this->retractRobot = true;
 	}
-
 	if (tangent_updates == 0)
 		computeInitialDirection();
-	else 
+	else
 		memcpy(m_valve_tangent_prev, m_valve_tangent, 2 * sizeof(double));
 
 	tangent_updates++;
@@ -3019,17 +3034,25 @@ void CCTRDoc::computeApexToValveMotion(Eigen::Matrix<double,6,1>& err, APEX_TO_V
 	}
 	commanded_vel[0] = err(0, 0);
 	commanded_vel[1] = err(1, 0);
+
+	//::std::cout << "velocities:" << commanded_vel[0] << ", " << commanded_vel[1] << ::std::endl;
 	//::std::cout << "centroid_x:" << m_centroid_apex[0] << "  centroid_y:" << m_centroid_apex[1] << "  velocities:" << err.block(0,0, 3, 1).transpose() << ::std::endl;
+	//::std::cout << "m_wall_detected:" << m_wall_detected << ::std::endl;
 }
 
 void CCTRDoc::computeATVLeft(Eigen::Matrix<double,6,1>& err)
 {
-
-	// left bias
-	(this->m_wall_detected ? err[1] = 0 : err[1] = -this->m_bias );
-
 	// forward velocity
 	err[2] = m_forward_gainATV;    // mm/sec
+
+	// left bias
+	if (!this->m_wall_detected)
+	{
+		err[1] = -this->m_bias;
+		return;
+	}
+
+	err[1] = 0;
 
 	// check controller
 	if (this->m_centroid_apex[1] >= m_apex_theshold_max)
@@ -3043,15 +3066,19 @@ void CCTRDoc::computeATVLeft(Eigen::Matrix<double,6,1>& err)
 
 void CCTRDoc::computeATVTop(Eigen::Matrix<double,6,1>& err)
 {
-	
-	// Upward bias
-	(this->m_wall_detected ? err[0] = 0 : err[0] = this->m_bias);
-
 	// forward velocity
 	err[2] = m_forward_gainATV;    // mm/sec
 
-	// check controller
+	// top bias
+	if (!this->m_wall_detected)
+	{
+		err[0] = this->m_bias;
+		return;
+	}
+	
+	err[0] = 0.0;
 
+	// check controller
 	if (this->m_centroid_apex[0] <= 250 - m_apex_theshold_max)
 		err[0] += m_center_gainATV/m_scaling_factor * (this->m_centroid_apex[0] - 250 + m_apex_theshold_max);
 	else if (this->m_centroid_apex[0] >= 250 - m_apex_theshold_min)
@@ -3060,11 +3087,17 @@ void CCTRDoc::computeATVTop(Eigen::Matrix<double,6,1>& err)
 
 void CCTRDoc::computeATVBottom(Eigen::Matrix<double,6,1>& err)
 {
-	// Downward bias
-	(this->m_wall_detected ? err[0] = 0 : err[0] = -this->m_bias);
-
 	// forward velocity
 	err[2] = m_forward_gainATV;    // mm/sec
+
+	// bottom bias
+	if (!this->m_wall_detected)
+	{
+		err[0] = -this->m_bias;
+		return;
+	}
+	
+	err[0] = 0.0;
 
 	// check controller
 	if (this->m_centroid_apex[0] >= m_apex_theshold_max)
@@ -3211,6 +3244,8 @@ CCTRDoc::resetAutomation()
 	this->m_wall_detected = false;
 	this->m_line_detected = false;
 
+	this->goToClockFace = false;
+
 }
 
 void CCTRDoc::addPointOnValve()
@@ -3237,76 +3272,44 @@ void CCTRDoc::addPointOnValve()
 	this->index = this->valve_points_visited.size();
 }
 
-//void CCTRDoc::computeInitialDirection()
-//{
-//	double tmp_position[2];
-//	for (int i = 0; i < 2; ++i)
-//		tmp_position[i] = this->m_Status.currTipPosDir[i] + m_valve_tangent[i] * 10;
-//
-//	switch (this->cStatus)
-//	{
-//		case CIRCUM_STATUS::LEFT_A:
-//		{
-//			if (tmp_position[1] > this->m_Status.currTipPosDir[1])
-//			{
-//				m_valve_tangent[0] *= -1;
-//				m_valve_tangent[1] *= -1;
-//				
-//			}
-//			break;
-//		}
-//		case CIRCUM_STATUS::UP:
-//		{
-//			if (tmp_position[0] < this->m_Status.currTipPosDir[0])
-//			{
-//				m_valve_tangent[0] *= -1;
-//				m_valve_tangent[1] *= -1;
-//			}
-//			break;
-//		}
-//		case CIRCUM_STATUS::RIGHT:
-//		{
-//			if (tmp_position[1] < this->m_Status.currTipPosDir[1])
-//			{
-//				m_valve_tangent[0] *= -1;
-//				m_valve_tangent[1] *= -1;
-//			}
-//			break;
-//		}
-//		case CIRCUM_STATUS::DOWN:
-//		{
-//			if (tmp_position[0] > this->m_Status.currTipPosDir[0])
-//			{
-//				m_valve_tangent[0] *= -1;
-//				m_valve_tangent[1] *= -1;
-//			}
-//			break;
-//		}
-//	}
-//}
-
 void CCTRDoc::computeInitialDirection()
 {
-	m_valve_tangent_prev[0] = 0;
-	m_valve_tangent_prev[1] = 0;
+
+	if (this->goToClockFace)
+	{
+		this->computeShortestDirection();
+		return;
+	}
+
+
+
+	this->m_valve_tangent_prev[0] = 0;
+	this->m_valve_tangent_prev[1] = 0;
 
 	switch (this->cStatus)
 	{
 		case CIRCUM_STATUS::LEFT_A:
-			m_valve_tangent_prev[1] = -1;
+		{
+			this->m_valve_tangent_prev[1] = -1;
 			break;
+		}
 		case CIRCUM_STATUS::UP:
-			m_valve_tangent_prev[0] = 1;
+		{
+			this->m_valve_tangent_prev[0] = 1;
 			break;
+		}
 		case CIRCUM_STATUS::RIGHT:
-			m_valve_tangent_prev[1] = 1;
+		{
+			this->m_valve_tangent_prev[1] = 1;
 			break;
+		}
 		case CIRCUM_STATUS::DOWN:
-			m_valve_tangent_prev[0] = -1;
+		{
+			this->m_valve_tangent_prev[0] = -1;
 			break;
+		}
 	}
 }
-
 
 double 
 CCTRDoc::GetMonitorBreathingFreq()
@@ -3345,4 +3348,36 @@ CCTRDoc::OnBnClickedHome()
 {
 	double joints[5] = {0, 0, 35, 0, this->m_Status.currJang[4]};
 	this->SendCommand(0, joints);
+}
+
+
+void CCTRDoc::computeShortestDirection()
+{
+
+	// convert clockface positions to angles
+	double actualAngle = 0, desAngle = 0;
+	actualAngle = this->actualClockfacePosition;
+	desAngle = this->desiredClockfacePosition;
+
+	// compute unit vectors
+	::Eigen::Vector3d p1(cos(actualAngle * M_PI/180.0), sin(actualAngle * M_PI/180.0), 0);
+	::Eigen::Vector3d p2(cos(desAngle * M_PI/180.0), sin(desAngle * M_PI/180.0), 0);
+
+	// compute direction
+	::Eigen::Vector3d res = p2.cross(p1);
+
+	// compute tangent
+	::Eigen::Vector3d tmp = res.cross(p1);
+	::Eigen::Vector2d tang = tmp.segment(0, 2);
+	tang.normalize();
+
+	this->m_valve_tangent_prev[0] = tang[0];
+	this->m_valve_tangent_prev[1] = tang[1];
+}
+
+double
+CCTRDoc::computeAngle(double clockfacePosition)
+{
+	double angle = 0.5*  60 * clockfacePosition; // + this->registrationRotation; 
+	return angle;
 }

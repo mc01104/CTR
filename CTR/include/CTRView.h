@@ -95,6 +95,9 @@ public:
 	afx_msg void UpdateGlovalGain();
 	afx_msg void OnBnClickedKillFocusId();
 
+	afx_msg void OnKillFocusHour();
+	afx_msg void OnClickedBtnGo();
+
 	//afx_msg void GoToApex();
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 	

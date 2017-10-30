@@ -183,8 +183,17 @@ private:
 
 	bool				switchToCircum;
 
+	double				desiredClockfacePosition;
+	double				actualClockfacePosition;
+	bool				goToClockFace;
+	
 // Operations
 public:
+	void				computeShortestDirection();
+	void				setDesiredClockfacePosition(double desClock){this->desiredClockfacePosition = desClock;};
+	void				activateClockfaceTask(){this->goToClockFace = true;};
+	double				computeAngle(double clockfacePosition);
+
 	bool				m_adapt_LWPR;
 	::std::string		m_date;
 	

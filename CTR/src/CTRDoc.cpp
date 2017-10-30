@@ -717,7 +717,20 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 		ss << mySelf->GetMonitorBreathingFreq() << " ";
 
 		ss << mySelf->commanded_vel[0] << " " << mySelf->commanded_vel[1] << " ";
-		//::std::cout << mySelf->commanded_vel[0] << ",  " << mySelf->commanded_vel[1] << ::std::endl;
+
+		switch (mySelf->aStatus)
+		{
+			case APEX_TO_VALVE_STATUS::LEFT:
+				ss << 0 << " ";
+				break;
+			case APEX_TO_VALVE_STATUS::TOP:
+				ss << 1 << " ";
+				break;
+			case APEX_TO_VALVE_STATUS::BOTTOM:
+				ss << 2 << " ";
+				break;
+		}
+
 		if (mySelf->m_plane_changed)
 		{
 			ss << " " << 1 << " ";

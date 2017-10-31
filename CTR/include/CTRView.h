@@ -22,7 +22,6 @@ public:
 // Attributes
 public:
 	CCTRDoc* GetDocument() const;
-
 // Operations
 public:
 
@@ -96,6 +95,7 @@ public:
 	afx_msg void OnBnClickedKillFocusId();
 
 	afx_msg void OnKillFocusHour();
+	afx_msg void OnEnKillFocusATV();
 	afx_msg void OnClickedBtnGo();
 
 	//afx_msg void GoToApex();
@@ -170,6 +170,13 @@ public:
 	void dumpPlanePoints();
 	void computeCircle(::Eigen::Matrix3d rot, ::Eigen::Vector3d& center, double& radius);
 	bool m_freqUpdated;
+
+	afx_msg void OnClickedBtnGetPoint();
+	afx_msg void OnClickedBtnDiscardPoint();
+	afx_msg void OnClickedBtnRecordPoint();
+	afx_msg	void OnClickedBtnSaveAll();
+	::std::vector<::std::vector<::Eigen::Vector3d>> leak_measurements;
+	::std::vector<::Eigen::Vector3d> current_measurement;
 
 	CComboBox m_traj_type;
 	CString IDC_CIRCLE;

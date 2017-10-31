@@ -123,6 +123,7 @@ BEGIN_MESSAGE_MAP(CCTRView, CFormView)
 	ON_BN_CLICKED(IDC_RADIO_JA6, &CCTRView::OnBnClickedRadioModesATV)	
 	ON_BN_CLICKED(IDC_RADIO_TELE7, &CCTRView::OnBnClickedRadioModesATV)
 	ON_BN_CLICKED(IDC_RADIO_TELE8, &CCTRView::OnBnClickedRadioModesATV)
+	ON_BN_CLICKED(IDC_RADIO_TELE9, &CCTRView::OnBnClickedRadioModesATV)
 
 	ON_BN_CLICKED(IDC_RADIO_TELE6, &CCTRView::OnBnClickedRadioModesCircum)
 
@@ -140,6 +141,14 @@ BEGIN_MESSAGE_MAP(CCTRView, CFormView)
 
 	ON_EN_KILLFOCUS(IDC_EDIT36, &CCTRView::OnKillFocusHour)
 	ON_BN_CLICKED(IDC_BTN_MOVE13, &CCTRView::OnClickedBtnGo)
+
+	ON_EN_KILLFOCUS(IDC_EDIT37, &CCTRView::OnEnKillFocusATV)
+
+	ON_BN_CLICKED(IDC_BTN_MOVE9, &CCTRView::OnClickedBtnGetPoint)
+	ON_BN_CLICKED(IDC_BTN_MOVE22, &CCTRView::OnClickedBtnDiscardPoint)
+	ON_BN_CLICKED(IDC_BTN_MOVE23, &CCTRView::OnClickedBtnRecordPoint)
+	ON_BN_CLICKED(IDC_BTN_MOVE24, &CCTRView::OnClickedBtnSaveAll)
+	
 END_MESSAGE_MAP()
 
 
@@ -258,6 +267,10 @@ void CCTRView::DoDataExchange(CDataExchange* pDX)
 	CString tmp;
 	tmp.Format("%d",this->points_for_plane_estimation.size());
 	DDX_Text(pDX, IDC_EDIT4, tmp);
+
+	CString tmp2;
+	tmp2.Format("%d",this->current_measurement.size());
+	DDX_Text(pDX, IDC_EDIT13, tmp2);
 	
 	DDX_Radio(pDX, IDC_RADIO_JA2, m_PlaneEstimationMode);
 	DDX_Radio(pDX, IDC_RADIO_JA3, m_controlMode);
@@ -1104,6 +1117,11 @@ void CCTRView::OnBnClickedRadioModesATV()
 		::std::cout << "Apex-to-valve direction: bottom" << ::std::endl;
 		this->GetDocument()->SwitchApexToValveStatus(CCTRDoc::APEX_TO_VALVE_STATUS::BOTTOM);
 	}
+	else if (m_apex_wall == 3)
+	{
+		::std::cout << "Apex-to-valve direction: user-defined" << ::std::endl;
+		this->GetDocument()->SwitchApexToValveStatus(CCTRDoc::APEX_TO_VALVE_STATUS::USER);
+	}
 	else
 	{
 		::std::cout << "undefined direction for apex-to-valve navigation -> switching to default (LEFT)" << ::std::endl;
@@ -1191,9 +1209,60 @@ CCTRView::OnKillFocusHour()
 	this->GetDocument()->setDesiredClockfacePosition(desClockPosition);
 }
 
+void
+CCTRView::OnEnKillFocusATV()
+{
+	CString str;
+	this->GetDlgItemTextA(IDC_EDIT37, str);	
+	double desClockPosition = atof(str);
+
+	this->GetDocument()->setDesiredWallClockfacePosition(desClockPosition);
+}
+
 
 void 
 CCTRView::OnClickedBtnGo()
 {
 	this->GetDocument()->activateClockfaceTask();
+}
+
+
+void 
+CCTRView::OnClickedBtnGetPoint()
+{
+	::Eigen::Vector3d tmp  = this->GetDocument()->GetTipPosition();
+	if (this->current_measurement.size() < 2)
+		this->current_measurement.push_back(tmp);
+}
+
+void 
+CCTRView::OnClickedBtnDiscardPoint()
+{
+	::Eigen::Vector3d tmp  = this->GetDocument()->GetTipPosition();
+	if (this->current_measurement.size() > 0);
+		this->current_measurement.pop_back();
+
+}
+
+void 
+CCTRView::OnClickedBtnRecordPoint()
+{
+	if (this->current_measurement.size() == 2)
+	{
+		this->leak_measurements.push_back(this->current_measurement);
+		this->current_measurement.clear();		
+	}
+}
+
+
+void 
+CCTRView::OnClickedBtnSaveAll()
+{
+
+	::std::ofstream os("leak_measurements_" + GetDateString() + ".txt");
+	for (int i = 0; i < this->leak_measurements.size(); ++i)
+		os << this->leak_measurements[i][0].transpose() << " " << this->leak_measurements[i][1].transpose() << ::std::endl;
+
+	os.close();
+
 }

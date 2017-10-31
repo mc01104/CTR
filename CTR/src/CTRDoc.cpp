@@ -43,6 +43,7 @@
 #include "Utilities.h"
 #include "FilterLibrary.h"
 #include "MechanicsBasedKinematics.h"
+#include "HTransform.h"
 #include "CTRFactory.h"
 
 // Heart Rate Monitoring from surgivet
@@ -109,6 +110,8 @@ CCTRDoc::CCTRDoc()
 	m_frequency_changed = false;
 	m_control_mode = 0;
 	m_freq_mode = 1;
+
+	desiredWallClock = 12;
 
 	m_timer = new ChunTimer();
 	m_radius = 10;
@@ -3031,13 +3034,48 @@ void CCTRDoc::computeApexToValveMotion(Eigen::Matrix<double,6,1>& err, APEX_TO_V
 	case APEX_TO_VALVE_STATUS::BOTTOM:
 			computeATVBottom(err);
 			break;
+	case APEX_TO_VALVE_STATUS::USER:
+			computeATVUser(err);
+			break;
 	}
+
 	commanded_vel[0] = err(0, 0);
 	commanded_vel[1] = err(1, 0);
 
 	//::std::cout << "velocities:" << commanded_vel[0] << ", " << commanded_vel[1] << ::std::endl;
 	//::std::cout << "centroid_x:" << m_centroid_apex[0] << "  centroid_y:" << m_centroid_apex[1] << "  velocities:" << err.block(0,0, 3, 1).transpose() << ::std::endl;
 	//::std::cout << "m_wall_detected:" << m_wall_detected << ::std::endl;
+}
+
+void CCTRDoc::computeATVUser(Eigen::Matrix<double,6,1>& err)
+{
+	double desClock = this->desiredWallClock;
+	double angle = this->computeAngle(desClock);
+
+	::Eigen::Vector2d rotatedBias(0, -1);
+	::Eigen::Matrix3d rot = RotateZ(angle * M_PI/180.0);
+	rotatedBias = rot.block(0, 0, 2, 2).transpose() * rotatedBias;
+
+	// forward velocity
+	err[2] = m_forward_gainATV;    // mm/sec
+
+	// left bias
+	if (!this->m_wall_detected)
+	{
+		err.block(0, 0, 2, 1) = rotatedBias;
+		return;
+	}
+
+
+	::Eigen::Vector2d rotatedCentroid = rot.block(0, 0, 2, 2).transpose() * ::Eigen::Map<::Eigen::Vector2d> (this->m_centroid, 2);
+
+	if (rotatedCentroid(1) >= m_apex_theshold_max)
+		err[1] += m_center_gainATV/m_scaling_factor * (rotatedCentroid(1) - m_apex_theshold_max);
+	else if (rotatedCentroid(1) <= m_apex_theshold_min)
+		err[1] += m_center_gainATV/m_scaling_factor * (rotatedCentroid(1) - m_apex_theshold_min);
+
+	err.block(0, 0, 2, 1) = rot.block(0, 0, 2, 2) * err.block(0, 0, 2, 1);
+
 }
 
 void CCTRDoc::computeATVLeft(Eigen::Matrix<double,6,1>& err)

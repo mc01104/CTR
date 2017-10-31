@@ -59,7 +59,7 @@ void HeartRateMonitor::run()
 		else
 		{
 			heartRate = atof(strings[8].c_str());
-			breathingRate = atof(strings[strings.size()-2].c_str());
+			breathingRate = atof(strings[strings.size()-1].c_str());
 			//::std::cout << " Heart rate [bpm]:" << heartRate << ::std::endl;
 			//::std::cout << " Breathing rate [bpm]:" << breathingRate << ::std::endl;
 		}

@@ -45,7 +45,8 @@ public:
 	{
 		LEFT,
 		TOP,
-		BOTTOM
+		BOTTOM,
+		USER
 	};
 
 	enum CIRCUM_STATUS 
@@ -90,7 +91,8 @@ private:
 	ChunTracker*		m_Tracker;
 	TrjGenerator*		m_TrjGen;
 	ChunTimer*			m_timer;
-
+	
+	double				desiredWallClock;
 
 	// visual servoing stuff - these need to be read from the network
 	double				m_centroid[2];
@@ -191,7 +193,8 @@ private:
 public:
 	void				computeShortestDirection();
 	void				setDesiredClockfacePosition(double desClock){this->desiredClockfacePosition = desClock;};
-	void				activateClockfaceTask(){this->goToClockFace = true;};
+	void				setDesiredWallClockfacePosition(double desClock) {this->desiredWallClock = desClock;};
+	void				activateClockfaceTask(){this->goToClockFace = true; tangent_updates = 0;};
 	double				computeAngle(double clockfacePosition);
 
 	bool				m_adapt_LWPR;
@@ -274,6 +277,7 @@ public:
 	void computeATVLeft(Eigen::Matrix<double,6,1>& err);
 	void computeATVTop(Eigen::Matrix<double,6,1>& err);
 	void computeATVBottom(Eigen::Matrix<double,6,1>& err);
+	void computeATVUser(Eigen::Matrix<double,6,1>& err);
 
 	void addPointOnValve();
 

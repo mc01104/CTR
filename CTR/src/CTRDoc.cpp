@@ -104,6 +104,7 @@ double CCTRDoc::c_CntToMM = 3.175;
 
 CCTRDoc::CCTRDoc()
 {
+	registrationOffset = 0;
 	m_contact_response = false;
 	// TODO: add one-time construction code here
 	m_ioRunning = false;		m_teleOpMode = false;
@@ -724,15 +725,19 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 		switch (mySelf->aStatus)
 		{
 			case APEX_TO_VALVE_STATUS::LEFT:
-				ss << 0 << " ";
+				ss << -1 << " ";
 				break;
 			case APEX_TO_VALVE_STATUS::TOP:
-				ss << 1 << " ";
+				ss << -2 << " ";
 				break;
 			case APEX_TO_VALVE_STATUS::BOTTOM:
-				ss << 2 << " ";
+				ss << -3 << " ";
 				break;
+			case APEX_TO_VALVE_STATUS::USER:
+				ss << mySelf->desiredWallClock << " ";
 		}
+
+		ss << mySelf->registrationOffset << " ";
 
 		if (mySelf->m_plane_changed)
 		{
@@ -2884,7 +2889,7 @@ void CCTRDoc::computeCircumnavigationDirection(Eigen::Matrix<double,6,1>& err)
 	error3D.segment(0, 2) = error;
 	error3D(2) = 0.0;
 	
-	double epsilon = 0.2;
+	double epsilon = 0.1;
 	if (this->goToClockFace)
 	{
 		if (::std::abs(this->desiredClockfacePosition - this->actualClockfacePosition) < epsilon)

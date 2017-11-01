@@ -188,6 +188,7 @@ private:
 	double				desiredClockfacePosition;
 	double				actualClockfacePosition;
 	bool				goToClockFace;
+	double				registrationOffset;
 	
 // Operations
 public:
@@ -196,6 +197,7 @@ public:
 	void				setDesiredWallClockfacePosition(double desClock) {this->desiredWallClock = desClock;};
 	void				activateClockfaceTask(){this->goToClockFace = true; tangent_updates = 0;};
 	double				computeAngle(double clockfacePosition);
+	void				setRegistrationOffset(double offset) {this->registrationOffset = offset;};
 
 	bool				m_adapt_LWPR;
 	::std::string		m_date;
@@ -280,13 +282,13 @@ public:
 	void computeATVUser(Eigen::Matrix<double,6,1>& err);
 
 	void addPointOnValve();
-
+	double getClockPosition() {return this->actualClockfacePosition;};
 	bool storeValvePoint;
 	::std::vector<::Eigen::VectorXd> valve_points_visited;
 
 	int	 periodsForCRComputation;
 	void	SwitchApexToValveStatus(APEX_TO_VALVE_STATUS sts) {this->aStatus = sts;};
-	void	SwitchCircumStatus(CIRCUM_STATUS sts) {this->cStatus = sts;};
+	void	SwitchCircumStatus(CIRCUM_STATUS sts) {this->cStatus = sts; this->computeInitialDirection();};
 	void	computeInitialDirection();
 #ifdef _DEBUG
 	virtual void AssertValid() const;

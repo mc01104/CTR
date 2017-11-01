@@ -681,6 +681,7 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 		for(int i = 0; i < 6; i++)
 			localStat.tgtTipPosDir[i] = mySelf->m_Status.tgtTipPosDir[i];
 
+		int clock = mySelf->desiredWallClock;
 		LeaveCriticalSection(&m_cSection);
 
 		//update the buffer
@@ -734,11 +735,11 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 				ss << -3 << " ";
 				break;
 			case APEX_TO_VALVE_STATUS::USER:
-				ss << mySelf->desiredWallClock << " ";
+				ss << clock << " ";
 		}
 
 		ss << mySelf->registrationOffset << " ";
-
+	
 		if (mySelf->m_plane_changed)
 		{
 			ss << " " << 1 << " ";
@@ -843,7 +844,7 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 				if (mySelf->m_apex)
 					memcpy(mySelf->m_apex_coordinates, &msg.data()[13], 5 * sizeof(double));
 
-				end_loop = clock();
+				end_loop = clock;
 
 				::std::cout << "CR:" << contactRatio << ::std::endl;
 			}
@@ -2892,7 +2893,10 @@ void CCTRDoc::computeCircumnavigationDirection(Eigen::Matrix<double,6,1>& err)
 	double epsilon = 0.1;
 	if (this->goToClockFace)
 	{
-		if (::std::abs(this->desiredClockfacePosition - this->actualClockfacePosition) < epsilon)
+		double d1 = ::std::abs(this->desiredClockfacePosition - this->actualClockfacePosition);
+		double d2 = ::std::abs(12 - (this->desiredClockfacePosition - this->actualClockfacePosition));
+		double distance = min(d1, d2);
+		if (distance < epsilon)
 			error3D.segment(0, 3) = ::Eigen::Vector3d::Zero();
 	}
 	
@@ -3056,10 +3060,12 @@ void CCTRDoc::computeATVUser(Eigen::Matrix<double,6,1>& err)
 {
 	double desClock = this->desiredWallClock;
 	double angle = this->computeAngle(desClock);
-
-	::Eigen::Vector2d rotatedBias(0, -1);
+	//::std::cout << angle << ::std::endl;
+	::Eigen::Vector2d rotatedBias(1, 0);
 	::Eigen::Matrix3d rot = RotateZ(angle * M_PI/180.0);
-	rotatedBias = rot.block(0, 0, 2, 2).transpose() * rotatedBias;
+	rotatedBias = rot.block(0, 0, 2, 2) * rotatedBias;
+
+	rotatedBias *= this->m_bias;
 
 	// forward velocity
 	err[2] = m_forward_gainATV;    // mm/sec
@@ -3071,7 +3077,7 @@ void CCTRDoc::computeATVUser(Eigen::Matrix<double,6,1>& err)
 		return;
 	}
 
-
+	rot = RotateZ((angle - 270.0) * M_PI/180.0);
 	::Eigen::Vector2d rotatedCentroid = rot.block(0, 0, 2, 2).transpose() * ::Eigen::Map<::Eigen::Vector2d> (this->m_centroid, 2);
 
 	if (rotatedCentroid(1) >= m_apex_theshold_max)

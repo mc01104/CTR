@@ -149,6 +149,7 @@ BEGIN_MESSAGE_MAP(CCTRView, CFormView)
 	ON_BN_CLICKED(IDC_BTN_MOVE23, &CCTRView::OnClickedBtnRecordPoint)
 	ON_BN_CLICKED(IDC_BTN_MOVE24, &CCTRView::OnClickedBtnSaveAll)
 	
+	ON_EN_KILLFOCUS(IDC_EDIT32, &CCTRView::OnKillFocusRegOffset)
 END_MESSAGE_MAP()
 
 
@@ -272,6 +273,10 @@ void CCTRView::DoDataExchange(CDataExchange* pDX)
 	tmp2.Format("%d",this->current_measurement.size());
 	DDX_Text(pDX, IDC_EDIT13, tmp2);
 	
+	CString tmp3;
+	tmp2.Format("%d",this->GetDocument()->getClockPosition());
+	DDX_Text(pDX, IDC_EDIT31, tmp3);
+
 	DDX_Radio(pDX, IDC_RADIO_JA2, m_PlaneEstimationMode);
 	DDX_Radio(pDX, IDC_RADIO_JA3, m_controlMode);
 	DDX_Radio(pDX, IDC_RADIO_JA4, m_frequencyMode);
@@ -1265,4 +1270,14 @@ CCTRView::OnClickedBtnSaveAll()
 
 	os.close();
 
+}
+
+void 
+CCTRView::OnKillFocusRegOffset()
+{
+	CString str;
+	this->GetDlgItemTextA(IDC_EDIT32, str);	
+	double offset = atof(str);
+
+	this->GetDocument()->setRegistrationOffset(offset);
 }

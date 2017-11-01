@@ -157,7 +157,7 @@ public:
 
 	afx_msg void OnBnClickedResetAutomation();
 	afx_msg void TogglePullBack();
-
+	afx_msg void OnKillFocusRegOffset();
 	//afx_msg void OnBnClickedCheckLWPR();
 	//afx_msg void OnBnClickedButtonSave();
 	//afx_msg void OnCheckTraj();

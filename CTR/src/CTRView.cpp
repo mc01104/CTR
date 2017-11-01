@@ -25,12 +25,12 @@ int CCTRView::m_idActJang[5] = { IDC_A12_ACT, IDC_A13_ACT, IDC_L3_ACT, IDC_A1_AC
 int CCTRView::m_idCmdJang[5] = { IDC_A12_CMD, IDC_A13_CMD, IDC_L3_CMD, IDC_A1_CMD, IDC_L1_CMD };
 
 int CCTRView::manual_point_ENABLE[15] = {IDC_BTN_MOVE3, IDC_BTN_MOVE4, IDC_BTN_MOVE5, IDC_BTN_MOVE6, IDC_BTN_MOVE7, -1};
-int CCTRView::manual_point_DISABLE[15] = {IDC_EDIT8, IDC_EDIT9, IDC_EDIT10, IDC_BTN_MOVE8, IDC_EDIT11, IDC_EDIT12, IDC_EDIT13, IDC_BTN_MOVE8, -1};
+int CCTRView::manual_point_DISABLE[15] = {IDC_EDIT8, IDC_EDIT9, IDC_EDIT10, IDC_BTN_MOVE8, IDC_EDIT11, IDC_EDIT12, IDC_BTN_MOVE8, -1};
 
 int CCTRView::manual_ENABLE[15] = {IDC_EDIT8, IDC_EDIT9, IDC_EDIT10, IDC_BTN_MOVE8, -1};
 int CCTRView::manual_DISABLE[15] = {IDC_BTN_MOVE7, IDC_BTN_MOVE3, IDC_BTN_MOVE4, IDC_BTN_MOVE5, IDC_BTN_MOVE6, -1};
 
-int CCTRView::online_ENABLE[15] = {IDC_EDIT11, IDC_EDIT12, IDC_EDIT13, IDC_BTN_MOVE9, -1};
+int CCTRView::online_ENABLE[15] = {IDC_EDIT11, IDC_EDIT12, IDC_BTN_MOVE9, -1};
 int CCTRView::online_DISABLE[15] = {IDC_EDIT8, IDC_EDIT9, IDC_EDIT10, IDC_BTN_MOVE8, -1};
 
 int CCTRView::m_id_monitor_freq = IDC_A12_ACT2;
@@ -53,7 +53,7 @@ BEGIN_MESSAGE_MAP(CCTRView, CFormView)
 
 	ON_BN_CLICKED(IDC_RADIO_JA, &CCTRView::OnBnClickedRadioModes)	
 	ON_BN_CLICKED(IDC_RADIO_TELE, &CCTRView::OnBnClickedRadioModes)
-	ON_BN_CLICKED(IDC_RADIO_TELE9, &CCTRView::OnBnClickedRadioModes)
+	//ON_BN_CLICKED(IDC_RADIO_TELE9, &CCTRView::OnBnClickedRadioModes)
 
 	// plane radio controls
 	ON_BN_CLICKED(IDC_RADIO_JA2, &CCTRView::OnBnClickedRadioModesPlane)	
@@ -82,7 +82,7 @@ BEGIN_MESSAGE_MAP(CCTRView, CFormView)
 	ON_BN_CLICKED(IDC_BTN_MOVE5, &CCTRView::OnClickedBtnComputePlane)
 	ON_BN_CLICKED(IDC_BTN_MOVE7, &CCTRView::OnClickedBtnUpdate)
 	ON_BN_CLICKED(IDC_BTN_MOVE8, &CCTRView::OnClickedBtnUpdate)
-	ON_BN_CLICKED(IDC_BTN_MOVE9, &CCTRView::OnClickedBtnUpdate)
+	//ON_BN_CLICKED(IDC_BTN_MOVE9, &CCTRView::OnClickedBtnUpdate)
 
 	ON_BN_CLICKED(IDC_BTN_MOVE10, &CCTRView::OnClickedBtnStartLog)
 	ON_BN_CLICKED(IDC_BTN_MOVE11, &CCTRView::OnClickedBtnStopLog)
@@ -130,10 +130,10 @@ BEGIN_MESSAGE_MAP(CCTRView, CFormView)
 	ON_WM_CTLCOLOR()
 	ON_BN_CLICKED(IDC_BUTTON6, &CCTRView::OnClickedBtnHome)
 
-	ON_EN_KILLFOCUS(IDC_EDIT30, &CCTRView::OnBnClickedKillFocusId)
-	ON_EN_KILLFOCUS(IDC_EDIT31, &CCTRView::OnBnClickedKillFocusId)
-	ON_EN_KILLFOCUS(IDC_EDIT32, &CCTRView::OnBnClickedKillFocusId)
-	ON_EN_KILLFOCUS(IDC_EDIT33, &CCTRView::OnBnClickedKillFocusId)
+	//ON_EN_KILLFOCUS(IDC_EDIT30, &CCTRView::OnBnClickedKillFocusId)
+	////ON_EN_KILLFOCUS(IDC_EDIT31, &CCTRView::OnBnClickedKillFocusId)
+	//ON_EN_KILLFOCUS(IDC_EDIT32, &CCTRView::OnBnClickedKillFocusId)
+	//ON_EN_KILLFOCUS(IDC_EDIT33, &CCTRView::OnBnClickedKillFocusId)
 	ON_EN_KILLFOCUS(IDC_EDIT34, &CCTRView::OnEnKillFocusBias)
 
 	ON_EN_KILLFOCUS(IDC_EDIT35, &CCTRView::OnEnKillFocusDisturbance)
@@ -274,7 +274,7 @@ void CCTRView::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_EDIT13, tmp2);
 	
 	CString tmp3;
-	tmp2.Format("%d",this->GetDocument()->getClockPosition());
+	tmp3.Format("%f2.1",this->GetDocument()->getClockPosition());
 	DDX_Text(pDX, IDC_EDIT31, tmp3);
 
 	DDX_Radio(pDX, IDC_RADIO_JA2, m_PlaneEstimationMode);
@@ -1142,7 +1142,7 @@ void CCTRView::OnBnClickedKillFocusId()
 	CString str;
 	this->GetDlgItemTextA(IDC_EDIT30, str);	
 	double min_freq = atof(str);
-	this->GetDlgItemTextA(IDC_EDIT31, str);	
+	//this->GetDlgItemTextA(IDC_EDIT31, str);	
 	double max_freq = atof(str);
 	this->GetDlgItemTextA(IDC_EDIT32, str);	
 	double amplitude = atof(str);

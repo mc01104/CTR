@@ -17,6 +17,8 @@ class HeartRateMonitor
 	bool newFile;
 	::std::ofstream os;
 
+	int source;
+
 	public:
 		HeartRateMonitor();
 
@@ -28,6 +30,7 @@ class HeartRateMonitor
 
 		double getBreathingRate() {return this->breathingRate;};
 
+		void setHRSource(int source) {this->source = source;};
 		void toggleLog(bool logFlag) 
 		{
 			prevLog = logData; 

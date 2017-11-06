@@ -1333,13 +1333,6 @@ void CCTRView::OnCbnSelchangeCombo1()
    std::string s((LPCTSTR) strCBText);
    ::std::cout << s << ::std::endl;
 
-   	CString str("ECG");
-	m_combo.AddString(str);
-	str.Format("HR Art");
-	m_combo.AddString(str);
-	str.Format("SPO2");
-	m_combo.AddString(str);
-
    int n = 0;
    if (s == "ECG")
 		n = 1;
@@ -1348,5 +1341,6 @@ void CCTRView::OnCbnSelchangeCombo1()
    else
 	   n = 5;
 
+   ::std::cout << n << ::std::endl;
    this->GetDocument()->setHRSource(n);
 }

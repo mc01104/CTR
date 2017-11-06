@@ -329,12 +329,14 @@ void CCTRView::OnInitialUpdate()
 	ResizeParentToFit();
 	GetParentFrame()->SetWindowPos(&CWnd::wndTop,0,0,850,950, SWP_SHOWWINDOW );
 
-	CString str("ECG");
-	m_combo.AddString(str);
-	str.Format("HR Art");
-	m_combo.AddString(str);
-	str.Format("SPO2");
-	m_combo.AddString(str);
+	//CString str("ECG");
+	//m_combo.AddString(str);
+
+
+	//str.Format("HR Art");
+	//m_combo.AddString(str);
+	//str.Format("SPO2");
+	//m_combo.AddString(str);
 
 
 	CString tmp;

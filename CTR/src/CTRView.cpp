@@ -136,7 +136,7 @@ BEGIN_MESSAGE_MAP(CCTRView, CFormView)
 	//ON_EN_KILLFOCUS(IDC_EDIT33, &CCTRView::OnBnClickedKillFocusId)
 	ON_EN_KILLFOCUS(IDC_EDIT34, &CCTRView::OnEnKillFocusBias)
 
-	ON_EN_KILLFOCUS(IDC_EDIT35, &CCTRView::OnEnKillFocusDisturbance)
+	//ON_EN_KILLFOCUS(IDC_EDIT35, &CCTRView::OnEnKillFocusDisturbance)
 	ON_BN_CLICKED(IDC_BTN_MOVE16, &CCTRView::OnBnClickedResetAutomation)
 
 	ON_EN_KILLFOCUS(IDC_EDIT36, &CCTRView::OnKillFocusHour)
@@ -284,7 +284,7 @@ void CCTRView::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_EDIT31, tmp3);
 
 	CString tmp4;
-	tmp4.Format("%f2.1", this->angleBetweenPlaneAndRobot);
+	tmp4.Format("%f4.2", this->angleBetweenPlaneAndRobot);
 	DDX_Text(pDX, IDC_EDIT33, tmp4);
 
 	tmp4.Format("%f2.1",this->offsetBetweenValveCenterAndRobotAxis);
@@ -805,8 +805,8 @@ void CCTRView::OnClickedBtnComputePlane()
 	this->center = center;
 
 	this->radius = radius;
-
-	this->angleBetweenPlaneAndRobot = acos(this->normal.transpose() * ::Eigen::Vector3d::Ones());
+	double tmpInnerProduct = this->normal.transpose() * ::Eigen::Vector3d(0, 0, 1);
+	this->angleBetweenPlaneAndRobot = acos(tmpInnerProduct) * 180.0/M_PI;
 
 	this->offsetBetweenValveCenterAndRobotAxis = this->center.segment(0, 2).norm();
 

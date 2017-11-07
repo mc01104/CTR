@@ -193,7 +193,7 @@ private:
 // Operations
 public:
 	void				computeShortestDirection();
-	void				setDesiredClockfacePosition(double desClock){this->desiredClockfacePosition = desClock;};
+	void				setDesiredClockfacePosition(double desClock){this->desiredClockfacePosition = desClock; activateClockfaceTask();};
 	void				setDesiredWallClockfacePosition(double desClock) {this->desiredWallClock = desClock;};
 	void				activateClockfaceTask(){this->goToClockFace = true; tangent_updates = 0;};
 	double				computeAngle(double clockfacePosition);

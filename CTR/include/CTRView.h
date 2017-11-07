@@ -149,6 +149,8 @@ public:
 	std::ofstream	m_logfstr;
 	bool			m_blogData;
 
+	double		angleBetweenPlaneAndRobot;
+	double		offsetBetweenValveCenterAndRobotAxis;
 	LARGE_INTEGER m_Stime, m_Etime, m_Elapsed, m_Freq;
 
 	afx_msg void OnEnKillfocusForget();
@@ -158,6 +160,9 @@ public:
 	afx_msg void OnBnClickedResetAutomation();
 	afx_msg void TogglePullBack();
 	afx_msg void OnKillFocusRegOffset();
+	afx_msg void OnCbnSelchangeCombo1();
+
+
 	//afx_msg void OnBnClickedCheckLWPR();
 	//afx_msg void OnBnClickedButtonSave();
 	//afx_msg void OnCheckTraj();
@@ -189,6 +194,7 @@ public:
 
 	int m_apex_wall;
 	bool m_transition;
+	CComboBox m_combo;
 };
 
 #ifndef _DEBUG  // debug version in CTRView.cpp

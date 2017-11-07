@@ -150,6 +150,10 @@ BEGIN_MESSAGE_MAP(CCTRView, CFormView)
 	ON_BN_CLICKED(IDC_BTN_MOVE24, &CCTRView::OnClickedBtnSaveAll)
 	
 	ON_EN_KILLFOCUS(IDC_EDIT32, &CCTRView::OnKillFocusRegOffset)
+
+
+	ON_CBN_SELENDOK(IDC_COMBO1, &CCTRView::OnCbnSelchangeCombo1)
+
 END_MESSAGE_MAP()
 
 
@@ -168,6 +172,8 @@ CCTRView::CCTRView()
 	m_blogData = false;
 	this->logDataFlag = false;
 
+	angleBetweenPlaneAndRobot = 0;
+
 	this->eStopPressed = false;
 	
 	for(int i = 0; i < 5; ++i)
@@ -179,7 +185,7 @@ CCTRView::CCTRView()
 	m_frequencyMode = 1;
 	m_direction = 1;
 	m_apex_wall = 0;
-
+	offsetBetweenValveCenterAndRobotAxis = 0;
 	m_transition = false;
 	::std::ifstream f("plane_points.txt");
 	::std::vector<::std::string> points_on_plane;
@@ -272,10 +278,28 @@ void CCTRView::DoDataExchange(CDataExchange* pDX)
 	CString tmp2;
 	tmp2.Format("%d",this->current_measurement.size());
 	DDX_Text(pDX, IDC_EDIT13, tmp2);
-	
+
 	CString tmp3;
 	tmp3.Format("%f2.1",this->GetDocument()->getClockPosition());
 	DDX_Text(pDX, IDC_EDIT31, tmp3);
+
+	CString tmp4;
+	tmp4.Format("%f2.1", this->angleBetweenPlaneAndRobot);
+	DDX_Text(pDX, IDC_EDIT33, tmp4);
+
+	tmp4.Format("%f2.1",this->offsetBetweenValveCenterAndRobotAxis);
+	DDX_Text(pDX, IDC_EDIT35, tmp4);
+
+
+	tmp4.Format("%f2.1", this->center[0]);
+	DDX_Text(pDX, IDC_EDIT38, tmp4);
+
+	tmp4.Format("%f2.1", this->center[1]);
+	DDX_Text(pDX, IDC_EDIT39, tmp4);
+
+	tmp4.Format("%f2.1", this->center[2]);
+	DDX_Text(pDX, IDC_EDIT40, tmp4);
+
 
 	DDX_Radio(pDX, IDC_RADIO_JA2, m_PlaneEstimationMode);
 	DDX_Radio(pDX, IDC_RADIO_JA3, m_controlMode);
@@ -284,8 +308,9 @@ void CCTRView::DoDataExchange(CDataExchange* pDX)
 
 	DDX_Radio(pDX, IDC_RADIO_JA6, m_apex_wall);
 	m_ctrlMode != 1 ? GetDlgItem(IDC_CHECK1)->EnableWindow(false) : GetDlgItem(IDC_CHECK1)->EnableWindow(true);
-//	m_ctrlMode != 1 ? GetDlgItem(IDC_CHECK3)->EnableWindow(false) : GetDlgItem(IDC_CHECK3)->EnableWindow(true);
+	//	m_ctrlMode != 1 ? GetDlgItem(IDC_CHECK3)->EnableWindow(false) : GetDlgItem(IDC_CHECK3)->EnableWindow(true);
 
+	DDX_Control(pDX, IDC_COMBO1, m_combo);
 }
 
 BOOL CCTRView::PreCreateWindow(CREATESTRUCT& cs)
@@ -303,6 +328,16 @@ void CCTRView::OnInitialUpdate()
 	GetParentFrame()->RecalcLayout();
 	ResizeParentToFit();
 	GetParentFrame()->SetWindowPos(&CWnd::wndTop,0,0,850,950, SWP_SHOWWINDOW );
+
+	//CString str("ECG");
+	//m_combo.AddString(str);
+
+
+	//str.Format("HR Art");
+	//m_combo.AddString(str);
+	//str.Format("SPO2");
+	//m_combo.AddString(str);
+
 
 	CString tmp;
 	tmp.Format("%d",this->points_for_plane_estimation.size());
@@ -760,6 +795,7 @@ void CCTRView::OnClickedBtnComputePlane()
 		normal_tmp = -normal_tmp;
 
 	this->normal = normal_tmp;;
+	this->normal.normalize();
 
 	::Eigen::Vector3d center;
 	double radius;
@@ -769,6 +805,10 @@ void CCTRView::OnClickedBtnComputePlane()
 	this->center = center;
 
 	this->radius = radius;
+
+	this->angleBetweenPlaneAndRobot = acos(this->normal.transpose() * ::Eigen::Vector3d::Ones());
+
+	this->offsetBetweenValveCenterAndRobotAxis = this->center.segment(0, 2).norm();
 
 	this->dumpPlanePoints();
 }
@@ -1280,4 +1320,27 @@ CCTRView::OnKillFocusRegOffset()
 	double offset = atof(str);
 
 	this->GetDocument()->setRegistrationOffset(offset);
+}
+
+
+void CCTRView::OnCbnSelchangeCombo1() 
+{
+   int nIndex = m_combo.GetCurSel();
+	CString strCBText;
+	m_combo.GetLBText( nIndex, strCBText);
+
+   UpdateData(FALSE);
+   std::string s((LPCTSTR) strCBText);
+   ::std::cout << s << ::std::endl;
+
+   int n = 0;
+   if (s == "ECG")
+		n = 1;
+   else if  (s == "HR Art")
+	   n = 4;
+   else
+	   n = 5;
+
+   ::std::cout << n << ::std::endl;
+   this->GetDocument()->setHRSource(n);
 }

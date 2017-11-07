@@ -121,6 +121,8 @@ CCTRDoc::CCTRDoc()
 	m_position_gain_feedforward = 1.0;
 	m_orientation_gain_feedforward = 1.0;
 
+	m_HRSource = 8;
+
 	for (int i = 0; i < 3; ++i)
 		this->m_Status.tgtWorkspaceVelocity[i] = 0;
 	m_date = GetDateString();
@@ -2893,7 +2895,10 @@ void CCTRDoc::computeCircumnavigationDirection(Eigen::Matrix<double,6,1>& err)
 	double epsilon = 0.1;
 	if (this->goToClockFace)
 	{
-		if (::std::abs(this->desiredClockfacePosition - this->actualClockfacePosition) < epsilon)
+		double d1 = ::std::abs(this->desiredClockfacePosition - this->actualClockfacePosition);
+		double d2 = ::std::abs(12 - (this->desiredClockfacePosition - this->actualClockfacePosition));
+		double distance = min(d1, d2);
+		if (distance < epsilon)
 			error3D.segment(0, 3) = ::Eigen::Vector3d::Zero();
 	}
 	
@@ -2930,6 +2935,7 @@ void CCTRDoc::ToggleCircumnavigation()
 	{
 		this->valve_points_visited.clear();
 		this->index = 0;
+		this->tangent_updates = 0.0;
 	}
 	::std::cout << "circumnavigation: " << (this->m_circumnavigation ?	"ON" : "OFF") << ::std::endl; 
 
@@ -3074,15 +3080,17 @@ void CCTRDoc::computeATVUser(Eigen::Matrix<double,6,1>& err)
 		return;
 	}
 
-	rot = RotateZ((angle - 270.0) * M_PI/180.0);
-	::Eigen::Vector2d rotatedCentroid = rot.block(0, 0, 2, 2).transpose() * ::Eigen::Map<::Eigen::Vector2d> (this->m_centroid, 2);
+	rot = RotateZ((270.0 - angle) * M_PI/180.0);
+	::Eigen::Vector2d im_center(125, 125);
+	::Eigen::Vector2d rotatedCentroid = rot.block(0, 0, 2, 2) * (::Eigen::Map<::Eigen::Vector2d> (this->m_centroid, 2) - im_center);
+	rotatedCentroid += im_center;
 
 	if (rotatedCentroid(1) >= m_apex_theshold_max)
 		err[1] += m_center_gainATV/m_scaling_factor * (rotatedCentroid(1) - m_apex_theshold_max);
 	else if (rotatedCentroid(1) <= m_apex_theshold_min)
 		err[1] += m_center_gainATV/m_scaling_factor * (rotatedCentroid(1) - m_apex_theshold_min);
 
-	err.block(0, 0, 2, 1) = rot.block(0, 0, 2, 2) * err.block(0, 0, 2, 1);
+	err.block(0, 0, 2, 1) = rot.block(0, 0, 2, 2).transpose() * err.block(0, 0, 2, 1);
 
 }
 
@@ -3360,6 +3368,7 @@ void CCTRDoc::computeInitialDirection()
 double 
 CCTRDoc::GetMonitorBreathingFreq()
 {
+	this->m_heartRateMonitor->setHRSource(this->m_HRSource);
 	return this->m_heartRateMonitor->getBreathingRate();
 }
 
@@ -3424,6 +3433,6 @@ void CCTRDoc::computeShortestDirection()
 double
 CCTRDoc::computeAngle(double clockfacePosition)
 {
-	double angle = 0.5*  60 * clockfacePosition; // + this->registrationRotation; 
-	return angle;
+	return  0.5*  60 * clockfacePosition; // + this->registrationRotation; 
+
 }

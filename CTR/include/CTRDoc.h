@@ -201,7 +201,7 @@ public:
 
 	bool				m_adapt_LWPR;
 	::std::string		m_date;
-	
+	int					m_HRSource;
 // Overrides
 public:
 	virtual BOOL OnNewDocument();
@@ -218,6 +218,7 @@ public:
 
 	double GetMonitorFreq();
 	double GetMonitorBreathingFreq();
+	void	setHRSource(int source){this->m_HRSource = source;};
 	void	UpdateGains(double position, double orientation, double position_forward, double orientation_forward);
 	void	UpdateGainsApexToValve(double center, double forward, double threshold_min, double threshold_max);
 	void	UpdateGlobalGain(double gain) {this->m_globalCR_gain = gain; ::std::cout << this->m_globalCR_gain << ::std::endl; };

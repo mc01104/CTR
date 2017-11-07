@@ -3419,7 +3419,7 @@ void CCTRDoc::computeShortestDirection()
 	::Eigen::Vector3d p2(cos(desAngle * M_PI/180.0), sin(desAngle * M_PI/180.0), 0);
 
 	// compute direction
-	::Eigen::Vector3d res = p2.cross(p1);
+	::Eigen::Vector3d res = p1.cross(p2);
 
 	// compute tangent
 	::Eigen::Vector3d tmp = res.cross(p1);

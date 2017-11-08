@@ -297,7 +297,8 @@ CCTRDoc::CCTRDoc()
 	desiredClockfacePosition = 0;
 	actualClockfacePosition = 0;			// read from network
 	goToClockFace = false;
-	
+	isModelRegistered = false;
+
 }
 
 CCTRDoc::~CCTRDoc()
@@ -817,7 +818,9 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 
 				mySelf->actualClockfacePosition = msg[11];
 
-				mySelf->m_apex = msg[12];
+				mySelf->isModelRegistered = msg[12];
+
+				mySelf->m_apex = msg[13];
 
 
 				LeaveCriticalSection(&m_cSection);
@@ -844,7 +847,7 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 				}
 
 				if (mySelf->m_apex)
-					memcpy(mySelf->m_apex_coordinates, &msg.data()[13], 5 * sizeof(double));
+					memcpy(mySelf->m_apex_coordinates, &msg.data()[14], 5 * sizeof(double));
 
 				end_loop = clock;
 
@@ -2897,13 +2900,16 @@ void CCTRDoc::computeCircumnavigationDirection(Eigen::Matrix<double,6,1>& err)
 	error3D(2) = 0.0;
 	
 	double epsilon = 0.1;
-	if (this->goToClockFace)
+	if (this->goToClockFace  && this->isModelRegistered)
 	{
 		double d1 = ::std::abs(this->desiredClockfacePosition - this->actualClockfacePosition);
 		double d2 = ::std::abs(12 - (this->desiredClockfacePosition - this->actualClockfacePosition));
 		double distance = min(d1, d2);
 		if (distance < epsilon)
 			error3D.segment(0, 3) = ::Eigen::Vector3d::Zero();
+		else
+			this->computeInitialDirection();
+
 	}
 	
 	err.block(0, 0, 3, 1) = rot * error3D;
@@ -3334,7 +3340,7 @@ void CCTRDoc::addPointOnValve()
 void CCTRDoc::computeInitialDirection()
 {
 
-	if (this->goToClockFace)
+	if (this->goToClockFace && this->isModelRegistered)
 	{
 		this->computeShortestDirection();
 		return;

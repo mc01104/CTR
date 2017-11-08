@@ -202,6 +202,7 @@ public:
 	bool				m_adapt_LWPR;
 	::std::string		m_date;
 	int					m_HRSource;
+	bool				isModelRegistered;
 // Overrides
 public:
 	virtual BOOL OnNewDocument();

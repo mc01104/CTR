@@ -60,7 +60,7 @@ public:
 	afx_msg void OnClickedBtnRight();
 	afx_msg void OnClickedBtnRecConf();
 	afx_msg void OnClickedBtnGoToRecConf();
-
+	afx_msg void OnClickedBtnClockFace();
 	afx_msg void OnClickedBtnStartLog();
 	afx_msg void OnClickedBtnStopLog();
 

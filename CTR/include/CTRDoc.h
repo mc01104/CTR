@@ -193,7 +193,7 @@ private:
 // Operations
 public:
 	void				computeShortestDirection();
-	void				setDesiredClockfacePosition(double desClock){this->desiredClockfacePosition = desClock;};
+	void				setDesiredClockfacePosition(double desClock){this->desiredClockfacePosition = desClock; };
 	void				setDesiredWallClockfacePosition(double desClock) {this->desiredWallClock = desClock;};
 	void				activateClockfaceTask(){this->goToClockFace = true; tangent_updates = 0;};
 	double				computeAngle(double clockfacePosition);
@@ -202,6 +202,7 @@ public:
 	bool				m_adapt_LWPR;
 	::std::string		m_date;
 	int					m_HRSource;
+	bool				isModelRegistered;
 // Overrides
 public:
 	virtual BOOL OnNewDocument();
@@ -224,7 +225,7 @@ public:
 	void	UpdateGlobalGain(double gain) {this->m_globalCR_gain = gain; ::std::cout << this->m_globalCR_gain << ::std::endl; };
 	void	SwitchControlMode(int mode);
 	void	SwitchFreqMode(int mode);
-
+	void	ToggleClockface();
 	void	SwitchAllControlFlagsOff();
 	void	ToggleCameraControl();
 	// CKim - Get thread safe copy of the robot status

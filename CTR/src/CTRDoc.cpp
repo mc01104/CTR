@@ -848,7 +848,7 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 
 				end_loop = clock;
 
-				::std::cout << "CR:" << contactRatio << ::std::endl;
+				//::std::cout << "CR:" << contactRatio << ::std::endl;
 			}
 			
 		}
@@ -1625,7 +1625,7 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 						if (!isInContact) // move using the most recent computed velocities when not in contact
 							err.block(0, 0, 3, 1) = tmpVelocities;
 						else
-							err.setZero();
+							err.block(0, 0, 3, 1).setZero();
 					}
 					else if (apex_to_valve)
 						mySelf->computeApexToValveMotion(err, mySelf->aStatus);
@@ -2876,7 +2876,11 @@ double CCTRDoc::GetMonitorFreq()
 // QQ: need to use the rotation matrix?
 void CCTRDoc::computeCircumnavigationDirection(Eigen::Matrix<double,6,1>& err)
 {
-
+	if (this->actualClockfacePosition < 0)
+	{
+		err.block(0, 0, 3, 1).setZero();
+		return;
+	}
 	// later this needs to be computed from the plane normal
 	::Eigen::Matrix3d rot = ::Eigen::Matrix3d::Identity();
 
@@ -2959,7 +2963,8 @@ void CCTRDoc::ToggleApexToValve()
 
 void CCTRDoc::UpdateCircumnavigationParams(::std::vector<double>& msg)
 {
-
+	if (this->actualClockfacePosition < 0)
+		return;
 	this->centroid_prev[0] = m_centroid[0];
 	this->centroid_prev[1] = m_centroid[1];
 
@@ -3411,13 +3416,14 @@ void CCTRDoc::computeShortestDirection()
 
 	// convert clockface positions to angles
 	double actualAngle = 0, desAngle = 0;
-	actualAngle = this->actualClockfacePosition;
-	desAngle = this->desiredClockfacePosition;
+	actualAngle = this->actualClockfacePosition * 30.0;
+	desAngle = this->desiredClockfacePosition * 30.0;
 
 	// compute unit vectors
 	::Eigen::Vector3d p1(cos(actualAngle * M_PI/180.0), sin(actualAngle * M_PI/180.0), 0);
 	::Eigen::Vector3d p2(cos(desAngle * M_PI/180.0), sin(desAngle * M_PI/180.0), 0);
 
+	::std::cout << this->desiredClockfacePosition << " " << this->actualClockfacePosition << ::std::endl;
 	// compute direction
 	::Eigen::Vector3d res = p1.cross(p2);
 
@@ -3428,6 +3434,7 @@ void CCTRDoc::computeShortestDirection()
 
 	this->m_valve_tangent_prev[0] = tang[0];
 	this->m_valve_tangent_prev[1] = tang[1];
+	PrintCArray(this->m_valve_tangent_prev, 2);
 }
 
 double
@@ -3435,4 +3442,12 @@ CCTRDoc::computeAngle(double clockfacePosition)
 {
 	return  0.5*  60 * clockfacePosition; // + this->registrationRotation; 
 
+}
+
+void 
+CCTRDoc::ToggleClockface()
+{
+	this->goToClockFace = !this->goToClockFace;
+	this->tangent_updates = 0;
+	::std::cout << "Go-to-clockface is " << (this->goToClockFace ? "active" : "inactive") << ::std::endl;
 }

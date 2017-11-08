@@ -154,7 +154,7 @@ BEGIN_MESSAGE_MAP(CCTRView, CFormView)
 
 	ON_CBN_SELENDOK(IDC_COMBO1, &CCTRView::OnCbnSelchangeCombo1)
 
-	ON_BN_CLICKED(IDC_CHECK6, &CCTRView::OnClickedBtnGo)
+	ON_BN_CLICKED(IDC_CHECK6, &CCTRView::OnClickedBtnClockFace)
 END_MESSAGE_MAP()
 
 
@@ -1344,4 +1344,9 @@ void CCTRView::OnCbnSelchangeCombo1()
 
    ::std::cout << n << ::std::endl;
    this->GetDocument()->setHRSource(n);
+}
+
+void CCTRView::OnClickedBtnClockFace()
+{
+	this->GetDocument()->ToggleClockface();
 }

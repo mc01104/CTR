@@ -2999,10 +2999,13 @@ void CCTRDoc::UpdateCircumnavigationParams(::std::vector<double>& msg)
 		if (vel_cen.norm() < 0.5 * vel_tip.norm())
 			this->retractRobot = true;
 	}
-	if (tangent_updates == 0)
+	if (tangent_updates == 0 )
 		computeInitialDirection();
 	else
 		memcpy(m_valve_tangent_prev, m_valve_tangent, 2 * sizeof(double));
+
+	if (this->goToClockFace && this->isModelRegistered)
+		this->computeInitialDirection();
 
 	tangent_updates++;
 
@@ -3340,7 +3343,7 @@ void CCTRDoc::addPointOnValve()
 void CCTRDoc::computeInitialDirection()
 {
 
-	if (this->goToClockFace && this->isModelRegistered)
+	if (this->goToClockFace)
 	{
 		this->computeShortestDirection();
 		return;
@@ -3429,7 +3432,7 @@ void CCTRDoc::computeShortestDirection()
 	::Eigen::Vector3d p1(cos(actualAngle * M_PI/180.0), sin(actualAngle * M_PI/180.0), 0);
 	::Eigen::Vector3d p2(cos(desAngle * M_PI/180.0), sin(desAngle * M_PI/180.0), 0);
 
-	::std::cout << this->desiredClockfacePosition << " " << this->actualClockfacePosition << ::std::endl;
+	//::std::cout << this->desiredClockfacePosition << " " << this->actualClockfacePosition << ::std::endl;
 	// compute direction
 	::Eigen::Vector3d res = p1.cross(p2);
 
@@ -3440,7 +3443,7 @@ void CCTRDoc::computeShortestDirection()
 
 	this->m_valve_tangent_prev[0] = tang[0];
 	this->m_valve_tangent_prev[1] = tang[1];
-	PrintCArray(this->m_valve_tangent_prev, 2);
+	//PrintCArray(this->m_valve_tangent_prev, 2);
 }
 
 double

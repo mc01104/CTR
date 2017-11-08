@@ -1340,7 +1340,7 @@ void CCTRView::OnCbnSelchangeCombo1()
    else if  (s == "HR Art")
 	   n = 4;
    else
-	   n = 5;
+	   n = 8;
 
    ::std::cout << n << ::std::endl;
    this->GetDocument()->setHRSource(n);

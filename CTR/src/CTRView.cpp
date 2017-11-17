@@ -175,6 +175,9 @@ CCTRView::CCTRView()
 
 	angleBetweenPlaneAndRobot = 0;
 
+	this->azimuth = 0;
+	this->altitude = 0;
+
 	this->eStopPressed = false;
 	
 	for(int i = 0; i < 5; ++i)
@@ -300,6 +303,12 @@ void CCTRView::DoDataExchange(CDataExchange* pDX)
 
 	tmp4.Format("%f2.1", this->center[2]);
 	DDX_Text(pDX, IDC_EDIT40, tmp4);
+
+	tmp4.Format("%f2.1", this->azimuth);
+	DDX_Text(pDX, IDC_EDIT42, tmp4);
+
+	tmp4.Format("%f2.1", this->altitude);
+	DDX_Text(pDX, IDC_EDIT41, tmp4);
 
 
 	DDX_Radio(pDX, IDC_RADIO_JA2, m_PlaneEstimationMode);
@@ -810,6 +819,19 @@ void CCTRView::OnClickedBtnComputePlane()
 	this->angleBetweenPlaneAndRobot = acos(tmpInnerProduct) * 180.0/M_PI;
 
 	this->offsetBetweenValveCenterAndRobotAxis = this->center.segment(0, 2).norm();
+
+	::Eigen::Vector3d YZ(1, 0, 0);
+	double lambda = this->normal.transpose() * YZ;
+	::Eigen::Vector3d normalYZ = this->normal - lambda * YZ;
+
+	tmpInnerProduct = this->normal.transpose() * normalYZ;
+	this->azimuth = acos(tmpInnerProduct) * 180.0/M_PI;
+
+	::Eigen::Vector3d XZ(0, 1, 0);
+	lambda = this->normal.transpose() * XZ;
+	::Eigen::Vector3d normalXZ = this->normal - lambda * XZ;
+	tmpInnerProduct = this->normal.transpose() * normalXZ;
+	this->altitude = acos(tmpInnerProduct) * 180.0/M_PI;
 
 	this->dumpPlanePoints();
 }

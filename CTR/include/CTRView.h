@@ -105,6 +105,9 @@ public:
 	int m_controlMode;
 	int m_frequencyMode;
 
+	double azimuth;
+	double altitude;
+
 	bool logDataFlag;
 	::std::ofstream logStream;
 

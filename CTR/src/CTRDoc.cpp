@@ -50,7 +50,7 @@
 #include "HeartRateMonitor.h"
 #include "resource.h"
 
-#define DEFAULT_BUFLEN 512
+#define DEFAULT_BUFLEN 1024
 #define DEFAULT_PORT "27015"
 #define WIN32_LEAN_AND_MEAN
 
@@ -3094,7 +3094,7 @@ void CCTRDoc::computeATVUser(Eigen::Matrix<double,6,1>& err)
 		return;
 	}
 
-	err.block(0, 0, 2, 1).setZero();
+	err.block(0, 0, 2, 1).setZer;
 
 	rot = RotateZ((angle - 90) * M_PI/180.0);
 	::Eigen::Vector2d im_center(125, 125);

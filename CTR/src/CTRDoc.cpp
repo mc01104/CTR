@@ -3094,11 +3094,11 @@ void CCTRDoc::computeATVUser(Eigen::Matrix<double,6,1>& err)
 		return;
 	}
 
-	err.block(0, 0, 2, 1).setZer;
+	err.block(0, 0, 2, 1).setZero();
 
-	rot = RotateZ((angle - 90) * M_PI/180.0);
+	rot = RotateZ((angle - 270) * M_PI/180.0);
 	::Eigen::Vector2d im_center(125, 125);
-	::Eigen::Vector2d rotatedCentroid = rot.block(0, 0, 2, 2).transpose() * (::Eigen::Map<::Eigen::Vector2d> (this->m_centroid, 2) - im_center);
+	::Eigen::Vector2d rotatedCentroid = rot.block(0, 0, 2, 2).transpose() * (::Eigen::Map<::Eigen::Vector2d> (this->m_centroid_apex, 2) - im_center);
 	rotatedCentroid += im_center;
 
 	if (rotatedCentroid(1) >= m_apex_theshold_max)

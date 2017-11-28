@@ -17,7 +17,7 @@ SerialPort::~SerialPort()
  
 int SerialPort::connect() 
 {
-	return connect(L"COM1");
+	return connect(L"COM6");
 }
  
 int SerialPort::connect( wchar_t* device) 

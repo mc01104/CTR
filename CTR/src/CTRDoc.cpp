@@ -3094,7 +3094,7 @@ void CCTRDoc::computeATVUser(Eigen::Matrix<double,6,1>& err)
 		return;
 	}
 
-	err.block(0, 0, 2, 1) = 0;
+	err.block(0, 0, 2, 1).setZero();
 
 	rot = RotateZ((angle - 90) * M_PI/180.0);
 	::Eigen::Vector2d im_center(125, 125);

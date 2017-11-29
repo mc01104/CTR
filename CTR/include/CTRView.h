@@ -97,7 +97,7 @@ public:
 	afx_msg void OnKillFocusHour();
 	afx_msg void OnEnKillFocusATV();
 	afx_msg void OnClickedBtnGo();
-
+	afx_msg void OnClickedBtnTEST();
 	//afx_msg void GoToApex();
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 	

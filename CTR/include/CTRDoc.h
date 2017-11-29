@@ -93,7 +93,7 @@ private:
 	ChunTimer*			m_timer;
 	
 	double				desiredWallClock;
-
+	bool				deactivateTest;
 	// visual servoing stuff - these need to be read from the network
 	double				m_centroid[2];
 	double				m_centroid_apex[2];
@@ -461,4 +461,5 @@ public:
 	bool m_usePullBack;
 
 	void TogglePullback();
+	void ToggleTest();
 };

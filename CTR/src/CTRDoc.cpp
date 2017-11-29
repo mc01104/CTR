@@ -120,7 +120,7 @@ CCTRDoc::CCTRDoc()
 	m_orientation_gain = 1.0;
 	m_position_gain_feedforward = 1.0;
 	m_orientation_gain_feedforward = 1.0;
-
+	deactivateTest = false;
 	m_HRSource = 8;
 
 	for (int i = 0; i < 3; ++i)
@@ -1168,6 +1168,9 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 				mySelf->SlaveToMaster(localStat, scl);
 
 			}
+
+if (mySelf->deactivateTest)
+{
 			if (mySelf->m_circumnavigation || mySelf->m_apex_to_valve)
 			{
 				for(int i=0; i<6; i++)	
@@ -1180,6 +1183,7 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 	
 				mySelf->SlaveToMaster(localStat, scl);
 			}
+}
 		}
 
 					
@@ -1623,6 +1627,9 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 					tmpVelocities.setZero();
 					if (circumnavigation)
 					{
+						if (mySelf->deactivateTest)
+							memcpy(&localStat.tgtTipPosDir[3], planeNormal.data(), 3 * sizeof(double));
+
 						mySelf->computeCircumnavigationDirection(tmpVelocities);
 
 						if (!isInContact) // move using the most recent computed velocities when not in contact
@@ -3009,7 +3016,6 @@ void CCTRDoc::UpdateCircumnavigationParams(::std::vector<double>& msg)
 
 	tangent_updates++;
 
-
 	m_valve_tangent[0]  = msg[5];
 	m_valve_tangent[1]  = msg[6];
 
@@ -3051,7 +3057,6 @@ void CCTRDoc::computeApexToValveMotion(Eigen::Matrix<double,6,1>& err, APEX_TO_V
 	switch(aStatus)
 	{
 	case APEX_TO_VALVE_STATUS::LEFT:
-			//::std::cout << "activate left" << ::std::endl;
 			computeATVLeft(err);
 			break;
 	case APEX_TO_VALVE_STATUS::TOP:
@@ -3077,7 +3082,7 @@ void CCTRDoc::computeATVUser(Eigen::Matrix<double,6,1>& err)
 {
 	double desClock = this->desiredWallClock;
 	double angle = this->computeAngle(desClock);
-	//::std::cout << angle << ::std::endl;
+
 	::Eigen::Vector2d rotatedBias(1, 0);
 	::Eigen::Matrix3d rot = RotateZ(angle * M_PI/180.0);
 	rotatedBias = rot.block(0, 0, 2, 2) * rotatedBias;
@@ -3107,19 +3112,6 @@ void CCTRDoc::computeATVUser(Eigen::Matrix<double,6,1>& err)
 		err[1] += m_center_gainATV/m_scaling_factor * (rotatedCentroid(1) - m_apex_theshold_min);
 
 	err.block(0, 0, 2, 1) = rot.block(0, 0, 2, 2) * err.block(0, 0, 2, 1);
-
-
-	//rot = RotateZ((270.0 - angle) * M_PI/180.0);
-	//::Eigen::Vector2d im_center(125, 125);
-	//::Eigen::Vector2d rotatedCentroid = rot.block(0, 0, 2, 2) * (::Eigen::Map<::Eigen::Vector2d> (this->m_centroid, 2) - im_center);
-	//rotatedCentroid += im_center;
-
-	//if (rotatedCentroid(1) >= m_apex_theshold_max)
-	//	err[1] += m_center_gainATV/m_scaling_factor * (rotatedCentroid(1) - m_apex_theshold_max);
-	//else if (rotatedCentroid(1) <= m_apex_theshold_min)
-	//	err[1] += m_center_gainATV/m_scaling_factor * (rotatedCentroid(1) - m_apex_theshold_min);
-
-	//err.block(0, 0, 2, 1) = rot.block(0, 0, 2, 2).transpose() * err.block(0, 0, 2, 1);
 
 }
 
@@ -3364,8 +3356,6 @@ void CCTRDoc::computeInitialDirection()
 		return;
 	}
 
-
-
 	this->m_valve_tangent_prev[0] = 0;
 	this->m_valve_tangent_prev[1] = 0;
 
@@ -3411,6 +3401,17 @@ CCTRDoc::TogglePullback()
 	else
 		::std::cout << "pulling back when line not moving is NOT active" << ::std::endl;
 
+}
+
+void 
+CCTRDoc::ToggleTest()
+{
+	this->deactivateTest = !this->deactivateTest;
+
+	if (this->deactivateTest)
+		::std::cout << "switch back to old code" << ::std::endl;
+	else
+		::std::cout << "testing new code" << ::std::endl;
 }
 
 void 

@@ -3117,9 +3117,9 @@ void CCTRDoc::computeATVUser(Eigen::Matrix<double,6,1>& err)
 
 void CCTRDoc::computeATVLeft(Eigen::Matrix<double,6,1>& err)
 {
-	// forward velocity
-	err[2] = m_forward_gainATV;    // mm/sec
-
+	//// forward velocity
+	//err[2] = m_forward_gainATV;    // mm/sec
+	err.setZero();
 	// left bias
 	if (!this->m_wall_detected)
 	{
@@ -3131,9 +3131,18 @@ void CCTRDoc::computeATVLeft(Eigen::Matrix<double,6,1>& err)
 
 	// check controller
 	if (this->m_centroid_apex[1] >= m_apex_theshold_max)
+	{
 		err[1] += m_center_gainATV/m_scaling_factor * (this->m_centroid_apex[1] - m_apex_theshold_max);
+		return;
+	}
 	else if (this->m_centroid_apex[1] <= m_apex_theshold_min)
+	{
 		err[1] += m_center_gainATV/m_scaling_factor * (this->m_centroid_apex[1] - m_apex_theshold_min);
+		return;
+	}
+
+	// forward velocity
+	err[2] = m_forward_gainATV;    // mm/sec
 
 
 }

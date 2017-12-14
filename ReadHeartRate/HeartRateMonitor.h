@@ -1,9 +1,15 @@
 #pragma once
+// Winsock includes for network
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#include "targetver.h"
 
 #include "SerialCommunication.h"
 #include <vector>
 #include <fstream>
 #include "Utilities.h"
+
+#include "windows.h"
 
 class HeartRateMonitor
 {
@@ -25,6 +31,7 @@ class HeartRateMonitor
 		~HeartRateMonitor();
 
 		void run();
+		bool runNetwork();
 
 		double getHeartRate();
 

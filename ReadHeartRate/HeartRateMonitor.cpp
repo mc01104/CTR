@@ -236,8 +236,10 @@ bool HeartRateMonitor::runNetwork()
 			continue;
 		else
 		{
-			heartRate = atof(strings[this->source].c_str());
-			breathingRate = atof(strings[strings.size()-1].c_str());
+			//heartRate = atof(strings[this->source].c_str());
+			//breathingRate = atof(strings[strings.size()-1].c_str());
+			heartRate = atof(strings[5].c_str());
+			breathingRate = atof(strings[5].c_str());
 		}
 
 

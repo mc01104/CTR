@@ -2,7 +2,7 @@
 // Winsock includes for network
 #include <winsock2.h>
 #include <ws2tcpip.h>
-#include "targetver.h"
+//#include "targetver.h"
 
 #include "SerialCommunication.h"
 #include <vector>

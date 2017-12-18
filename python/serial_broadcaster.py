@@ -5,7 +5,7 @@ from time import sleep
 # initialize serial communication
 ser = serial.Serial()
 ser.baudrate = 115200
-ser.port = 'COM2'
+ser.port = 'COM3'
 ser.open()
 
 # Create a TCP/IP socket

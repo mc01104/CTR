@@ -3081,6 +3081,49 @@ void CCTRDoc::computeApexToValveMotion(Eigen::Matrix<double,6,1>& err, APEX_TO_V
 
 void CCTRDoc::computeATVUser(Eigen::Matrix<double,6,1>& err)
 {
+	//double desClock = this->desiredWallClock;
+	//double angle = this->computeAngle(desClock);
+
+	//::Eigen::Vector2d rotatedBias(1, 0);
+	//::Eigen::Matrix3d rot = RotateZ(angle * M_PI/180.0);
+	//rotatedBias = rot.block(0, 0, 2, 2) * rotatedBias;
+
+	//rotatedBias *= this->m_bias;
+
+	//// forward velocity
+	//err[2] = m_forward_gainATV;    // mm/sec
+	//
+	//err.setZero();
+	//// left bias
+	//if (!this->m_wall_detected)
+	//{
+	//	err.block(0, 0, 2, 1) = rotatedBias;
+	//	return;
+	//}
+
+	//err.block(0, 0, 2, 1).setZero();
+
+	//rot = RotateZ((angle - 270) * M_PI/180.0);
+	//::Eigen::Vector2d im_center(125, 125);
+	//::Eigen::Vector2d rotatedCentroid = rot.block(0, 0, 2, 2).transpose() * (::Eigen::Map<::Eigen::Vector2d> (this->m_centroid_apex, 2) - im_center);
+	//rotatedCentroid += im_center;
+
+	//if (rotatedCentroid(1) >= m_apex_theshold_max)
+	//{
+	//	err[1] += m_center_gainATV/m_scaling_factor * (rotatedCentroid(1) - m_apex_theshold_max);
+	//	err.block(0, 0, 2, 1) = rot.block(0, 0, 2, 2) * err.block(0, 0, 2, 1);
+	//	//return;
+
+	//}
+	//else if (rotatedCentroid(1) <= m_apex_theshold_min)
+	//{
+	//	err[1] += m_center_gainATV/m_scaling_factor * (rotatedCentroid(1) - m_apex_theshold_min);
+	//	err.block(0, 0, 2, 1) = rot.block(0, 0, 2, 2) * err.block(0, 0, 2, 1);
+	//	//return;
+	//}
+
+	//// forward velocity
+	////err[2] = m_forward_gainATV;    // mm/sec
 	double desClock = this->desiredWallClock;
 	double angle = this->computeAngle(desClock);
 
@@ -3090,10 +3133,9 @@ void CCTRDoc::computeATVUser(Eigen::Matrix<double,6,1>& err)
 
 	rotatedBias *= this->m_bias;
 
-	//// forward velocity
-	//err[2] = m_forward_gainATV;    // mm/sec
-	
-	err.setZero();
+	// forward velocity
+	err[2] = m_forward_gainATV;    // mm/sec
+
 	// left bias
 	if (!this->m_wall_detected)
 	{
@@ -3109,29 +3151,20 @@ void CCTRDoc::computeATVUser(Eigen::Matrix<double,6,1>& err)
 	rotatedCentroid += im_center;
 
 	if (rotatedCentroid(1) >= m_apex_theshold_max)
-	{
 		err[1] += m_center_gainATV/m_scaling_factor * (rotatedCentroid(1) - m_apex_theshold_max);
-		err.block(0, 0, 2, 1) = rot.block(0, 0, 2, 2) * err.block(0, 0, 2, 1);
-		return;
-
-	}
 	else if (rotatedCentroid(1) <= m_apex_theshold_min)
-	{
 		err[1] += m_center_gainATV/m_scaling_factor * (rotatedCentroid(1) - m_apex_theshold_min);
-		err.block(0, 0, 2, 1) = rot.block(0, 0, 2, 2) * err.block(0, 0, 2, 1);
-		return;
-	}
 
-	// forward velocity
-	err[2] = m_forward_gainATV;    // mm/sec
+	err.block(0, 0, 2, 1) = rot.block(0, 0, 2, 2) * err.block(0, 0, 2, 1);
 
 }
 
 void CCTRDoc::computeATVLeft(Eigen::Matrix<double,6,1>& err)
 {
-	//// forward velocity
-	//err[2] = m_forward_gainATV;    // mm/sec
-	err.setZero();
+
+	// forward velocity
+	err[2] = m_forward_gainATV;    // mm/sec
+
 	// left bias
 	if (!this->m_wall_detected)
 	{
@@ -3143,18 +3176,35 @@ void CCTRDoc::computeATVLeft(Eigen::Matrix<double,6,1>& err)
 
 	// check controller
 	if (this->m_centroid_apex[1] >= m_apex_theshold_max)
-	{
 		err[1] += m_center_gainATV/m_scaling_factor * (this->m_centroid_apex[1] - m_apex_theshold_max);
-		return;
-	}
 	else if (this->m_centroid_apex[1] <= m_apex_theshold_min)
-	{
 		err[1] += m_center_gainATV/m_scaling_factor * (this->m_centroid_apex[1] - m_apex_theshold_min);
-		return;
-	}
+	////// forward velocity
+	//err[2] = m_forward_gainATV;    // mm/sec
+	//err.setZero();
+	//// left bias
+	//if (!this->m_wall_detected)
+	//{
+	//	err[1] = -this->m_bias;
+	//	return;
+	//}
 
-	// forward velocity
-	err[2] = m_forward_gainATV;    // mm/sec
+	//err[1] = 0;
+
+	//// check controller
+	//if (this->m_centroid_apex[1] >= m_apex_theshold_max)
+	//{
+	//	err[1] += m_center_gainATV/m_scaling_factor * (this->m_centroid_apex[1] - m_apex_theshold_max);
+	//	//return;
+	//}
+	//else if (this->m_centroid_apex[1] <= m_apex_theshold_min)
+	//{
+	//	err[1] += m_center_gainATV/m_scaling_factor * (this->m_centroid_apex[1] - m_apex_theshold_min);
+	//	//return;
+	//}
+
+	//// forward velocity
+	////err[2] = m_forward_gainATV;    // mm/sec
 
 
 }
@@ -3162,7 +3212,8 @@ void CCTRDoc::computeATVLeft(Eigen::Matrix<double,6,1>& err)
 
 void CCTRDoc::computeATVTop(Eigen::Matrix<double,6,1>& err)
 {
-	err.setZero();
+// forward velocity
+	err[2] = m_forward_gainATV;    // mm/sec
 
 	// top bias
 	if (!this->m_wall_detected)
@@ -3175,24 +3226,15 @@ void CCTRDoc::computeATVTop(Eigen::Matrix<double,6,1>& err)
 
 	// check controller
 	if (this->m_centroid_apex[0] <= 250 - m_apex_theshold_max)
-	{
 		err[0] += m_center_gainATV/m_scaling_factor * (this->m_centroid_apex[0] - 250 + m_apex_theshold_max);
-		return;
-	}
 	else if (this->m_centroid_apex[0] >= 250 - m_apex_theshold_min)
-	{
 		err[0] += m_center_gainATV/m_scaling_factor * (this->m_centroid_apex[0] - 250 + m_apex_theshold_min);
-		return;
-	}
-
-	// forward velocity
-	err[2] = m_forward_gainATV;    // mm/sec
-
 }
 
 void CCTRDoc::computeATVBottom(Eigen::Matrix<double,6,1>& err)
 {
-	err.setZero();
+	// forward velocity
+	err[2] = m_forward_gainATV;    // mm/sec
 
 	// bottom bias
 	if (!this->m_wall_detected)
@@ -3205,18 +3247,10 @@ void CCTRDoc::computeATVBottom(Eigen::Matrix<double,6,1>& err)
 
 	// check controller
 	if (this->m_centroid_apex[0] >= m_apex_theshold_max)
-	{
 		err[0] += m_center_gainATV/m_scaling_factor * (this->m_centroid_apex[0] - m_apex_theshold_max);
-		return;
-	}
 	else if (this->m_centroid_apex[1] <= m_apex_theshold_min)
-	{
 		err[0] += m_center_gainATV/m_scaling_factor * (this->m_centroid_apex[0] - m_apex_theshold_min);
-		return;
-	}
 
-	// forward velocity
-	err[2] = m_forward_gainATV;    // mm/sec
 
 }
 

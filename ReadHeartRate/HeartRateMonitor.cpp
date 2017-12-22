@@ -199,8 +199,8 @@ bool HeartRateMonitor::runNetwork()
 	::std::vector<bool> source;
 	::std::vector<int> index;
 	index.push_back(1);
-	//index.push_back(4);
-	index.push_back(5);
+	index.push_back(4);
+	//index.push_back(5);
 	index.push_back(8);
 
 
@@ -232,15 +232,15 @@ bool HeartRateMonitor::runNetwork()
 		if (source.size() <= 0)
 			continue;
 		
-		if(!checkForConsistency(strings[index[1]]))
-			continue;
-		else
-		{
+		//if(!checkForConsistency(strings[index[4]]))
+		//	continue;
+		//else
+		//{
 			//heartRate = atof(strings[this->source].c_str());
 			//breathingRate = atof(strings[strings.size()-1].c_str());
-			heartRate = atof(strings[5].c_str());
-			breathingRate = atof(strings[5].c_str());
-		}
+			heartRate = atof(strings[2].c_str());
+			breathingRate = atof(strings[24].c_str());
+		//}
 
 
 		counter++;

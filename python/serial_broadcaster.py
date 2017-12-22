@@ -23,7 +23,10 @@ def run(socket, serial):
     counter = 0
     while True:
         data_send = serial.readline()
+        if not data_send:
+            continue
         #data_send = "%d\n" % counter
+        print counter
         print data_send
         data_recv = connection.recv(16)
         counter = counter + 1

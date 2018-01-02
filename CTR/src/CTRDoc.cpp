@@ -221,8 +221,8 @@ CCTRDoc::CCTRDoc()
 	m_scaling_factor = 26.27;
 	m_circumnavigation = false;
 
-	m_valve_tangent_prev[0] = 0;
-	m_valve_tangent_prev[1] = -1;
+	m_valve_tangent_prev[0] = -1;
+	m_valve_tangent_prev[1] = 0;
 
 	m_valve_tangent[0] = 0;
 	m_valve_tangent[1] = 0;
@@ -255,6 +255,7 @@ CCTRDoc::CCTRDoc()
 
 	aStatus = APEX_TO_VALVE_STATUS::LEFT;
 	cStatus = CIRCUM_STATUS::LEFT_A;
+	dStatus = CIRCUM_DIRECTION::CW;
 
 	storeValvePoint = false;
 	index = 0;
@@ -3007,13 +3008,15 @@ void CCTRDoc::UpdateCircumnavigationParams(::std::vector<double>& msg)
 		if (vel_cen.norm() < 0.5 * vel_tip.norm())
 			this->retractRobot = true;
 	}
-	if (tangent_updates == 0 )
-		computeInitialDirection();
-	else
-		memcpy(m_valve_tangent_prev, m_valve_tangent, 2 * sizeof(double));
+	//if (tangent_updates == 0 )
+	//	computeInitialDirection();
+	//else
+	//	memcpy(m_valve_tangent_prev, m_valve_tangent, 2 * sizeof(double));
 
-	if (this->goToClockFace && this->isModelRegistered)
-		this->computeInitialDirection();
+	//if (this->goToClockFace && this->isModelRegistered)
+	//	this->computeInitialDirection();
+
+	this->computeInitialDirection();
 
 	tangent_updates++;
 
@@ -3081,49 +3084,6 @@ void CCTRDoc::computeApexToValveMotion(Eigen::Matrix<double,6,1>& err, APEX_TO_V
 
 void CCTRDoc::computeATVUser(Eigen::Matrix<double,6,1>& err)
 {
-	//double desClock = this->desiredWallClock;
-	//double angle = this->computeAngle(desClock);
-
-	//::Eigen::Vector2d rotatedBias(1, 0);
-	//::Eigen::Matrix3d rot = RotateZ(angle * M_PI/180.0);
-	//rotatedBias = rot.block(0, 0, 2, 2) * rotatedBias;
-
-	//rotatedBias *= this->m_bias;
-
-	//// forward velocity
-	//err[2] = m_forward_gainATV;    // mm/sec
-	//
-	//err.setZero();
-	//// left bias
-	//if (!this->m_wall_detected)
-	//{
-	//	err.block(0, 0, 2, 1) = rotatedBias;
-	//	return;
-	//}
-
-	//err.block(0, 0, 2, 1).setZero();
-
-	//rot = RotateZ((angle - 270) * M_PI/180.0);
-	//::Eigen::Vector2d im_center(125, 125);
-	//::Eigen::Vector2d rotatedCentroid = rot.block(0, 0, 2, 2).transpose() * (::Eigen::Map<::Eigen::Vector2d> (this->m_centroid_apex, 2) - im_center);
-	//rotatedCentroid += im_center;
-
-	//if (rotatedCentroid(1) >= m_apex_theshold_max)
-	//{
-	//	err[1] += m_center_gainATV/m_scaling_factor * (rotatedCentroid(1) - m_apex_theshold_max);
-	//	err.block(0, 0, 2, 1) = rot.block(0, 0, 2, 2) * err.block(0, 0, 2, 1);
-	//	//return;
-
-	//}
-	//else if (rotatedCentroid(1) <= m_apex_theshold_min)
-	//{
-	//	err[1] += m_center_gainATV/m_scaling_factor * (rotatedCentroid(1) - m_apex_theshold_min);
-	//	err.block(0, 0, 2, 1) = rot.block(0, 0, 2, 2) * err.block(0, 0, 2, 1);
-	//	//return;
-	//}
-
-	//// forward velocity
-	////err[2] = m_forward_gainATV;    // mm/sec
 	double desClock = this->desiredWallClock;
 	double angle = this->computeAngle(desClock);
 
@@ -3179,37 +3139,10 @@ void CCTRDoc::computeATVLeft(Eigen::Matrix<double,6,1>& err)
 		err[1] += m_center_gainATV/m_scaling_factor * (this->m_centroid_apex[1] - m_apex_theshold_max);
 	else if (this->m_centroid_apex[1] <= m_apex_theshold_min)
 		err[1] += m_center_gainATV/m_scaling_factor * (this->m_centroid_apex[1] - m_apex_theshold_min);
-	////// forward velocity
-	//err[2] = m_forward_gainATV;    // mm/sec
-	//err.setZero();
-	//// left bias
-	//if (!this->m_wall_detected)
-	//{
-	//	err[1] = -this->m_bias;
-	//	return;
-	//}
-
-	//err[1] = 0;
-
-	//// check controller
-	//if (this->m_centroid_apex[1] >= m_apex_theshold_max)
-	//{
-	//	err[1] += m_center_gainATV/m_scaling_factor * (this->m_centroid_apex[1] - m_apex_theshold_max);
-	//	//return;
-	//}
-	//else if (this->m_centroid_apex[1] <= m_apex_theshold_min)
-	//{
-	//	err[1] += m_center_gainATV/m_scaling_factor * (this->m_centroid_apex[1] - m_apex_theshold_min);
-	//	//return;
-	//}
-
-	//// forward velocity
-	////err[2] = m_forward_gainATV;    // mm/sec
-
 
 }
 
-
+ 
 void CCTRDoc::computeATVTop(Eigen::Matrix<double,6,1>& err)
 {
 // forward velocity
@@ -3431,29 +3364,26 @@ void CCTRDoc::computeInitialDirection()
 	this->m_valve_tangent_prev[0] = 0;
 	this->m_valve_tangent_prev[1] = 0;
 
-	switch (this->cStatus)
-	{
-		case CIRCUM_STATUS::LEFT_A:
-		{
-			this->m_valve_tangent_prev[1] = -1;
-			break;
-		}
-		case CIRCUM_STATUS::UP:
-		{
-			this->m_valve_tangent_prev[0] = 1;
-			break;
-		}
-		case CIRCUM_STATUS::RIGHT:
-		{
-			this->m_valve_tangent_prev[1] = 1;
-			break;
-		}
-		case CIRCUM_STATUS::DOWN:
-		{
-			this->m_valve_tangent_prev[0] = -1;
-			break;
-		}
-	}
+	::Eigen::Vector3d circDirection(0, 0, 1);
+
+	if (this->dStatus == CIRCUM_DIRECTION::CCW)
+		circDirection *= -1.0;
+
+	double actualAngle;
+	
+	if (this->actualClockfacePosition > 0)
+		actualAngle = this->actualClockfacePosition * 30.0;
+	else
+		actualAngle = getInitialPositionOnValve() * 30.0;
+
+	// compute unit vectors
+	::Eigen::Vector3d p1(cos(actualAngle * M_PI/180.0), sin(actualAngle * M_PI/180.0), 0);
+
+	// compute direction
+	::Eigen::Vector3d res = circDirection.cross(p1);
+
+	memcpy(this->m_valve_tangent_prev, circDirection.data(), 2 * sizeof(double));
+
 }
 
 double 
@@ -3547,4 +3477,27 @@ CCTRDoc::ToggleClockface()
 	this->goToClockFace = !this->goToClockFace;
 	this->tangent_updates = 0;
 	::std::cout << "Go-to-clockface is " << (this->goToClockFace ? "active" : "inactive") << ::std::endl;
+}
+
+double CCTRDoc::getInitialPositionOnValve()
+{
+	double positionOnValve = 0;
+
+	switch(this->aStatus)
+	{
+		case APEX_TO_VALVE_STATUS::BOTTOM:
+			positionOnValve = 6.0;
+			break;
+		case APEX_TO_VALVE_STATUS::TOP:
+			positionOnValve = 0.0;
+			break;
+		case APEX_TO_VALVE_STATUS::LEFT:
+			positionOnValve = 9.0;
+			break;
+		case APEX_TO_VALVE_STATUS::USER:
+			positionOnValve = this->desiredWallClock;
+			break;	
+	}
+
+	return positionOnValve;
 }

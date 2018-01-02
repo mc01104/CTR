@@ -115,17 +115,20 @@ BEGIN_MESSAGE_MAP(CCTRView, CFormView)
 	ON_BN_CLICKED(IDC_RADIO_JA4, &CCTRView::OnBnClickedRadioModesFreq)	
 	ON_BN_CLICKED(IDC_RADIO_TELE5, &CCTRView::OnBnClickedRadioModesFreq)
 
-	ON_BN_CLICKED(IDC_RADIO_JA5, &CCTRView::OnBnClickedRadioModesCircum)	
-	ON_BN_CLICKED(IDC_RADIO_TELE6, &CCTRView::OnBnClickedRadioModesCircum)
-	ON_BN_CLICKED(IDC_RADIO_TELE10, &CCTRView::OnBnClickedRadioModesCircum)
-	ON_BN_CLICKED(IDC_RADIO_TELE11, &CCTRView::OnBnClickedRadioModesCircum)
+	//ON_BN_CLICKED(IDC_RADIO_JA5, &CCTRView::OnBnClickedRadioModesCircum)	
+	//ON_BN_CLICKED(IDC_RADIO_TELE6, &CCTRView::OnBnClickedRadioModesCircum)
+	//ON_BN_CLICKED(IDC_RADIO_TELE10, &CCTRView::OnBnClickedRadioModesCircum)
+	//ON_BN_CLICKED(IDC_RADIO_TELE11, &CCTRView::OnBnClickedRadioModesCircum)
+
+	ON_BN_CLICKED(IDC_RADIO_JA5, &CCTRView::OnBnClickedRadioModesCWCCW)	
+	ON_BN_CLICKED(IDC_RADIO_TELE6, &CCTRView::OnBnClickedRadioModesCWCCW)
 
 	ON_BN_CLICKED(IDC_RADIO_JA6, &CCTRView::OnBnClickedRadioModesATV)	
 	ON_BN_CLICKED(IDC_RADIO_TELE7, &CCTRView::OnBnClickedRadioModesATV)
 	ON_BN_CLICKED(IDC_RADIO_TELE8, &CCTRView::OnBnClickedRadioModesATV)
 	ON_BN_CLICKED(IDC_RADIO_TELE9, &CCTRView::OnBnClickedRadioModesATV)
 
-	ON_BN_CLICKED(IDC_RADIO_TELE6, &CCTRView::OnBnClickedRadioModesCircum)
+
 
 	ON_WM_CTLCOLOR()
 	ON_BN_CLICKED(IDC_BUTTON6, &CCTRView::OnClickedBtnHome)
@@ -188,7 +191,7 @@ CCTRView::CCTRView()
 	m_PlaneEstimationMode = 0;
 	m_controlMode = 0;
 	m_frequencyMode = 1;
-	m_direction = 1;
+	m_direction = 1;			// I am not sure if this is taken into account
 	m_apex_wall = 0;
 	offsetBetweenValveCenterAndRobotAxis = 0;
 	m_transition = false;
@@ -1084,6 +1087,26 @@ void CCTRView::UpdateTangent()
 	//this->GetDlgItemTextA(IDC_EDIT25, str);	
 	//tangent[1] = atof(str);
 	//this->GetDocument()->SetTangent(tangent);
+}
+
+void CCTRView::OnBnClickedRadioModesCWCCW()
+{
+	UpdateData(true);	
+	CCTRDoc::CIRCUM_DIRECTION sts;
+	if(m_direction == 0)	
+	{
+		::std::cout << "Circumnavigation direction: clockwise" << ::std::endl;
+		sts = CCTRDoc::CIRCUM_DIRECTION::CW;
+	}
+	else if (m_direction == 1)
+	{
+		::std::cout << "Circumnavigation direction: counter-clockwise" << ::std::endl;
+		sts = CCTRDoc::CIRCUM_DIRECTION::CCW;
+	}
+
+	this->GetDocument()->SwitchCircumStatus(sts);
+	return;		
+
 }
 
 void CCTRView::OnBnClickedRadioModesCircum()

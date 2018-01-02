@@ -57,10 +57,18 @@ public:
 		DOWN
 	};
 
+	enum CIRCUM_DIRECTION 
+	{
+		CW,
+		CCW
+	};
+
 private:
 
 	APEX_TO_VALVE_STATUS aStatus;
 	CIRCUM_STATUS		cStatus;
+	CIRCUM_DIRECTION dStatus;
+
 	// CKim - Robot Status
 	CTR_status		m_Status;
 	::std::ofstream adaptiveExperimentLog;
@@ -283,6 +291,8 @@ public:
 	void computeATVBottom(Eigen::Matrix<double,6,1>& err);
 	void computeATVUser(Eigen::Matrix<double,6,1>& err);
 
+	double getInitialPositionOnValve();
+
 	void addPointOnValve();
 	double getClockPosition() {return this->actualClockfacePosition;};
 	bool storeValvePoint;
@@ -291,6 +301,8 @@ public:
 	int	 periodsForCRComputation;
 	void	SwitchApexToValveStatus(APEX_TO_VALVE_STATUS sts) {this->aStatus = sts;};
 	void	SwitchCircumStatus(CIRCUM_STATUS sts) {this->cStatus = sts; this->computeInitialDirection();};
+	void	SwitchCircumStatus(CIRCUM_DIRECTION sts) {this->dStatus = sts; this->computeInitialDirection();};
+
 	void	computeInitialDirection();
 #ifdef _DEBUG
 	virtual void AssertValid() const;

@@ -88,7 +88,11 @@ public:
 	afx_msg void UpdateTangent();
 	afx_msg void OnBnClickedRadioModesController();
 	afx_msg void OnBnClickedRadioModesFreq();
+	
 	afx_msg void OnBnClickedRadioModesCircum();
+	afx_msg void OnBnClickedRadioModesCWCCW();
+
+
 	afx_msg void OnBnClickedRadioModesATV();
 	afx_msg void UpdateGainsATV();
 	afx_msg void UpdateGlovalGain();

@@ -3382,7 +3382,7 @@ void CCTRDoc::computeInitialDirection()
 	// compute direction
 	::Eigen::Vector3d res = circDirection.cross(p1);
 
-	memcpy(this->m_valve_tangent_prev, circDirection.data(), 2 * sizeof(double));
+	memcpy(this->m_valve_tangent_prev, res.data(), 2 * sizeof(double));
 
 }
 

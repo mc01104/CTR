@@ -304,6 +304,8 @@ public:
 	void	SwitchCircumStatus(CIRCUM_DIRECTION sts) {this->dStatus = sts; this->computeInitialDirection();};
 
 	void	computeInitialDirection();
+	void	checkDirection(::Eigen::Matrix<double, 6, 1>& err);
+
 #ifdef _DEBUG
 	virtual void AssertValid() const;
 	virtual void Dump(CDumpContext& dc) const;

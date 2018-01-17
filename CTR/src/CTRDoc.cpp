@@ -1635,7 +1635,12 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 						mySelf->computeCircumnavigationDirection(tmpVelocities);
 
 						if (!isInContact) // move using the most recent computed velocities when not in contact
+						{
 							err.block(0, 0, 3, 1) = tmpVelocities;
+							mySelf->checkDirection(err);
+							mySelf->commanded_vel[0] = err(0, 0);
+							mySelf->commanded_vel[1] = err(1, 0);
+						}
 						else
 							err.block(0, 0, 3, 1).setZero();
 					}
@@ -2922,8 +2927,8 @@ void CCTRDoc::computeCircumnavigationDirection(Eigen::Matrix<double,6,1>& err)
 	}
 	
 	err.block(0, 0, 3, 1) = rot * error3D;
-	commanded_vel[0] = err(0, 0);
-	commanded_vel[1] = err(1, 0);
+	//commanded_vel[0] = err(0, 0);
+	//commanded_vel[1] = err(1, 0);
 	//::std::cout << commanded_vel[0] << "., " << commanded_vel[1] << ::std::endl;
 	//::std::cout << "centroid x:" << m_centroid[0] << " centroid y:" << m_centroid[1] << " tangent x:" << m_valve_tangent[0] << " tangent y:" << m_valve_tangent[1] << ::std::endl;
 	//::std::cout << "velocities :" << err.block(0, 0, 3, 1).transpose() << ::std::endl;
@@ -3385,6 +3390,44 @@ void CCTRDoc::computeInitialDirection()
 	memcpy(this->m_valve_tangent_prev, res.data(), 2 * sizeof(double));
 
 }
+
+void CCTRDoc::checkDirection(::Eigen::Matrix<double, 6, 1>& err)
+{
+
+	if (this->goToClockFace)
+	{
+		this->computeShortestDirection();
+		return;
+	}
+
+	//this->m_valve_tangent_prev[0] = 0;
+	//this->m_valve_tangent_prev[1] = 0;
+
+	::Eigen::Vector3d circDirection(0, 0, 1);
+
+	if (this->dStatus == CIRCUM_DIRECTION::CCW)
+		circDirection *= -1.0;
+
+	// commanded velocity
+	::Eigen::Vector3d commandedVel = err.block(0, 0, 3, 1);
+
+	// tip position
+	::Eigen::Vector3d tipPosition = ::Eigen::Map<::Eigen::Vector3d> (this->m_Status.currTipPosDir, 3);
+
+	// axis to tip position
+	double lambda = tipPosition.transpose() * ::Eigen::Vector3d(0, 0, 1);
+	::Eigen::Vector3d axisToTipPositionVector = tipPosition - lambda * ::Eigen::Vector3d(0, 0, 1);
+
+	// compute commanded direction of rotation
+	::Eigen::Vector3d commandedDirection = axisToTipPositionVector.cross(commandedVel);
+
+	// check sign
+	double tmp = circDirection(2) * commandedDirection(2);
+
+	if (tmp < 0)
+		err.block(0, 0, 3, 1) *= -1;
+}
+
 
 double 
 CCTRDoc::GetMonitorBreathingFreq()

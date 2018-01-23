@@ -1018,14 +1018,13 @@ void CTRKin::EvalCurrentKinematicsModel_NEW(const double* jAng,  const double* t
 
 void CTRKin::ApplyKinematicControlNullspace(const Eigen::MatrixXd& J, const Eigen::MatrixXd& err, double* dq, double* q)
 {
-	
-	::Eigen::VectorXd dotq(5);
+		
 	this->ComputeJointspaceVelocities(J, err, dotq);
 
 	double limit_margin = 2.0;
 	if ((q[2] >= L31_MAX - limit_margin && dotq[2] > 0) || (q[2] <= L31_MIN && dotq[2] < 0))
 	{
-		::Eigen::MatrixXd Jlocal = J;		
+		Jlocal = J;		
 		removeColumn(Jlocal, 2);
 		this->ComputeJointspaceVelocities(Jlocal, err, dotq);
 
@@ -1047,7 +1046,7 @@ void CTRKin::ComputeJointspaceVelocities(const ::Eigen::MatrixXd& J, const ::Eig
 
 	::Eigen::VectorXd qdotTemp(nCol);
 
-	::Eigen::MatrixXd Jtemp = J;
+	Jtemp = J;
 
 	Jtemp.col(0) *= scl_jacobian;
 	Jtemp.col(1) *= scl_jacobian;
@@ -1058,8 +1057,8 @@ void CTRKin::ComputeJointspaceVelocities(const ::Eigen::MatrixXd& J, const ::Eig
 		Jtemp.col(3) *= scl_jacobian;
 
 	// position and orientation jacobian
-	::Eigen::MatrixXd Jp  = Jtemp.block(0, 0, 3, nCol);
-	::Eigen::MatrixXd Jo = Jtemp.block(3, 0, 3, nCol);
+	Jp  = Jtemp.block(0, 0, 3, nCol);
+	Jo = Jtemp.block(3, 0, 3, nCol);
 
 	// condition matrix for pseudo inverse
 	::Eigen::Matrix<double, 3, 3> tmpMat (Jp * Jp.transpose());
@@ -1072,7 +1071,7 @@ void CTRKin::ComputeJointspaceVelocities(const ::Eigen::MatrixXd& J, const ::Eig
 		lambda_position_max *= 10; //is that necessary?
 
 	::Eigen::JacobiSVD<::Eigen::MatrixXd> svd(tmpMat, ::Eigen::ComputeThinU | ::Eigen::ComputeThinV);
-	::Eigen::VectorXd singVal = svd.singularValues();
+	singVal = svd.singularValues();
 
 	if (singVal[singVal.size() - 1] <= epsilon)
 		lambda_position = (1.0 - ::std::pow(singVal[singVal.size() - 1]/epsilon, 2)) * lambda_position_max;
@@ -1081,22 +1080,19 @@ void CTRKin::ComputeJointspaceVelocities(const ::Eigen::MatrixXd& J, const ::Eig
 		tmpMat(i, i) += lambda_position;
 
 	// task 1: control position
-	::Eigen::MatrixXd task1_pseudo = Jp.transpose() * tmpMat.inverse();
+	task1_pseudo = Jp.transpose() * tmpMat.inverse();
 	qdotTemp = task1_pseudo * err.block(0, 0, 3, 1);
 
 	// task 2: control orientation
 	::Eigen::MatrixXd IdMat(nCol, nCol);
 	IdMat.setIdentity();
 
-	::Eigen::MatrixXd tmpOrient;
-	::Eigen::Matrix<double, 3, 3> tmpOrientPseudo;
-
 	// do the same thing for orientation here
 	tmpOrient = Jo * (IdMat - task1_pseudo * Jp);
 	tmpOrientPseudo = tmpOrient * tmpOrient.transpose();
 
 	::Eigen::JacobiSVD<::Eigen::MatrixXd> svdOr(tmpOrientPseudo, ::Eigen::ComputeThinU | ::Eigen::ComputeThinV);
-	::Eigen::VectorXd singValOr = svdOr.singularValues();
+	singValOr = svdOr.singularValues();
 
 	double lambda_orientation = 0.0;
 	double lambda_orientation_max = 0.0001;
@@ -1110,9 +1106,8 @@ void CTRKin::ComputeJointspaceVelocities(const ::Eigen::MatrixXd& J, const ::Eig
 
 	for (int i = 0; i < 3; ++i)
 		tmpOrientPseudo(i, i) += lambda_orientation;
-
 	
-	::Eigen::MatrixXd orientPseudo = tmpOrient.transpose() * tmpOrientPseudo.inverse();
+	orientPseudo = tmpOrient.transpose() * tmpOrientPseudo.inverse();
 	qdotTemp += orientPseudo * ( err.block(3, 0, 3, 1) - Jo * task1_pseudo * err.block(0, 0, 3, 1));
 
 	qdotTemp[0] *= scl_jacobian;

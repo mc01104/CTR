@@ -97,4 +97,16 @@ protected:
 	double				m_forceGain;
 	// CKim - Inverse kinematics threshold
 	double m_Thresh;		double m_MaxPosErr;		double m_MaxOrtErr;
+
+	::Eigen::VectorXd dotq;
+	::Eigen::MatrixXd Jlocal;
+	::Eigen::MatrixXd Jtemp;
+	::Eigen::MatrixXd Jp;
+	::Eigen::MatrixXd Jo;
+	::Eigen::VectorXd singVal;
+	::Eigen::MatrixXd task1_pseudo;
+	::Eigen::MatrixXd tmpOrient;
+	::Eigen::Matrix<double, 3, 3> tmpOrientPseudo;
+	::Eigen::VectorXd singValOr;
+	::Eigen::MatrixXd orientPseudo;
 };

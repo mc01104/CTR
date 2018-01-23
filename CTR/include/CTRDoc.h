@@ -427,6 +427,20 @@ protected:
 	RecursiveFilter::Filter* filter_centroid;
 	RecursiveFilter::Filter*	filter_tip;
 
+	::Eigen::Vector2d error_circ;
+	::Eigen::Vector3d error3D;
+	::Eigen::Matrix<double, 6, 1> tmpVelocities;
+	::Eigen::Vector3d commandedVel;
+	::Eigen::Vector3d tipPosition;
+	::Eigen::Vector3d axisToTipPositionVector;
+	::Eigen::Vector3d robot_axis;
+	::Eigen::Vector3d commandedDirection;
+	::Eigen::Vector3d tangent_vec;
+	::Eigen::Vector3d tangent_vel;
+
+	::Eigen::Vector3d center_vel;
+	::Eigen::Vector3d final_vel;
+
 // Generated message map functions
 protected:
 	DECLARE_MESSAGE_MAP()

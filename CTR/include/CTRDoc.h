@@ -283,7 +283,7 @@ public:
 	Eigen::Vector3d GetTipPosition();
 	void setContactControlNormal(const ::Eigen::Vector3d& computedNormal, const ::Eigen::Vector3d& center, double radius, ::std::vector<::Eigen::Vector3d> pts);
 
-	void computeCircumnavigationDirection(Eigen::Matrix<double,6,1>& err);
+	void computeCircumnavigationDirection(::Eigen::VectorXd& err);
 	void computeApexToValveMotion(Eigen::Matrix<double,6,1>& err, APEX_TO_VALVE_STATUS aStatus = LEFT);
 
 	void computeATVLeft(Eigen::Matrix<double,6,1>& err);
@@ -429,7 +429,7 @@ protected:
 
 	::Eigen::Vector2d error_circ;
 	::Eigen::Vector3d error3D;
-	::Eigen::Matrix<double, 6, 1> tmpVelocities;
+	::Eigen::VectorXd tmpVelocities;
 	::Eigen::Vector3d commandedVel;
 	::Eigen::Vector3d tipPosition;
 	::Eigen::Vector3d axisToTipPositionVector;

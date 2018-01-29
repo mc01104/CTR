@@ -116,6 +116,7 @@ CCTRDoc::CCTRDoc()
 	m_freq_mode = 1;
 
 	desiredWallClock = 12;
+	tmpVelocities = ::Eigen::VectorXd(3);
 	tmpVelocities.setZero();
 
 	m_timer = new ChunTimer();
@@ -2899,7 +2900,7 @@ double CCTRDoc::GetMonitorFreq()
 }
 
 // QQ: need to use the rotation matrix?
-void CCTRDoc::computeCircumnavigationDirection(Eigen::Matrix<double,6,1>& err)
+void CCTRDoc::computeCircumnavigationDirection(Eigen::VectorXd& err)
 {
 	if (this->actualClockfacePosition < 0)
 	{
@@ -3364,6 +3365,7 @@ void CCTRDoc::checkDirection(::Eigen::Matrix<double, 6, 1>& err)
 	// axis to tip position
 	double lambda = tipPosition.transpose() * this->robot_axis;
 	axisToTipPositionVector = tipPosition - lambda * this->robot_axis;
+	axisToTipPositionVector.normalize();
 
 	// compute commanded direction of rotation
 	tangent_vec[0] = this->m_valve_tangent[0];
@@ -3376,7 +3378,7 @@ void CCTRDoc::checkDirection(::Eigen::Matrix<double, 6, 1>& err)
 
 	commandedDirection = axisToTipPositionVector.cross(tangent_vel);
 
-	double tmp = circDirection(2) * commandedDirection(2);
+	double tmp = circDirection.transpose() * commandedDirection;
 
 	if (tmp < 0)
 		tangent_vel *= -1;

@@ -2989,48 +2989,15 @@ void CCTRDoc::ToggleApexToValve()
 
 void CCTRDoc::UpdateCircumnavigationParams(::std::vector<double>& msg)
 {
-	if (this->actualClockfacePosition < 0)
-		return;
 	this->centroid_prev[0] = m_centroid[0];
 	this->centroid_prev[1] = m_centroid[1];
-
 
 	m_centroid[0] = msg[3];
 	m_centroid[1] = msg[4];
 
-	this->retractRobot = false;
-	if (m_usePullBack)
-	{
-		
-		double dt = static_cast<double> (circumTimer.GetTime())/1.e06;
-		circumTimer.ResetTime();
-
-
-		for (int i = 0; i < 2; ++i)
-			this->tip_velocity[i] = this->filter_tip->step((this->m_Status.currTipPosDir[i] - this->tip_position_prev[i])/dt);
-
-
-		for (int i = 0; i < 2; ++i)
-			this->centroid_velocity[i] = this->filter_centroid->step((this->m_centroid[i] - this->centroid_prev[i])/dt/this->m_scaling_factor); // centroid velocity in mm/sec
-
-		::Eigen::Vector2d vel_cen = ::Eigen::Map<::Eigen::Vector2d> (this->centroid_velocity, 2);
-		::Eigen::Vector2d vel_tip = ::Eigen::Map<::Eigen::Vector2d> (this->tip_velocity, 2);
-
-		if (vel_cen.norm() < 0.5 * vel_tip.norm())
-			this->retractRobot = true;
-	}
-	//if (tangent_updates == 0 )
-	//	computeInitialDirection();
-	//else
-	//	memcpy(m_valve_tangent_prev, m_valve_tangent, 2 * sizeof(double));
-
-	//if (this->goToClockFace && this->isModelRegistered)
-	//	this->computeInitialDirection();
-
-	//if (this->goToClockFace)
-	//	this->computeInitialDirection();
 
 	tangent_updates++;
+	memcpy(this->m_valve_tangent_prev, this->m_valve_tangent, 2 * sizeof(double));
 
 	m_valve_tangent[0]  = msg[5];
 	m_valve_tangent[1]  = msg[6];
@@ -3044,7 +3011,8 @@ void CCTRDoc::UpdateCircumnavigationParams(::std::vector<double>& msg)
 	//}
 
 
-	memcpy(this->tip_position_prev, this->m_Status.currTipPosDir, 2 *sizeof(double));
+
+
 }
 
 void CCTRDoc::SetVSGains(double gain_center, double gain_tangent) 
@@ -3400,12 +3368,11 @@ void CCTRDoc::computeInitialDirection()
 
 void CCTRDoc::checkDirection(::Eigen::Matrix<double, 6, 1>& err)
 {
-
-	//if (this->goToClockFace)
-	//{
-	//	this->computeShortestDirection();
-	//	return;
-	//}
+	if (this->goToClockFace)
+	{
+		this->computeShortestDirection();
+		return;
+	}
 
 	//this->m_valve_tangent_prev[0] = 0;
 	//this->m_valve_tangent_prev[1] = 0;
@@ -3425,16 +3392,18 @@ void CCTRDoc::checkDirection(::Eigen::Matrix<double, 6, 1>& err)
 	double lambda = tipPosition.transpose() * ::Eigen::Vector3d(0, 0, 1);
 	::Eigen::Vector3d axisToTipPositionVector = tipPosition - lambda * ::Eigen::Vector3d(0, 0, 1);
 
-	// compute commanded direction of rotation
-	::Eigen::Vector3d commandedDirection = axisToTipPositionVector.cross(commandedVel);
-
-	// check sign
-	double tmp = circDirection(2) * commandedDirection(2);
-
 	::Eigen::Vector3d tangent_vec = ::Eigen::Vector3d(this->m_valve_tangent[0], this->m_valve_tangent[1], 0);
 	double lambda_vel = commandedVel.transpose() * tangent_vec;
 	::Eigen::Vector3d tangent_vel = lambda_vel * tangent_vec;
 	::Eigen::Vector3d center_vel = commandedVel - tangent_vel;
+
+
+	// compute commanded direction of rotation
+	::Eigen::Vector3d commandedDirection = axisToTipPositionVector.cross(tangent_vel);
+
+	// check sign
+	double tmp = circDirection.transpose() * commandedDirection;
+
 	if (tmp < 0)
 		tangent_vel *= -1;
 
@@ -3519,6 +3488,13 @@ void CCTRDoc::computeShortestDirection()
 
 	this->m_valve_tangent_prev[0] = tang[0];
 	this->m_valve_tangent_prev[1] = tang[1];
+
+	double tmpS = this->m_valve_tangent_prev[0] * this->m_valve_tangent[0] + this->m_valve_tangent_prev[1] * this->m_valve_tangent[1];
+	if (tmpS < 0)
+	{
+		this->m_valve_tangent[0] *= -1;
+		this->m_valve_tangent[1] *= -1;
+	}
 	//PrintCArray(this->m_valve_tangent_prev, 2);
 }
 

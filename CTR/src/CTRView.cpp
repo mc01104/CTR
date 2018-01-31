@@ -799,11 +799,14 @@ void CCTRView::OnClickedBtnComputePlane()
 	::Eigen::Vector3d mu = data.rowwise().mean();
 	::Eigen::Matrix3Xd points_centered = data.colwise() - mu;
 
-	int setting = Eigen::ComputeFullU | Eigen::ComputeFullU;
+	int setting = Eigen::ComputeFullU | Eigen::ComputeFullV;
 	Eigen::JacobiSVD<Eigen::Matrix3Xd> svd = points_centered.jacobiSvd(setting);
 	::Eigen::MatrixXd U = svd.matrixU();
 	Eigen::Vector3d normal_tmp = U.col(2);
+	if (U.determinant() < 0)
+		U.col(2) *= -1;
 
+	::Eigen::MatrixXd V = svd.matrixV();
 	// the computed plane normal is always pointing to the positive z-direction 
 	if (normal_tmp(2) < 0)
 		normal_tmp = -normal_tmp;
@@ -827,14 +830,16 @@ void CCTRView::OnClickedBtnComputePlane()
 	::Eigen::Vector3d YZ(1, 0, 0);
 	double lambda = this->normal.transpose() * YZ;
 	::Eigen::Vector3d normalYZ = this->normal - lambda * YZ;
+	normalYZ.normalize();
 
-	tmpInnerProduct = YZ.transpose() * normalYZ;
+	tmpInnerProduct = ::Eigen::Vector3d(0, 0, 1).transpose() * normalYZ;
 	this->azimuth = acos(tmpInnerProduct) * 180.0/M_PI;
 
 	::Eigen::Vector3d XZ(0, 1, 0);
 	lambda = this->normal.transpose() * XZ;
 	::Eigen::Vector3d normalXZ = this->normal - lambda * XZ;
-	tmpInnerProduct = XZ.transpose() * normalXZ;
+	normalXZ.normalize();
+	tmpInnerProduct = ::Eigen::Vector3d(0, 0, 1).transpose() * normalXZ;
 	this->altitude = acos(tmpInnerProduct) * 180.0/M_PI;
 
 	this->dumpPlanePoints();
@@ -853,11 +858,11 @@ void CCTRView::computeCircle(::Eigen::Matrix3d rot, ::Eigen::Vector3d& center, d
 	::std::vector<::Eigen::Vector3d> rotated_points;
 	
 	for(int i = 0; i < points_for_plane_estimation.size(); ++i)
-		rotated_points.push_back(rot*points_centered.col(i));
+		rotated_points.push_back(rot.transpose()*points_centered.col(i));
 
 	fitCircle(rotated_points, center, radius);
 
-	center = rot.transpose() * center;
+	center = rot * center;
 }
 
 void CCTRView::OnBnClickedRadioModesPlane()

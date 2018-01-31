@@ -808,7 +808,7 @@ void CCTRView::OnClickedBtnComputePlane()
 	if (normal_tmp(2) < 0)
 		normal_tmp = -normal_tmp;
 
-	this->normal = normal_tmp;;
+	this->normal = normal_tmp;
 	this->normal.normalize();
 
 	::Eigen::Vector3d center;
@@ -828,13 +828,13 @@ void CCTRView::OnClickedBtnComputePlane()
 	double lambda = this->normal.transpose() * YZ;
 	::Eigen::Vector3d normalYZ = this->normal - lambda * YZ;
 
-	tmpInnerProduct = this->normal.transpose() * normalYZ;
+	tmpInnerProduct = YZ.transpose() * normalYZ;
 	this->azimuth = acos(tmpInnerProduct) * 180.0/M_PI;
 
 	::Eigen::Vector3d XZ(0, 1, 0);
 	lambda = this->normal.transpose() * XZ;
 	::Eigen::Vector3d normalXZ = this->normal - lambda * XZ;
-	tmpInnerProduct = this->normal.transpose() * normalXZ;
+	tmpInnerProduct = XZ.transpose() * normalXZ;
 	this->altitude = acos(tmpInnerProduct) * 180.0/M_PI;
 
 	this->dumpPlanePoints();

@@ -1024,7 +1024,7 @@ unsigned int WINAPI	CCTRDoc::TeleOpLoop(void* para)
 
 	RecursiveFilter::Filter* filters = new RecursiveFilter::MovingAverageFilter[3];
 
-	//GEORGE - clear previous events from omni - NOT tested
+	//GEORGE 
 	mySelf->m_Omni->ClearEvents();
 
 	// CKim - The Loop

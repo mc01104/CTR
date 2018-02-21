@@ -2270,9 +2270,10 @@ void CCTRDoc::InvKinJangToMtr(const double* jA, const double* currCnt, double* t
 	// Second, since L1 and L3  is controlled by translation stage 0 and 1, both are limited to +-100 mm.
 	// We limit L1 such that -100 < L1, L3 < 100.0
 	// L3 < L1 = L31_MAX - L31 + L3 < 100.0
+	double translation_limit = 150;
 	// -100 < L3 = L31 - L31_MAX + L1 < L1, this leads to -100 + L31_MAX - L31 < L1
-	if(L1 > 100.0)						{	L1 = 100.0;						isInLimFlag = false;	::std::cout << "L1 >"  <<std::endl;}
-	if(L1 < (-100.0 + L31_MAX - L31))	{	L1 = (-100.0 + L31_MAX - L31);	isInLimFlag = false;	::std::cout << "L1 <"  <<std::endl;}
+	if(L1 > translation_limit)						{	L1 = translation_limit;						isInLimFlag = false;	::std::cout << "L1 >"  <<std::endl;}
+	if(L1 < (-translation_limit + L31_MAX - L31))	{	L1 = (-translation_limit + L31_MAX - L31);	isInLimFlag = false;	::std::cout << "L1 <"  <<std::endl;}
 	
 	// Calculate L3. Update joint angles and motor counts 
 	L3 = L31 - L31_MAX + L1;

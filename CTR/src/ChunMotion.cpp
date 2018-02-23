@@ -128,7 +128,7 @@ bool ChunMotion::Initialize()
 
 	::std::remove("crashDump.txt");
 
-	double limit_translation = 130;
+	double limit_translation = 160;
 	// CKim - Set software limits - Software limit switches are not used until the amplifier has been homed. 
 	// Set accel limit to zero to disable accel limit
 	for(int i=0; i<AMPCT; i++)	{	m_Lim[i].accel = 0;		}

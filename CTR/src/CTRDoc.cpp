@@ -1538,6 +1538,8 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 		// CKim - Calculate current joint angle -> convert counts to radians
 		mySelf->MtrToJang(localStat.currMotorCnt, localStat.currJang);
 
+		PrintCArray(mySelf->m_Status.tgtWorkspaceAngVelocity, 3);
+
 		// this is used for root finding
 		if(mySelf->m_InvKinOn)
 		{

@@ -116,17 +116,17 @@ HDCallbackCode HDCALLBACK ChunHaptic::updateCallback(void *pData)
 	m_lastTime = currentTime;
 	ang_velocity[0] = dt;
 
-	::Eigen::MatrixXd lastT = ::Eigen::Map<::Eigen::MatrixXd>(mySelf->m_lastState.tfMat, 4,4);
-	::Eigen::MatrixXd currentT = ::Eigen::Map<::Eigen::MatrixXd>(mySelf->m_currentState.tfMat, 4,4);
+	//::Eigen::MatrixXd lastT = ::Eigen::Map<::Eigen::MatrixXd>(mySelf->m_lastState.tfMat, 4,4);
+	//::Eigen::MatrixXd currentT = ::Eigen::Map<::Eigen::MatrixXd>(mySelf->m_currentState.tfMat, 4,4);
 
-	::Eigen::Matrix3d Rdot = (currentT - lastT).block(0,0,3,3)/dt;
-	::Eigen::Matrix3d R_t = currentT.block(0,0,3,3).transpose();	// R transpose
-	::Eigen::Matrix3d angVel_skew = Rdot*R_t;
-	ang_velocity[0] = -angVel_skew(1,2);
-	ang_velocity[1] = angVel_skew(0,2);
-	ang_velocity[2] = -angVel_skew(0,1);
+	//::Eigen::Matrix3d Rdot = (currentT - lastT).block(0,0,3,3)/dt;
+	//::Eigen::Matrix3d R_t = currentT.block(0,0,3,3).transpose();	// R transpose
+	//::Eigen::Matrix3d angVel_skew = Rdot*R_t;
+	//ang_velocity[0] = -angVel_skew(1,2);
+	//ang_velocity[1] = angVel_skew(0,2);
+	//ang_velocity[2] = -angVel_skew(0,1);
 
-	//hdGetDoublev(HD_CURRENT_ANGULAR_VELOCITY, ang_velocity);
+	hdGetDoublev(HD_CURRENT_ANGULAR_VELOCITY, ang_velocity);
 	//ang_velocity[0] = 1;
 	for(int i = 0 ; i < 3; ++i)
 		mySelf->m_currentState.ang_velocity[i] = mySelf->m_filters[i + 3].step(ang_velocity[i]);

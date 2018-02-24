@@ -2028,7 +2028,8 @@ unsigned int WINAPI	CCTRDoc::ClosedLoopControlLoop(void* para)
 		//mySelf->m_kinLWPR->TipFwdKin(localStat.currJang, predTipPosDir);
 
 		// CKim - Read trajectory from the 'Playback.txt'. Returns false when the end of trajectory is reached
-		mySelf->m_playBack = mySelf->m_TrjGen->InterpolateNextPoint(localStat.tgtTipPosDir);	// Update tgtTipPosDir
+		//mySelf->m_playBack = mySelf->m_TrjGen->InterpolateNextPoint(localStat.tgtTipPosDir);	// Update tgtTipPosDir
+		mySelf->m_playBack = mySelf->m_TrjGen->InterpolateNextPoint(localStat.tgtTipPosDir, localStat.tgtWorkspaceVelocity);	// Update tgtTipPosDir
 		
 		// CKim - In case of feed forward position control, solve inverse kinematics
 		if(mySelf->m_InvKinOn)
@@ -2053,12 +2054,6 @@ unsigned int WINAPI	CCTRDoc::ClosedLoopControlLoop(void* para)
 			for(int i=0; i<6; i++)	{	ofstr<<localStat.currTipPosDir[i]<<" ";		}
 			for(int i=0; i<6; i++)	{	ofstr<<localStat.sensedTipPosDir[i]<<" ";	}
 			for(int i = 0; i < 5; i++) { ofstr  << localStat.currJang[i] << " "; }
-			//for(int i=0; i<6; i++)	{	ofstr<<predTipPosDir[i]<<" ";		}
-			//for(int i=0; i<5; i++)	{	ofstr<<localStat.tgtJang[i]<<" ";			}
-			//for(int i=0; i<7; i++)	{	ofstr<<localStat.tgtMotorCnt[i]<<" ";	}
-			//ofstr<<localStat.invKinOK<<" ";
-			//ofstr<<localStat.condNum<<" ";
-			//ofstr<<localStat.limitOK<<" ";
 			ofstr<<"\n";		
 			perfcnt = 0;		//timer.ResetTime();
 		}
@@ -2069,12 +2064,17 @@ unsigned int WINAPI	CCTRDoc::ClosedLoopControlLoop(void* para)
 		// CKim - Update shared variable
 		// --------------------------------------------------------------- //
 		EnterCriticalSection(&m_cSection);
-		for(int i=0; i<6; i++)	{
+		for(int i=0; i<6; i++)	
+		{
 			mySelf->m_Status.tgtTipPosDir[i] = localStat.tgtTipPosDir[i];		}
 		for(int i=0; i<5; i++)	{
 			mySelf->m_Status.tgtJang[i] = localStat.tgtJang[i];		}
 		for(int i=0; i<7; i++)	{
 			mySelf->m_Status.tgtMotorCnt[i] = localStat.tgtMotorCnt[i];		}
+
+		for(int i=0; i<6; i++)	
+			mySelf->m_Status.tgtWorkspaceVelocity[i] = localStat.tgtWorkspaceVelocity[i];		
+
 
 		mySelf->m_Status.invKinOK = localStat.invKinOK;
 		mySelf->m_Status.limitOK = localStat.limitOK;

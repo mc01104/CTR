@@ -1483,7 +1483,8 @@ unsigned int WINAPI	CCTRDoc::JointSpacePlayback(void* para)
 		for (int i = 0; i < 5; ++i)
 			localStat.tgtJang[i] = pos[i];
 
-		if (iter % 200 == 0 )
+		//if (iter % 200 == 0 )
+		if (iter % 100 == 0 )
 		{
 
 			//memcpy(localStat.tgtJang , pos, 5 * sizeof(double));
@@ -2114,7 +2115,8 @@ void CCTRDoc::OnBnClickedBtnPlay()
 	{
 		::std::cout << "joint space trajectory playback" << ::std::endl;
 		//m_TrjGen->Initialize("hysteresisTest.txt", 5);
-		m_TrjGen->Initialize("drift.txt", 5);
+		//m_TrjGen->Initialize("drift.txt", 5);
+		m_TrjGen->Initialize("deep_learning_traj.txt", 5);
 
 		m_hEMevent = CreateEvent(NULL,false,false,NULL);	// Auto reset event (2nd argument false means...)
 		

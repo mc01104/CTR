@@ -58,11 +58,16 @@ public:
 
 
 	// CKim - Control law for closed loop inverse kinematics control. 'tgtMotorVel'
-	void ApplyKinematicControl(const Eigen::MatrixXd& J, const Eigen::MatrixXd& err, double* dotq,double* q);
+
+	void ApplyKinematicControl(const Eigen::MatrixXd& J, const Eigen::MatrixXd& err, double* dotq,double* q, ::Eigen::Vector3d& orGoal, ::Eigen::Vector3d& orActual);
 	void ApplyKinematicControl_NEW(const Eigen::MatrixXd& J, const Eigen::MatrixXd& err, double* dotq);
-	void ApplyKinematicControlNullspace(const Eigen::MatrixXd& J, const Eigen::MatrixXd& err, double* dotq, double* q);
+	void ApplyKinematicControlNullspace(const Eigen::MatrixXd& J, const Eigen::MatrixXd& err, double* dotq, double* q, ::Eigen::Vector3d& orGoal, ::Eigen::Vector3d& orActual);
+	void ApplyKinematicControlNullspace_KHATIB(const Eigen::MatrixXd& J, const Eigen::MatrixXd& err, double* dq, double* q, ::Eigen::Vector3d& orGoal, ::Eigen::Vector3d& orActual);
+
 	void ApplyHybridPositionForceControl(const ::Eigen::MatrixXd& J, const ::Eigen::MatrixXd& err, const ::Eigen::MatrixXd& desiredForce, const ::Eigen::MatrixXd& actualForce, double* dq, double* q);
-	void ComputeJointspaceVelocities(const ::Eigen::MatrixXd& J, const ::Eigen::MatrixXd& err, ::Eigen::VectorXd& qdot);
+	void ComputeJointspaceVelocities(const ::Eigen::MatrixXd& J, const ::Eigen::MatrixXd& err, ::Eigen::VectorXd& qdot, ::Eigen::Vector3d& orGoal, ::Eigen::Vector3d& orActual);
+	void ComputeJointspaceVelocities_KHATIB(const ::Eigen::MatrixXd& J, const ::Eigen::MatrixXd& err, ::Eigen::VectorXd& qdot, ::Eigen::Vector3d& orGoal, ::Eigen::Vector3d& orActual);
+
 	double m_forgettingFactor;
 
 protected:

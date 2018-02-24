@@ -1016,18 +1016,18 @@ void CTRKin::EvalCurrentKinematicsModel_NEW(const double* jAng,  const double* t
 	return;
 }
 
-void CTRKin::ApplyKinematicControlNullspace(const Eigen::MatrixXd& J, const Eigen::MatrixXd& err, double* dq, double* q)
+void CTRKin::ApplyKinematicControlNullspace(const Eigen::MatrixXd& J, const Eigen::MatrixXd& err, double* dq, double* q, ::Eigen::Vector3d& orGoal, ::Eigen::Vector3d& orActual)
 {
 	
 	::Eigen::VectorXd dotq(5);
-	this->ComputeJointspaceVelocities(J, err, dotq);
+	this->ComputeJointspaceVelocities(J, err, dotq, orGoal, orActual);
 
 	double limit_margin = 2.0;
 	if ((q[2] >= L31_MAX - limit_margin && dotq[2] > 0) || (q[2] <= L31_MIN && dotq[2] < 0))
 	{
 		::Eigen::MatrixXd Jlocal = J;		
 		removeColumn(Jlocal, 2);
-		this->ComputeJointspaceVelocities(Jlocal, err, dotq);
+		this->ComputeJointspaceVelocities(Jlocal, err, dotq, orGoal, orActual);
 
 		if(q[2] >= L31_MAX - limit_margin)
 			dotq[2] = 10*(L31_MAX - limit_margin - q[2]) - 0.1 * dotq[2];
@@ -1040,7 +1040,31 @@ void CTRKin::ApplyKinematicControlNullspace(const Eigen::MatrixXd& J, const Eige
 
 }
 
-void CTRKin::ComputeJointspaceVelocities(const ::Eigen::MatrixXd& J, const ::Eigen::MatrixXd& err, ::Eigen::VectorXd& qdot)
+void CTRKin::ApplyKinematicControlNullspace_KHATIB(const Eigen::MatrixXd& J, const Eigen::MatrixXd& err, double* dq, double* q, ::Eigen::Vector3d& orGoal, ::Eigen::Vector3d& orActual)
+{
+	::Eigen::VectorXd dotq(5);
+	this->ComputeJointspaceVelocities_KHATIB(J, err, dotq, orGoal, orActual);
+
+	double limit_margin = 2.0;
+	if ((q[2] >= L31_MAX - limit_margin && dotq[2] > 0) || (q[2] <= L31_MIN && dotq[2] < 0))
+	{
+		::Eigen::MatrixXd Jlocal = J;		
+		removeColumn(Jlocal, 2);
+		this->ComputeJointspaceVelocities_KHATIB(Jlocal, err, dotq, orGoal, orActual);
+
+		if(q[2] >= L31_MAX - limit_margin)
+			dotq[2] = 10*(L31_MAX - limit_margin - q[2]) - 0.1 * dotq[2];
+		else if(q[2] <= L31_MIN)
+			dotq[2] = 10*(L31_MIN - q[2]) - 0.1 * dotq[2];
+	}
+
+	for(int i=0; i<5; i++)
+		dq[i] = dotq(i,0);	
+
+}
+
+
+void CTRKin::ComputeJointspaceVelocities(const ::Eigen::MatrixXd& J, const ::Eigen::MatrixXd& err, ::Eigen::VectorXd& qdot, ::Eigen::Vector3d& orGoal, ::Eigen::Vector3d& orActual)
 {
 	int nCol = J.cols();
 	double scl_jacobian = M_PI / 180.0 * 3;
@@ -1060,6 +1084,9 @@ void CTRKin::ComputeJointspaceVelocities(const ::Eigen::MatrixXd& J, const ::Eig
 	// position and orientation jacobian
 	::Eigen::MatrixXd Jp  = Jtemp.block(0, 0, 3, nCol);
 	::Eigen::MatrixXd Jo = Jtemp.block(3, 0, 3, nCol);
+
+	// compute Jo using the new orientation definition
+	Jo = -1/sqrt(1 - ::std::pow(orActual.transpose() * orGoal, 2)) * orGoal.transpose() * Jo.eval();
 
 	// condition matrix for pseudo inverse
 	::Eigen::Matrix<double, 3, 3> tmpMat (Jp * Jp.transpose());
@@ -1089,7 +1116,7 @@ void CTRKin::ComputeJointspaceVelocities(const ::Eigen::MatrixXd& J, const ::Eig
 	IdMat.setIdentity();
 
 	::Eigen::MatrixXd tmpOrient;
-	::Eigen::Matrix<double, 3, 3> tmpOrientPseudo;
+	::Eigen::MatrixXd tmpOrientPseudo;
 
 	// do the same thing for orientation here
 	tmpOrient = Jo * (IdMat - task1_pseudo * Jp);
@@ -1111,9 +1138,9 @@ void CTRKin::ComputeJointspaceVelocities(const ::Eigen::MatrixXd& J, const ::Eig
 	for (int i = 0; i < 3; ++i)
 		tmpOrientPseudo(i, i) += lambda_orientation;
 
-	
 	::Eigen::MatrixXd orientPseudo = tmpOrient.transpose() * tmpOrientPseudo.inverse();
-	qdotTemp += orientPseudo * ( err.block(3, 0, 3, 1) - Jo * task1_pseudo * err.block(0, 0, 3, 1));
+	qdotTemp += orientPseudo * (err.block(3, 0, 1, 1) - Jo * task1_pseudo * err.block(0, 0, 3, 1));
+
 
 	qdotTemp[0] *= scl_jacobian;
 	qdotTemp[1] *= scl_jacobian;
@@ -1133,6 +1160,101 @@ void CTRKin::ComputeJointspaceVelocities(const ::Eigen::MatrixXd& J, const ::Eig
 	}
 
 }
+
+
+void CTRKin::ComputeJointspaceVelocities_KHATIB(const ::Eigen::MatrixXd& J, const ::Eigen::MatrixXd& err, ::Eigen::VectorXd& qdot, ::Eigen::Vector3d& orGoal, ::Eigen::Vector3d& orActual)
+{
+	int nCol = J.cols();
+	double scl_jacobian = M_PI / 180.0 * 3;
+
+	::Eigen::VectorXd qdotTemp(nCol);
+
+	::Eigen::MatrixXd Jtemp = J;
+
+	Jtemp.col(0) *= scl_jacobian;
+	Jtemp.col(1) *= scl_jacobian;
+
+	if (nCol == 4)
+		Jtemp.col(2) *= scl_jacobian;
+	else
+		Jtemp.col(3) *= scl_jacobian;
+
+	// position and orientation jacobian
+	::Eigen::MatrixXd Jp  = Jtemp.block(0, 0, 3, nCol);
+	::Eigen::MatrixXd Jo = Jtemp.block(3, 0, 3, nCol);
+
+	// compute Jo using the new orientation definition
+	Jo = -1/sqrt(1 - ::std::pow(orActual.transpose() * orGoal, 2)) * orGoal.transpose() * Jo.eval();
+
+	// condition matrix for pseudo inverse
+	::Eigen::Matrix<double, 3, 3> tmpMat (Jp * Jp.transpose());
+
+	double lambda_position = 0.0;
+	double epsilon = 0.01;
+	double lambda_position_max = 0.01;
+
+	if (nCol == 4)
+		lambda_position_max *= 10; //is that necessary?
+
+	::Eigen::JacobiSVD<::Eigen::MatrixXd> svd(tmpMat, ::Eigen::ComputeThinU | ::Eigen::ComputeThinV);
+	::Eigen::VectorXd singVal = svd.singularValues();
+
+	if (singVal[singVal.size() - 1] <= epsilon)
+		lambda_position = (1.0 - ::std::pow(singVal[singVal.size() - 1]/epsilon, 2)) * lambda_position_max;
+
+	for (int i = 0; i < 3; ++i)
+		tmpMat(i, i) += lambda_position;
+
+	// task 1: control position
+	::Eigen::MatrixXd task1_pseudo = Jp.transpose() * tmpMat.inverse();
+	qdotTemp = task1_pseudo * err.block(0, 0, 3, 1);
+
+
+	// task 2: control orientation
+	::Eigen::Matrix<double, 3, 3> tmpMatOrientation (Jo * Jo.transpose());
+
+	::Eigen::JacobiSVD<::Eigen::MatrixXd> svdOr(tmpMatOrientation, ::Eigen::ComputeThinU | ::Eigen::ComputeThinV);
+	::Eigen::VectorXd singValOr = svdOr.singularValues();
+
+	double lambda_orientation = 0.0;
+	double lambda_orientation_max = 0.0001;
+
+	if (nCol == 4)
+		lambda_orientation_max *= 100;
+
+
+	if (singValOr[singValOr.size() - 1] <= epsilon)
+		lambda_orientation = (1.0 - ::std::pow(singValOr[singValOr.size() - 1]/epsilon, 2)) * lambda_orientation_max;
+
+	for (int i = 0; i < 3; ++i)
+		tmpMatOrientation(i, i) += lambda_orientation;
+
+	::Eigen::MatrixXd task2_pseudo = Jo.transpose() * tmpMatOrientation.inverse();
+
+	::Eigen::MatrixXd IdMat(nCol, nCol);
+	IdMat.setIdentity();
+	
+	::Eigen::MatrixXd nullspaceProjection = (IdMat - task1_pseudo * Jp) * task2_pseudo;
+	qdotTemp += nullspaceProjection * err(3, 0);
+
+	qdotTemp[0] *= scl_jacobian;
+	qdotTemp[1] *= scl_jacobian;
+
+	if (nCol == 4)
+	{
+		qdotTemp[2] *= scl_jacobian;
+		qdot.segment(0, 2) = qdotTemp.segment(0, 2);
+		qdot(2) = 0;
+		qdot.segment(3, 2) = qdotTemp.segment(2, 2);
+	}
+	else
+	{
+		qdotTemp[3] *= scl_jacobian;
+		qdot = qdotTemp;
+	}
+
+}
+
 
 void CTRKin::conditionMatrix(::Eigen::Matrix2d& mat_original, double conditionNumberDes, ::Eigen::MatrixXd& mat_conditioned, double& condition_number_new)
 {
@@ -1216,89 +1338,42 @@ void CTRKin::ApplyHybridPositionForceControl(const ::Eigen::MatrixXd& J, const :
 
 }
 
-void CTRKin::ApplyKinematicControl(const Eigen::MatrixXd& J, const Eigen::MatrixXd& err, double* dq, double* q)
+void CTRKin::ApplyKinematicControl(const Eigen::MatrixXd& J, const Eigen::MatrixXd& err, double* dq, double* q, ::Eigen::Vector3d& orGoal, ::Eigen::Vector3d& orActual)
 {
 
-	// George - ignoring small errors
 	Eigen::VectorXd localErr = err.col(0);
-	for(int i = 0; i < 3 ; ++i)
-		if(fabs(localErr(i)) < 0.1)
-			localErr(i) = 0;
-
-	if(localErr.segment(3,3).norm() < 1 * M_PI / 180)
-		localErr.segment(3,3).setZero();
 
 	// CKim - This function is called when I use 6 x 5 Jacobian
-	Eigen::Matrix<double,5,5> JtJ;	Eigen::Matrix<double,5,1> b;		Eigen::Matrix<double,5,1> dotq;		
-	Eigen::Matrix<double,5,5> A;	double lambda = 10;				Eigen::Matrix<double,5,1> sv;
+	::Eigen::MatrixXd JtJ;	::Eigen::MatrixXd b;		::Eigen::VectorXd dotq;		
+	::Eigen::MatrixXd A;	double lambda = 10;				::Eigen::MatrixXd sv;
 	double eps;						double condNum;
 
-	//::std::cout << J << ::std::endl;
+	// compute Jo using the new orientation definition
+	::Eigen::VectorXd Jo = -1/sqrt(1 - ::std::pow(orActual.transpose() * orGoal, 2)) * orGoal.transpose() * Jo.block(3, 0, 3, 5);
+
+	::Eigen::Matrix<double, 4, 5> Jtmp;
+	Jtmp.block(0, 0, 3, 5) = J.block(0, 0, 3, 5);
+	Jtmp.row(3) = Jo;
+
 	// CKim - Invert jacobian, handle singularity and solve
 	double scalarWeight = 50.0;
-	Eigen::Matrix<double, 6,6> weights;
+	Eigen::Matrix<double, 4,4> weights;
 	weights.setIdentity();
-	for (int i = 3; i < 6; ++i)
+	for (int i = 3; i < 4; ++i)
 		weights(i,i) = pow(scalarWeight,2);
 
-	//JtJ = J.transpose()*J;			b = J.transpose()*err;
-	JtJ = J.transpose() * weights * J;			b = J.transpose()* weights * localErr;
+	JtJ = Jtmp.transpose() * weights * Jtmp;			b = Jtmp.transpose()* weights * localErr;
 
 	Eigen::JacobiSVD<Eigen::Matrix<double,5,5>> Jsvd(JtJ,Eigen::ComputeThinU | Eigen::ComputeThinV);
 	sv = Jsvd.singularValues();	
-
-	//for(int i = 0 ; i < 5 ; ++i)
-	//	::std::cout << sv(i,i)  << "\t";
-	//::std::cout << ::std::endl;
-	//std::cout << "sv = " << sv.transpose() << ::std::endl;
-	//std::cout << "U = " << Jsvd.matrixV() << ::std::endl;
-	//std::cout << "J = " << J << ::std::endl;
-
-	//double minimunSV = 1;
-	//int index = 5;
-	//for(int i = 0 ; i < 5 ; ++i)
-	//	if(sv(i,0) < minimunSV)
-	//	{
-	//		index = i;
-	//		::std::cout << index << ::std::endl;
-	//		break;
-	//	}
-
-	//Eigen::MatrixXd Xns = Jsvd.matrixV().block(0,0,5,index);
-	//Eigen::MatrixXd invSVns(index,index);
-	//invSVns.setZero();
-	//for(int i = 0; i < index; ++i)
-	//	invSVns(i,i) = 1/sv(i,0);
-
-	//dotq = Xns * invSVns * Xns.transpose() * b;
 	
 
 	double conditionNumber = sv(0, 0)/sv(4, 0);
-	//double conditionNumber = sv(4, 0)/sv(0, 0);
 	double conditionThreshold = 2e4;
 	
-/*	for (int i = 0; i < 5; ++i)
-		JtJ(i,i) += lambda;
-
-	Jsvd.compute(JtJ);*/
-	//::std::cout << conditionNumber << ::std::endl;
-	//os << conditionNumber << ::std::endl;
 	if (conditionNumber >= conditionThreshold)
-	//if(false)
 	{
 		::std::cout << "TRANSPOSE" << ::std::endl;
-		//::std::cout << " before" << ::std::endl;
-		//::std::cout << conditionNumber << ::std::endl;
-		//double epsilon = conditionThreshold * sv(4, 0) - sv(0, 0);
-		//epsilon /= 1 - conditionThreshold;
-		//A = JtJ;
-		//for(int i=0; i<5; i++)	
-		//	A(i,i) += epsilon;
-
-		//Jsvd.compute(A);
-		//sv = Jsvd.singularValues();	
-		//::std::cout << " after" << ::std::endl;
-		//::std::cout << sv(0, 0)/sv(4, 0) << ::std::endl;
 
 		dotq = 0.005*b;
 		dotq(2) *= 100;
@@ -1309,27 +1384,6 @@ void CTRKin::ApplyKinematicControl(const Eigen::MatrixXd& J, const Eigen::Matrix
 		return;
 	}
 
-	//eps = sv(0,0)*Eigen::NumTraits<double>::epsilon();
-	//
-	////::std::cout << JtJ.determinant() << ::std::endl;
-	//condNum = fabs(sv(4,0));
-	////eps = 0.00001;
-	//		
-	////for(int i=0; i<5; i++)	{	JtJ(i,i) += lambda;		}
-
-	//if(condNum < eps)	
-	//{
-	//	//localStat.invKinOK = false;
-	//	A = JtJ;
-	//	for(int i=0; i<5; i++)	{	A(i,i) += (1-sv(4,0)/eps)*lambda;	}
-	//			////for(int i=0; i<5; i++)	{	A(i,i) += lambda*JtJ(i,i);		}
-	//	Jsvd.compute(A);
-	//}
-	//else
-	//{
-	//	//localStat.invKinOK = true;
-	//}
-	//::std::cout << J.col(2) << ::std::endl;
 	::std::cout << "INVERSE" << ::std::endl;
 	dotq = Jsvd.solve(b);
 	//::std::cout << dotq << ::std::endl;
@@ -1353,7 +1407,7 @@ void CTRKin::ApplyKinematicControl(const Eigen::MatrixXd& J, const Eigen::Matrix
 
 	for(int i=0; i<5; i++)	{	dq[i] = dotq(i,0);	}
 	for(int i=0; i<5; i++)	{	dq[i] = dotq(i,0);	}
-	//PrintCArray(dq, 5);
+
 }
 
 

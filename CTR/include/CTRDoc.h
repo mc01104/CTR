@@ -441,6 +441,7 @@ public:
 	afx_msg void OnUpdateViewTeleop(CCmdUI *pCmdUI);
 	afx_msg void OnBnClickedInitEm();
 	afx_msg void OnBnClickedRegst();
+	afx_msg void OnBnClickedChkFeedback();
 
 	afx_msg void OnViewPlot();
 	afx_msg void OnUpdateViewPlot(CCmdUI *pCmdUI);
@@ -450,7 +451,7 @@ public:
 	afx_msg void OnBnClickedGoToLast();
 	afx_msg void OnBnClickedGoToPrev();
 	afx_msg void OnBnClickedGoToNext();
-
+	afx_msg void OnBnClickedBtnPlay();
 	afx_msg void OnBnClickedDumpConf();
 
 	// identification

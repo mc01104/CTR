@@ -73,6 +73,8 @@ BEGIN_MESSAGE_MAP(CCTRDoc, CDocument)
 
 	ON_BN_CLICKED(IDC_INIT_EM, &CCTRDoc::OnBnClickedInitEm)
 	ON_BN_CLICKED(IDC_REGST, &CCTRDoc::OnBnClickedRegst)
+	ON_BN_CLICKED(IDC_CHK_FEEDBACK, &CCTRDoc::OnBnClickedChkFeedback)
+
 	ON_BN_CLICKED(IDC_BUTTON11, &CCTRDoc::OnBnClickedGoToApex)
 
 	ON_BN_CLICKED(IDC_BTN_MOVE12, &CCTRDoc::OnBnClickedGoToFirst)
@@ -1498,7 +1500,8 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 
 	// CKim - Variables for Differential inverse kinematics control. Jacobian matrix
 	Eigen::MatrixXd J(6,5);			
-	Eigen::Matrix<double,6,1> err;
+	//Eigen::Matrix<double,6,1> err;
+	Eigen::Matrix<double, 4, 1> err;
 	err.setZero();
 	double dq[5];		
 	double dCnt[7];		
@@ -1528,6 +1531,8 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 	tmpVelocities.setZero();
 
 	double	desiredPosition[6];
+
+	::Eigen::Vector3d orGoal;
 
 	while(mySelf->m_motorConnected)
 	{
@@ -1601,8 +1606,11 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 			isInContact = mySelf->m_contact_response;	// do i need to filter that?
 
 			LeaveCriticalSection(&m_cSection);
+			
+			orGoal = ::Eigen::Map<::Eigen::Vector3d> (&localStat.tgtTipPosDir[3], 3);
 
 			currentTangent = ::Eigen::Map<::Eigen::Vector3d> (&localStat.currTipPosDir[3], 3);
+
 			tangentVelocity = ::Eigen::Map<::Eigen::Vector3d> (localStat.tgtWorkspaceAngVelocity, 3).cross(currentTangent);
 
 			mySelf->m_kinLib->EvalCurrentKinematicsModelNumeric(localStat.currJang, localStat.currTipPosDir, J, mySelf->m_bCLIK);
@@ -1610,8 +1618,14 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 			// Use sensor feedback
 			if(mySelf->m_FeedbackOn)
 			{
-				for(int i=0; i<6; i++)	
-					err(i,0) = K[i]*(localStat.tgtTipPosDir[i] - localStat.sensedTipPosDir[i]);	
+				for(int i=0; i<3; i++)	
+					err(i,0) = mySelf->m_position_gain * K[i]*(localStat.tgtTipPosDir[i] - localStat.currTipPosDir[i]) + mySelf->m_position_gain_feedforward * localStat.tgtWorkspaceVelocity[i];
+
+				//// orientation velocities
+				//for(int i = 3; i < 6; ++i)
+				//	err(i,0) = mySelf->m_orientation_gain * K[i]*(localStat.tgtTipPosDir[i] - localStat.currTipPosDir[i]) + mySelf->m_orientation_gain_feedforward * tangentVelocity[i-3];
+				err(3, 0) = acos(currentTangent.transpose() * orGoal);
+
 			}
 			// Use fwd kin output
 			else
@@ -1639,7 +1653,7 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 						if (!isInContact) // move using the most recent computed velocities when not in contact
 						{
 							err.block(0, 0, 3, 1) = tmpVelocities;
-							mySelf->checkDirection(err);
+							//mySelf->checkDirection(err);
 							mySelf->commanded_vel[0] = err(0, 0);
 							mySelf->commanded_vel[1] = err(1, 0);
 						}
@@ -1650,15 +1664,14 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 							mySelf->commanded_vel[1] = err(1, 0);
 						}
 					}
-					else if (apex_to_valve)
-						mySelf->computeApexToValveMotion(err, mySelf->aStatus);
+					//else if (apex_to_valve)
+					//	mySelf->computeApexToValveMotion(err, mySelf->aStatus);
 
 				}
 
-				// orientation velocities
-				for(int i = 3; i < 6; ++i)
-					err(i,0) = mySelf->m_orientation_gain * K[i]*(localStat.tgtTipPosDir[i] - localStat.currTipPosDir[i]) + mySelf->m_orientation_gain_feedforward * tangentVelocity[i-3];
-
+				//for(int i = 3; i < 6; ++i)
+				//	err(i,0) = mySelf->m_orientation_gain * K[i]*(localStat.tgtTipPosDir[i] - localStat.currTipPosDir[i]) + mySelf->m_orientation_gain_feedforward * tangentVelocity[i-3];
+				err(3, 0) = acos(currentTangent.transpose() * orGoal);
 			}
 
 			//project the error on the plane
@@ -1674,16 +1687,13 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 					err(2, 0) = -2.5; //value?
 			}
 
-			if (mySelf->m_control_mode == 0)
-				mySelf->m_kinLib->ApplyKinematicControlNullspace(J,err,dq, localStat.currJang);
-			else if (mySelf->m_control_mode ==1)
-				mySelf->m_kinLib->ApplyKinematicControl(J,err,dq, localStat.currJang);
 
-			//// add sinusoidal disturbance
-			//double time = (double)timer_dis.GetTime()/1e6;
-			//double freq_dis = 6;	// BPM
-			//double vel_dis = mySelf->m_disturbance_amp * freq_dis/60 * 2 *M_PI * cos(freq_dis/60 * 2 *M_PI * time);
-			//dq[4] += vel_dis;
+			if (mySelf->m_control_mode == 0)
+				mySelf->m_kinLib->ApplyKinematicControlNullspace(J,err,dq, localStat.currJang, orGoal, currentTangent);
+			else if (mySelf->m_control_mode == 1)
+				mySelf->m_kinLib->ApplyKinematicControl(J,err,dq, localStat.currJang, orGoal, currentTangent);
+			else if (mySelf->m_control_mode == 2)
+				mySelf->m_kinLib->ApplyKinematicControlNullspace_KHATIB(J,err,dq, localStat.currJang, orGoal, currentTangent);
 
 			// CKim - Convert dotq into motor velocity
 			mySelf->dJangTodCnt(dq, dCnt);
@@ -2000,7 +2010,7 @@ unsigned int WINAPI	CCTRDoc::ClosedLoopControlLoop(void* para)
 		for(int i=0; i<7; i++)	{	localStat.currMotorCnt[i] = mySelf->m_Status.currMotorCnt[i];	}
 		for(int i=0; i<5; i++)	{	localStat.currJang[i] = mySelf->m_Status.currJang[i];	}
 		for(int i=0; i<6; i++)	{	localStat.currTipPosDir[i] = mySelf->m_Status.currTipPosDir[i];	}
-		//for(int i=0; i<6; i++)	{	localStat.sensedTipPosDir[i] = mySelf->m_Status.sensedTipPosDir[i];		}
+		for(int i=0; i<6; i++)	{	localStat.sensedTipPosDir[i] = mySelf->m_Status.sensedTipPosDir[i];		}
 		for(int i=0; i<6; i++)	{	localStat.sensedTipPosDir[i] = mySelf->m_measPosforRec[i];		}
 		LeaveCriticalSection(&m_cSection);
 
@@ -2411,8 +2421,7 @@ void CCTRDoc::SwitchPlayBackMode(bool onoff)
 {
 	m_motionCtrl->SetTeleOpMode(onoff);	
 	
-	//m_teleOpMode = onoff;
-
+	m_playBack = onoff;
 
 }
 
@@ -3537,4 +3546,23 @@ double CCTRDoc::getInitialPositionOnValve()
 	}
 
 	return positionOnValve;
+}
+
+
+void CCTRDoc::OnBnClickedChkFeedback()
+{
+	m_FeedbackOn = !m_FeedbackOn;
+	// TODO: Add your control notification handler code here
+}
+
+void CCTRDoc::OnBnClickedBtnPlay()
+{
+	if (m_playBack)
+		m_TrjGen->Initialize("slowerCircle_scaled.txt",6);
+		
+		m_hEMevent = CreateEvent(NULL,false,false,NULL);	// Auto reset event (2nd argument false means...)
+		m_playBack = true;
+
+		m_hAdaptive = (HANDLE)_beginthreadex(NULL, 0, CCTRDoc::ClosedLoopControlLoop, this, 0, NULL);
+
 }

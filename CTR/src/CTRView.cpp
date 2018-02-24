@@ -53,7 +53,7 @@ BEGIN_MESSAGE_MAP(CCTRView, CFormView)
 
 	ON_BN_CLICKED(IDC_RADIO_JA, &CCTRView::OnBnClickedRadioModes)	
 	ON_BN_CLICKED(IDC_RADIO_TELE, &CCTRView::OnBnClickedRadioModes)
-	//ON_BN_CLICKED(IDC_RADIO_TELE9, &CCTRView::OnBnClickedRadioModes)
+	ON_BN_CLICKED(IDC_RADIO_PLAYBACK, &CCTRView::OnBnClickedRadioModes)
 
 	// plane radio controls
 	ON_BN_CLICKED(IDC_RADIO_JA2, &CCTRView::OnBnClickedRadioModesPlane)	
@@ -111,6 +111,7 @@ BEGIN_MESSAGE_MAP(CCTRView, CFormView)
 
 	ON_BN_CLICKED(IDC_RADIO_JA3, &CCTRView::OnBnClickedRadioModesController)	
 	ON_BN_CLICKED(IDC_RADIO_TELE4, &CCTRView::OnBnClickedRadioModesController)
+	ON_BN_CLICKED(IDC_RADIO_TELE12, &CCTRView::OnBnClickedRadioModesController)
 
 	ON_BN_CLICKED(IDC_RADIO_JA4, &CCTRView::OnBnClickedRadioModesFreq)	
 	ON_BN_CLICKED(IDC_RADIO_TELE5, &CCTRView::OnBnClickedRadioModesFreq)
@@ -624,16 +625,18 @@ void CCTRView::OnBnClickedRadioModes()
 		return;		
 	}
 
-	if (m_ctrlMode == 2)
-	{
-		this->GetDocument()->switchIDMode(1);
-		return;
-	}
-	else if (prevMode == 2)
-	{
-		this->GetDocument()->switchIDMode(0);
-		return;
-	}
+	//if (m_ctrlMode == 2)
+	//{
+	//	this->GetDocument()->switchIDMode(1);
+	//	return;
+	//}
+	//else if (prevMode == 2)
+	//{
+	//	this->GetDocument()->switchIDMode(0);
+	//	return;
+	//}
+	if(m_ctrlMode == 2)		{	this->GetDocument()->SwitchPlayBackMode(1);	return;		}
+	else if(prevMode == 2)	{	this->GetDocument()->SwitchPlayBackMode(0);	return;		}
 
 }
 
@@ -997,7 +1000,11 @@ void CCTRView::OnBnClickedRadioModesController()
 	}
 	else if (m_controlMode == 1)
 	{
-		::std::cout << "Weighted Cotnroller" << ::std::endl;
+		::std::cout << "Weighted Controller" << ::std::endl;
+	}
+	else if (m_controlMode == 2)
+	{
+		::std::cout << "Nullspace KHATIB" << ::std::endl;
 	}
 
 	this->GetDocument()->SwitchControlMode(m_controlMode);

@@ -1625,7 +1625,7 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 				//// orientation velocities
 				//for(int i = 3; i < 6; ++i)
 				//	err(i,0) = mySelf->m_orientation_gain * K[i]*(localStat.tgtTipPosDir[i] - localStat.currTipPosDir[i]) + mySelf->m_orientation_gain_feedforward * tangentVelocity[i-3];
-				err(3, 0) = acos(currentTangent.transpose() * orGoal);
+				err(3, 0) = ::std::acos(currentTangent.transpose() * orGoal);
 				//::std::cout << "reading from sensor" << ::std::endl;
 
 			}
@@ -1673,7 +1673,11 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 
 				//for(int i = 3; i < 6; ++i)
 				//	err(i,0) = mySelf->m_orientation_gain * K[i]*(localStat.tgtTipPosDir[i] - localStat.currTipPosDir[i]) + mySelf->m_orientation_gain_feedforward * tangentVelocity[i-3];
-				err(3, 0) = acos(currentTangent.transpose() * orGoal);
+				err(3, 0) = ::std::acos(currentTangent.transpose() * orGoal);
+				//::std::cout << "current tangent:" << currentTangent.transpose() << ::std::endl;
+				//::std::cout << "goal tangent:" << orGoal.transpose() << ::std::endl;
+				//::std::cout << ::std::acos(currentTangent.transpose() * orGoal) << ::std::endl;
+				//err(3,0) = 1;
 			}
 
 			//project the error on the plane
@@ -1699,7 +1703,7 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 
 			// CKim - Convert dotq into motor velocity
 			mySelf->dJangTodCnt(dq, dCnt);
-	
+			//PrintCArray(dq, 5);
 			if(safeToTeleOp)	{	for(int i=0; i<7; i++)	{	vel[i] = dCnt[i];	}		}
 			else				{	for(int i=0; i<7; i++)	{	vel[i] = 0.0;		}		}
 
@@ -1796,8 +1800,8 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 			// CKim - Process user commands... should be in separate threads..
 			mySelf->ProcessCommand(localStat);	
 		}
-			for(int i=0; i<7; i++)	
-				vel[i] = 0.0;		
+			//for(int i=0; i<7; i++)	
+			//	vel[i] = 0.0;		
 
 		if(!mySelf->m_motionCtrl->DoTeleOpMotion(vel))	
 		{

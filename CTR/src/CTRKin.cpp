@@ -1213,7 +1213,7 @@ void CTRKin::ComputeJointspaceVelocities_KHATIB(const ::Eigen::MatrixXd& J, cons
 
 
 	// task 2: control orientation
-	::Eigen::Matrix<double, 3, 3> tmpMatOrientation (Jo * Jo.transpose());
+	::Eigen::Matrix<double, 1, 1> tmpMatOrientation (Jo * Jo.transpose());
 
 	::Eigen::JacobiSVD<::Eigen::MatrixXd> svdOr(tmpMatOrientation, ::Eigen::ComputeThinU | ::Eigen::ComputeThinV);
 	::Eigen::VectorXd singValOr = svdOr.singularValues();
@@ -1367,7 +1367,7 @@ void CTRKin::ApplyKinematicControl(const Eigen::MatrixXd& J, const Eigen::Matrix
 
 	JtJ = Jtmp.transpose() * weights * Jtmp;			b = Jtmp.transpose()* weights * localErr;
 
-	Eigen::JacobiSVD<Eigen::Matrix<double,5,5>> Jsvd(JtJ,Eigen::ComputeThinU | Eigen::ComputeThinV);
+	Eigen::JacobiSVD<Eigen::MatrixXd> Jsvd(JtJ,Eigen::ComputeThinU | Eigen::ComputeThinV);
 	sv = Jsvd.singularValues();	
 	
 

@@ -91,7 +91,7 @@ BEGIN_MESSAGE_MAP(CCTRView, CFormView)
 	ON_BN_CLICKED(IDC_CHECK2, &CCTRView::ToggleCircumnavigation)
 	ON_BN_CLICKED(IDC_CHECK3, &CCTRView::ToggleGlobalGains)
 	ON_BN_CLICKED(IDC_CHECK4, &CCTRView::ToggleApexToValve)
-	ON_BN_CLICKED(IDC_CHECK5, &CCTRView::TogglePullBack)
+	//ON_BN_CLICKED(IDC_CHECK5, &CCTRView::TogglePullBack)
 
 	ON_EN_KILLFOCUS(IDC_EDIT15, &CCTRView::UpdateGains)
 	ON_EN_KILLFOCUS(IDC_EDIT16, &CCTRView::UpdateGains)

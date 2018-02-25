@@ -88,6 +88,7 @@ BEGIN_MESSAGE_MAP(CCTRDoc, CDocument)
 	ON_BN_CLICKED(IDC_BTN_MOVE20, &CCTRDoc::OnBnClickedDumpConf)
 	ON_BN_CLICKED(IDC_BUTTON12, &CCTRDoc::OnBnClickedStraight)
 	ON_BN_CLICKED(IDC_BUTTON13, &CCTRDoc::OnBnClickedHome)
+	ON_BN_CLICKED(IDC_BTN_PLAY, &CCTRDoc::OnBnClickedBtnPlay)
 
 	//ON_BN_CLICKED(IDC_BTN_MOVE16, &CCTRDoc::OnBnClickedResetAutomation)
 
@@ -1543,7 +1544,7 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 		// CKim - Calculate current joint angle -> convert counts to radians
 		mySelf->MtrToJang(localStat.currMotorCnt, localStat.currJang);
 
-		PrintCArray(mySelf->m_Status.tgtWorkspaceAngVelocity, 3);
+		//PrintCArray(mySelf->m_Status.tgtWorkspaceAngVelocity, 3);
 
 		// this is used for root finding
 		if(mySelf->m_InvKinOn)
@@ -1625,12 +1626,13 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 				//for(int i = 3; i < 6; ++i)
 				//	err(i,0) = mySelf->m_orientation_gain * K[i]*(localStat.tgtTipPosDir[i] - localStat.currTipPosDir[i]) + mySelf->m_orientation_gain_feedforward * tangentVelocity[i-3];
 				err(3, 0) = acos(currentTangent.transpose() * orGoal);
+				//::std::cout << "reading from sensor" << ::std::endl;
 
 			}
 			// Use fwd kin output
 			else
 			{
-
+				//::std::cout << "using model" << ::std::endl;
 				if (mySelf->m_forceControlActivated)
 					tangentVelocity.setZero();
 
@@ -1794,8 +1796,8 @@ unsigned int WINAPI	CCTRDoc::MotorLoop(void* para)
 			// CKim - Process user commands... should be in separate threads..
 			mySelf->ProcessCommand(localStat);	
 		}
-			//for(int i=0; i<7; i++)	
-			//	vel[i] = 0.0;		
+			for(int i=0; i<7; i++)	
+				vel[i] = 0.0;		
 
 		if(!mySelf->m_motionCtrl->DoTeleOpMotion(vel))	
 		{
@@ -2013,7 +2015,7 @@ unsigned int WINAPI	CCTRDoc::ClosedLoopControlLoop(void* para)
 		for(int i=0; i<6; i++)	{	localStat.sensedTipPosDir[i] = mySelf->m_Status.sensedTipPosDir[i];		}
 		for(int i=0; i<6; i++)	{	localStat.sensedTipPosDir[i] = mySelf->m_measPosforRec[i];		}
 		LeaveCriticalSection(&m_cSection);
-
+		PrintCArray(localStat.currJang, 5);
 		// CKim - Safety check. Stop and exit loop if joint angle is out of limit
 		if( (localStat.currJang[2] > L31_MAX) || (localStat.currJang[2] < L31_MIN) || (fabs(localStat.currJang[4]) > 100.0) )
 		{
@@ -2030,7 +2032,8 @@ unsigned int WINAPI	CCTRDoc::ClosedLoopControlLoop(void* para)
 		// CKim - Read trajectory from the 'Playback.txt'. Returns false when the end of trajectory is reached
 		//mySelf->m_playBack = mySelf->m_TrjGen->InterpolateNextPoint(localStat.tgtTipPosDir);	// Update tgtTipPosDir
 		mySelf->m_playBack = mySelf->m_TrjGen->InterpolateNextPoint(localStat.tgtTipPosDir, localStat.tgtWorkspaceVelocity);	// Update tgtTipPosDir
-		
+		PrintCArray(localStat.tgtTipPosDir, 3);
+		PrintCArray(localStat.tgtWorkspaceVelocity, 3);
 		// CKim - In case of feed forward position control, solve inverse kinematics
 		if(mySelf->m_InvKinOn)
 		{
@@ -2421,7 +2424,7 @@ void CCTRDoc::SwitchPlayBackMode(bool onoff)
 {
 	m_motionCtrl->SetTeleOpMode(onoff);	
 	
-	m_playBack = onoff;
+	//m_playBack = onoff;
 
 }
 
@@ -3557,12 +3560,14 @@ void CCTRDoc::OnBnClickedChkFeedback()
 
 void CCTRDoc::OnBnClickedBtnPlay()
 {
-	if (m_playBack)
-		m_TrjGen->Initialize("slowerCircle_scaled.txt",6);
+	::std::cout << "clicked play" << ::std::endl;
+	if (!m_playBack)
+	{
+		m_TrjGen->Initialize("slowCircle.txt",6);
 		
 		m_hEMevent = CreateEvent(NULL,false,false,NULL);	// Auto reset event (2nd argument false means...)
 		m_playBack = true;
 
 		m_hAdaptive = (HANDLE)_beginthreadex(NULL, 0, CCTRDoc::ClosedLoopControlLoop, this, 0, NULL);
-
+	}
 }

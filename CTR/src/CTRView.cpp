@@ -266,8 +266,8 @@ void CCTRView::DoDataExchange(CDataExchange* pDX)
 
 	for(int i=0; i<5; i++)	{	DDX_Text(pDX, m_idActJang[i], m_actJang[i]);	}
 
-	DDX_Text(pDX, m_id_monitor_freq, m_monitor_freq);
-	DDX_Text(pDX, m_id_monitor_freq_breath, m_monitor_freq_breath);
+	//DDX_Text(pDX, m_id_monitor_freq, m_monitor_freq);
+	//DDX_Text(pDX, m_id_monitor_freq_breath, m_monitor_freq_breath);
 
 	if(m_ctrlMode!= 0)	// CKim - 0: joint angle, 1: tip orientation, 2: teleoperation
 	{
@@ -277,55 +277,55 @@ void CCTRView::DoDataExchange(CDataExchange* pDX)
 	if (!this->eStopPressed)
 		DDX_Radio(pDX, IDC_RADIO_JA, m_ctrlMode);
 
-	DDV_MinMaxInt(pDX, m_ctrlMode, 0, 1);
+	DDV_MinMaxInt(pDX, m_ctrlMode, 0, 2);
 
-	// update number of collected points
-	CString tmp;
-	tmp.Format("%d",this->points_for_plane_estimation.size());
-	DDX_Text(pDX, IDC_EDIT4, tmp);
+	//// update number of collected points
+	//CString tmp;
+	//tmp.Format("%d",this->points_for_plane_estimation.size());
+	//DDX_Text(pDX, IDC_EDIT4, tmp);
 
-	CString tmp2;
-	tmp2.Format("%d",this->current_measurement.size());
-	DDX_Text(pDX, IDC_EDIT13, tmp2);
+	//CString tmp2;
+	//tmp2.Format("%d",this->current_measurement.size());
+	//DDX_Text(pDX, IDC_EDIT13, tmp2);
 
-	CString tmp3;
-	tmp3.Format("%f2.1",this->GetDocument()->getClockPosition());
-	DDX_Text(pDX, IDC_EDIT31, tmp3);
+	//CString tmp3;
+	//tmp3.Format("%f2.1",this->GetDocument()->getClockPosition());
+	//DDX_Text(pDX, IDC_EDIT31, tmp3);
 
-	CString tmp4;
-	tmp4.Format("%f4.2", this->angleBetweenPlaneAndRobot);
-	DDX_Text(pDX, IDC_EDIT33, tmp4);
+	//CString tmp4;
+	//tmp4.Format("%f4.2", this->angleBetweenPlaneAndRobot);
+	//DDX_Text(pDX, IDC_EDIT33, tmp4);
 
-	tmp4.Format("%f2.1",this->offsetBetweenValveCenterAndRobotAxis);
-	DDX_Text(pDX, IDC_EDIT35, tmp4);
-
-
-	tmp4.Format("%f2.1", this->center[0]);
-	DDX_Text(pDX, IDC_EDIT38, tmp4);
-
-	tmp4.Format("%f2.1", this->center[1]);
-	DDX_Text(pDX, IDC_EDIT39, tmp4);
-
-	tmp4.Format("%f2.1", this->center[2]);
-	DDX_Text(pDX, IDC_EDIT40, tmp4);
-
-	tmp4.Format("%f2.1", this->azimuth);
-	DDX_Text(pDX, IDC_EDIT42, tmp4);
-
-	tmp4.Format("%f2.1", this->altitude);
-	DDX_Text(pDX, IDC_EDIT41, tmp4);
+	//tmp4.Format("%f2.1",this->offsetBetweenValveCenterAndRobotAxis);
+	//DDX_Text(pDX, IDC_EDIT35, tmp4);
 
 
-	DDX_Radio(pDX, IDC_RADIO_JA2, m_PlaneEstimationMode);
+	//tmp4.Format("%f2.1", this->center[0]);
+	//DDX_Text(pDX, IDC_EDIT38, tmp4);
+
+	//tmp4.Format("%f2.1", this->center[1]);
+	//DDX_Text(pDX, IDC_EDIT39, tmp4);
+
+	//tmp4.Format("%f2.1", this->center[2]);
+	//DDX_Text(pDX, IDC_EDIT40, tmp4);
+
+	//tmp4.Format("%f2.1", this->azimuth);
+	//DDX_Text(pDX, IDC_EDIT42, tmp4);
+
+	//tmp4.Format("%f2.1", this->altitude);
+	//DDX_Text(pDX, IDC_EDIT41, tmp4);
+
+
+	//DDX_Radio(pDX, IDC_RADIO_JA2, m_PlaneEstimationMode);
 	DDX_Radio(pDX, IDC_RADIO_JA3, m_controlMode);
-	DDX_Radio(pDX, IDC_RADIO_JA4, m_frequencyMode);
-	DDX_Radio(pDX, IDC_RADIO_JA5, m_direction);
+	//DDX_Radio(pDX, IDC_RADIO_JA4, m_frequencyMode);
+	//DDX_Radio(pDX, IDC_RADIO_JA5, m_direction);
 
-	DDX_Radio(pDX, IDC_RADIO_JA6, m_apex_wall);
-	m_ctrlMode != 1 ? GetDlgItem(IDC_CHECK1)->EnableWindow(false) : GetDlgItem(IDC_CHECK1)->EnableWindow(true);
+	//DDX_Radio(pDX, IDC_RADIO_JA6, m_apex_wall);
+	//m_ctrlMode != 1 ? GetDlgItem(IDC_CHECK1)->EnableWindow(false) : GetDlgItem(IDC_CHECK1)->EnableWindow(true);
 	//	m_ctrlMode != 1 ? GetDlgItem(IDC_CHECK3)->EnableWindow(false) : GetDlgItem(IDC_CHECK3)->EnableWindow(true);
 
-	DDX_Control(pDX, IDC_COMBO1, m_combo);
+	//DDX_Control(pDX, IDC_COMBO1, m_combo);
 }
 
 BOOL CCTRView::PreCreateWindow(CREATESTRUCT& cs)
@@ -355,13 +355,13 @@ void CCTRView::OnInitialUpdate()
 
 
 	CString tmp;
-	tmp.Format("%d",this->points_for_plane_estimation.size());
-	this->SetDlgItemTextA(IDC_EDIT4,tmp);
+	//tmp.Format("%d",this->points_for_plane_estimation.size());
+	//this->SetDlgItemTextA(IDC_EDIT4,tmp);
 
 	// CKim - Initialize controls here
-	this->SetDlgItemTextA(m_idCmdJang[0],"180");		this->SetDlgItemTextA(m_idCmdJang[1],"0");	
-	this->SetDlgItemTextA(m_idCmdJang[2],"5");			this->SetDlgItemTextA(m_idCmdJang[3],"0");			this->SetDlgItemTextA(m_idCmdJang[4],"0");
-	
+	//this->SetDlgItemTextA(m_idCmdJang[0],"180");		this->SetDlgItemTextA(m_idCmdJang[1],"0");	
+	//this->SetDlgItemTextA(m_idCmdJang[2],"5");			this->SetDlgItemTextA(m_idCmdJang[3],"0");			this->SetDlgItemTextA(m_idCmdJang[4],"0");
+	//
 	//this->updateGUIActivationState(manual_point_ENABLE, manual_point_DISABLE);
 
 	this->SetTimer(100,30,NULL);
@@ -377,20 +377,20 @@ void CCTRView::OnInitialUpdate()
 	tmp.Format("%0.2f",0.0);
 	this->SetDlgItemTextA(IDC_EDIT18,tmp);
 
-	tmp.Format("%0.2f",10.0);
-	this->SetDlgItemTextA(IDC_EDIT2,tmp);
-	tmp.Format("%0.2f",0.0);
-	this->SetDlgItemTextA(IDC_EDIT19,tmp);
+	//tmp.Format("%0.2f",10.0);
+	//this->SetDlgItemTextA(IDC_EDIT2,tmp);
+	//tmp.Format("%0.2f",0.0);
+	//this->SetDlgItemTextA(IDC_EDIT19,tmp);
 
-	tmp.Format("%0.2f",0.0);
-	this->SetDlgItemTextA(IDC_EDIT3,tmp);
+	//tmp.Format("%0.2f",0.0);
+	//this->SetDlgItemTextA(IDC_EDIT3,tmp);
 
-	tmp.Format("%0.2f",26.27);
-	this->SetDlgItemTextA(IDC_EDIT21,tmp);
+	//tmp.Format("%0.2f",26.27);
+	//this->SetDlgItemTextA(IDC_EDIT21,tmp);
 
-	tmp.Format("%0.2f",0.3);
-	this->SetDlgItemTextA(IDC_EDIT22,tmp);
-	this->SetDlgItemTextA(IDC_EDIT24,tmp);
+	//tmp.Format("%0.2f",0.3);
+	//this->SetDlgItemTextA(IDC_EDIT22,tmp);
+	//this->SetDlgItemTextA(IDC_EDIT24,tmp);
 
 }
 
@@ -599,7 +599,7 @@ void CCTRView::OnUpdateViewGraphicwin(CCmdUI *pCmdUI)
 void CCTRView::OnBnClickedRadioModes()
 {
 	int prevMode = m_ctrlMode;
-	
+	//::std::cout << "changing mmode" << ::std::endl;
 	UpdateData(true);	// CKim - Get the status
 	
 	if(m_ctrlMode == 0)	
@@ -617,12 +617,13 @@ void CCTRView::OnBnClickedRadioModes()
 	if (m_ctrlMode == 1)
 	{	
 		this->GetDocument()->SwitchTeleOpMode(1);	
+		this->GetDocument()->SwitchPlayBackMode(0);	
 		return;		
 	}
 	else if(prevMode == 1)	
 	{	
 		this->GetDocument()->SwitchTeleOpMode(0);	
-		return;		
+		//return;		
 	}
 
 	//if (m_ctrlMode == 2)
@@ -635,8 +636,21 @@ void CCTRView::OnBnClickedRadioModes()
 	//	this->GetDocument()->switchIDMode(0);
 	//	return;
 	//}
-	if(m_ctrlMode == 2)		{	this->GetDocument()->SwitchPlayBackMode(1);	return;		}
-	else if(prevMode == 2)	{	this->GetDocument()->SwitchPlayBackMode(0);	return;		}
+	if(m_ctrlMode == 2)		
+	{	
+		::std::cout << "switching playback on" << ::std::endl;
+		this->GetDocument()->SwitchPlayBackMode(1);	
+
+		if (prevMode == 1)
+			this->GetDocument()->SwitchTeleOpMode(0);	
+		return;		
+	}
+	else if(prevMode == 2)	
+	{	
+		::std::cout << "switching playback off" << ::std::endl;
+		this->GetDocument()->SwitchPlayBackMode(0);	
+		return;		
+	}
 
 }
 

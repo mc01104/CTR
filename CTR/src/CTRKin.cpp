@@ -1018,48 +1018,50 @@ void CTRKin::EvalCurrentKinematicsModel_NEW(const double* jAng,  const double* t
 
 void CTRKin::ApplyKinematicControlNullspace(const Eigen::MatrixXd& J, const Eigen::MatrixXd& err, double* dq, double* q, ::Eigen::Vector3d& orGoal, ::Eigen::Vector3d& orActual)
 {
-	
-	::Eigen::VectorXd dotq(5);
-	this->ComputeJointspaceVelocities(J, err, dotq, orGoal, orActual);
+	//::std::cout << "nullspace" << ::std::endl;
+	//::Eigen::VectorXd dotq(5);
+	//this->ComputeJointspaceVelocities(J, err, dotq, orGoal, orActual);
 
-	double limit_margin = 2.0;
-	if ((q[2] >= L31_MAX - limit_margin && dotq[2] > 0) || (q[2] <= L31_MIN && dotq[2] < 0))
-	{
-		::Eigen::MatrixXd Jlocal = J;		
-		removeColumn(Jlocal, 2);
-		this->ComputeJointspaceVelocities(Jlocal, err, dotq, orGoal, orActual);
+	//double limit_margin = 2.0;
+	//if ((q[2] >= L31_MAX - limit_margin && dotq[2] > 0) || (q[2] <= L31_MIN && dotq[2] < 0))
+	//{
+	//	::Eigen::MatrixXd Jlocal = J;		
+	//	removeColumn(Jlocal, 2);
+	//	this->ComputeJointspaceVelocities(Jlocal, err, dotq, orGoal, orActual);
 
-		if(q[2] >= L31_MAX - limit_margin)
-			dotq[2] = 10*(L31_MAX - limit_margin - q[2]) - 0.1 * dotq[2];
-		else if(q[2] <= L31_MIN)
-			dotq[2] = 10*(L31_MIN - q[2]) - 0.1 * dotq[2];
-	}
+	//	if(q[2] >= L31_MAX - limit_margin)
+	//		dotq[2] = 10*(L31_MAX - limit_margin - q[2]) - 0.1 * dotq[2];
+	//	else if(q[2] <= L31_MIN)
+	//		dotq[2] = 10*(L31_MIN - q[2]) - 0.1 * dotq[2];
+	//}
 
-	for(int i=0; i<5; i++)
-		dq[i] = dotq(i,0);	
+	//for(int i=0; i<5; i++)
+	//	dq[i] = dotq(i,0);	
 
 }
 
 void CTRKin::ApplyKinematicControlNullspace_KHATIB(const Eigen::MatrixXd& J, const Eigen::MatrixXd& err, double* dq, double* q, ::Eigen::Vector3d& orGoal, ::Eigen::Vector3d& orActual)
 {
-	::Eigen::VectorXd dotq(5);
-	this->ComputeJointspaceVelocities_KHATIB(J, err, dotq, orGoal, orActual);
+	//::std::cout << "KHATIB" << ::std::endl;
 
-	double limit_margin = 2.0;
-	if ((q[2] >= L31_MAX - limit_margin && dotq[2] > 0) || (q[2] <= L31_MIN && dotq[2] < 0))
-	{
-		::Eigen::MatrixXd Jlocal = J;		
-		removeColumn(Jlocal, 2);
-		this->ComputeJointspaceVelocities_KHATIB(Jlocal, err, dotq, orGoal, orActual);
+	//::Eigen::VectorXd dotq(5);
+	//this->ComputeJointspaceVelocities_KHATIB(J, err, dotq, orGoal, orActual);
 
-		if(q[2] >= L31_MAX - limit_margin)
-			dotq[2] = 10*(L31_MAX - limit_margin - q[2]) - 0.1 * dotq[2];
-		else if(q[2] <= L31_MIN)
-			dotq[2] = 10*(L31_MIN - q[2]) - 0.1 * dotq[2];
-	}
+	//double limit_margin = 2.0;
+	//if ((q[2] >= L31_MAX - limit_margin && dotq[2] > 0) || (q[2] <= L31_MIN && dotq[2] < 0))
+	//{
+	//	::Eigen::MatrixXd Jlocal = J;		
+	//	removeColumn(Jlocal, 2);
+	//	this->ComputeJointspaceVelocities_KHATIB(Jlocal, err, dotq, orGoal, orActual);
 
-	for(int i=0; i<5; i++)
-		dq[i] = dotq(i,0);	
+	//	if(q[2] >= L31_MAX - limit_margin)
+	//		dotq[2] = 10*(L31_MAX - limit_margin - q[2]) - 0.1 * dotq[2];
+	//	else if(q[2] <= L31_MIN)
+	//		dotq[2] = 10*(L31_MIN - q[2]) - 0.1 * dotq[2];
+	//}
+
+	//for(int i=0; i<5; i++)
+	//	dq[i] = dotq(i,0);	
 
 }
 
@@ -1340,73 +1342,74 @@ void CTRKin::ApplyHybridPositionForceControl(const ::Eigen::MatrixXd& J, const :
 
 void CTRKin::ApplyKinematicControl(const Eigen::MatrixXd& J, const Eigen::MatrixXd& err, double* dq, double* q, ::Eigen::Vector3d& orGoal, ::Eigen::Vector3d& orActual)
 {
+		//::std::cout << "weighted" << ::std::endl;
 
-	Eigen::VectorXd localErr = err.col(0);
+	//Eigen::VectorXd localErr = err.col(0);
 
-	// CKim - This function is called when I use 6 x 5 Jacobian
-	::Eigen::MatrixXd JtJ;	::Eigen::MatrixXd b;		::Eigen::VectorXd dotq;		
-	::Eigen::MatrixXd A;	double lambda = 10;				::Eigen::MatrixXd sv;
-	double eps;						double condNum;
+	//// CKim - This function is called when I use 6 x 5 Jacobian
+	//::Eigen::MatrixXd JtJ;	::Eigen::MatrixXd b;		::Eigen::VectorXd dotq;		
+	//::Eigen::MatrixXd A;	double lambda = 10;				::Eigen::MatrixXd sv;
+	//double eps;						double condNum;
 
-	// compute Jo using the new orientation definition
-	::Eigen::VectorXd Jo = -1/sqrt(1 - ::std::pow(orActual.transpose() * orGoal, 2)) * orGoal.transpose() * Jo.block(3, 0, 3, 5);
+	//// compute Jo using the new orientation definition
+	//::Eigen::VectorXd Jo = -1/sqrt(1 - ::std::pow(orActual.transpose() * orGoal, 2)) * orGoal.transpose() * Jo.block(3, 0, 3, 5);
 
-	::Eigen::Matrix<double, 4, 5> Jtmp;
-	Jtmp.block(0, 0, 3, 5) = J.block(0, 0, 3, 5);
-	Jtmp.row(3) = Jo;
+	//::Eigen::Matrix<double, 4, 5> Jtmp;
+	//Jtmp.block(0, 0, 3, 5) = J.block(0, 0, 3, 5);
+	//Jtmp.row(3) = Jo;
 
-	// CKim - Invert jacobian, handle singularity and solve
-	double scalarWeight = 50.0;
-	Eigen::Matrix<double, 4,4> weights;
-	weights.setIdentity();
-	for (int i = 3; i < 4; ++i)
-		weights(i,i) = pow(scalarWeight,2);
+	//// CKim - Invert jacobian, handle singularity and solve
+	//double scalarWeight = 50.0;
+	//Eigen::Matrix<double, 4,4> weights;
+	//weights.setIdentity();
+	//for (int i = 3; i < 4; ++i)
+	//	weights(i,i) = pow(scalarWeight,2);
 
-	JtJ = Jtmp.transpose() * weights * Jtmp;			b = Jtmp.transpose()* weights * localErr;
+	//JtJ = Jtmp.transpose() * weights * Jtmp;			b = Jtmp.transpose()* weights * localErr;
 
-	Eigen::JacobiSVD<Eigen::Matrix<double,5,5>> Jsvd(JtJ,Eigen::ComputeThinU | Eigen::ComputeThinV);
-	sv = Jsvd.singularValues();	
-	
+	//Eigen::JacobiSVD<Eigen::Matrix<double,5,5>> Jsvd(JtJ,Eigen::ComputeThinU | Eigen::ComputeThinV);
+	//sv = Jsvd.singularValues();	
+	//
 
-	double conditionNumber = sv(0, 0)/sv(4, 0);
-	double conditionThreshold = 2e4;
-	
-	if (conditionNumber >= conditionThreshold)
-	{
-		::std::cout << "TRANSPOSE" << ::std::endl;
+	//double conditionNumber = sv(0, 0)/sv(4, 0);
+	//double conditionThreshold = 2e4;
+	//
+	//if (conditionNumber >= conditionThreshold)
+	//{
+	//	::std::cout << "TRANSPOSE" << ::std::endl;
 
-		dotq = 0.005*b;
-		dotq(2) *= 100;
-		dotq(4) *= 100;
+	//	dotq = 0.005*b;
+	//	dotq(2) *= 100;
+	//	dotq(4) *= 100;
 
-		for(int i=0; i<5; i++)	{	dq[i] = dotq(i,0);	}
+	//	for(int i=0; i<5; i++)	{	dq[i] = dotq(i,0);	}
 
-		return;
-	}
+	//	return;
+	//}
 
-	::std::cout << "INVERSE" << ::std::endl;
-	dotq = Jsvd.solve(b);
-	//::std::cout << dotq << ::std::endl;
+	//::std::cout << "INVERSE" << ::std::endl;
+	//dotq = Jsvd.solve(b);
+	////::std::cout << dotq << ::std::endl;
 
-	// Joint limit avoidance using potential-field method
-	double upperSoft = L31_MAX - 10;
-	double lowerSoft = L31_MIN + 5;
-	double jointLimitGain = 0.2;
+	//// Joint limit avoidance using potential-field method
+	//double upperSoft = L31_MAX - 10;
+	//double lowerSoft = L31_MIN + 5;
+	//double jointLimitGain = 0.2;
 
-	if (q[2] >= upperSoft)
-		dotq[2] += max(-5.0, -jointLimitGain/::std::pow(q[2] - L31_MAX, 2) + jointLimitGain/::std::pow(upperSoft - L31_MAX, 2));
+	//if (q[2] >= upperSoft)
+	//	dotq[2] += max(-5.0, -jointLimitGain/::std::pow(q[2] - L31_MAX, 2) + jointLimitGain/::std::pow(upperSoft - L31_MAX, 2));
 
-	if (q[2] <= lowerSoft )
-		dotq[2] += min(5.0, jointLimitGain/::std::pow(q[2] - L31_MIN, 2) - jointLimitGain/::std::pow(lowerSoft - L31_MIN, 2));
+	//if (q[2] <= lowerSoft )
+	//	dotq[2] += min(5.0, jointLimitGain/::std::pow(q[2] - L31_MIN, 2) - jointLimitGain/::std::pow(lowerSoft - L31_MIN, 2));
 
 
-	if (q[2] >= L31_MAX && dotq[2] > 0) 
-		dotq[2] = -5.0;
-	else if (q[2] <= L31_MIN && dotq[2] < 0)
-		dotq[2] = 5.0;
+	//if (q[2] >= L31_MAX && dotq[2] > 0) 
+	//	dotq[2] = -5.0;
+	//else if (q[2] <= L31_MIN && dotq[2] < 0)
+	//	dotq[2] = 5.0;
 
-	for(int i=0; i<5; i++)	{	dq[i] = dotq(i,0);	}
-	for(int i=0; i<5; i++)	{	dq[i] = dotq(i,0);	}
+	//for(int i=0; i<5; i++)	{	dq[i] = dotq(i,0);	}
+	//for(int i=0; i<5; i++)	{	dq[i] = dotq(i,0);	}
 
 }
 

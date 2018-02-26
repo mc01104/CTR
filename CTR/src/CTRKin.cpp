@@ -11,6 +11,7 @@ CTRKin::CTRKin(void)
 	// CKim - Coefficient file for Tip
 	//fName = "CTR_TIP_FAC.txt";
 	//fName = "model_FT_2017_3_23_12_44_48_3.txt";
+	fName = "Fourier_1st_robot_with_new_inner_tube_order3.txt";
 	fName = "Fourier_newrobot_order3.txt";
 	//fName = "Fourier_oldrobot_order3.txt";
 	//fName = "Fourier_oldrobotrepaired_order3.txt";

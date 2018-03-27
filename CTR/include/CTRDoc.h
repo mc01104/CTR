@@ -197,6 +197,8 @@ private:
 	double				actualClockfacePosition;
 	bool				goToClockFace;
 	double				registrationOffset;
+	double				convergenceRadius;
+	bool				hasApexToLeakConverged;
 	
 // Operations
 public:
@@ -459,6 +461,9 @@ public:
 	afx_msg void OnBnClickedKillFocusId();
 	afx_msg void OnBnClickedStraight();
 	afx_msg void OnBnClickedHome();
+
+	void updateConvergenceRegion(double convergenceRegion) { this->convergenceRadius = convergenceRegion;};
+
 	void UpdateIDParams(double min_freq, double max_freq, double amplitude, int num_of_sins);
 	void switchIDMode(bool onoff) {this->m_idMode = onoff;};
 	int index;

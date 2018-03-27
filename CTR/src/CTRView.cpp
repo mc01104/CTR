@@ -154,6 +154,7 @@ BEGIN_MESSAGE_MAP(CCTRView, CFormView)
 	
 	ON_EN_KILLFOCUS(IDC_EDIT32, &CCTRView::OnKillFocusRegOffset)
 
+	ON_EN_KILLFOCUS(IDC_EDIT43, &CCTRView::OnKillFocusConvergenceRegion)
 
 	ON_CBN_SELENDOK(IDC_COMBO1, &CCTRView::OnCbnSelchangeCombo1)
 
@@ -1405,4 +1406,13 @@ void CCTRView::OnClickedBtnClockFace()
 void CCTRView::OnClickedBtnTEST()
 {
 	this->GetDocument()->ToggleTest();
+}
+
+void CCTRView::OnKillFocusConvergenceRegion()
+{
+	CString str;
+	this->GetDlgItemTextA(IDC_EDIT43, str);	
+	double convergence = atof(str);
+
+	this->GetDocument()->updateConvergenceRegion(convergence);
 }

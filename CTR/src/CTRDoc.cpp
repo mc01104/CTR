@@ -300,6 +300,8 @@ CCTRDoc::CCTRDoc()
 	goToClockFace = false;
 	isModelRegistered = false;
 
+	convergenceRadius = 0.3;
+	hasApexToLeakConverged = false;
 }
 
 CCTRDoc::~CCTRDoc()
@@ -744,7 +746,9 @@ unsigned int WINAPI	CCTRDoc::NetworkCommunication(void* para)
 		}
 
 		ss << mySelf->registrationOffset << " ";
-	
+
+		ss << mySelf->hasApexToLeakConverged << " ";
+
 		if (mySelf->m_plane_changed)
 		{
 			ss << " " << 1 << " ";
@@ -2920,7 +2924,7 @@ void CCTRDoc::computeCircumnavigationDirection(Eigen::Matrix<double,6,1>& err)
 	error3D.segment(0, 2) = error;
 	error3D(2) = 0.0;
 	
-	double epsilon = 0.1;
+	double epsilon = this->convergenceRadius;
 	if (this->goToClockFace)
 	{
 		double d1 = ::std::abs(this->desiredClockfacePosition - this->actualClockfacePosition);
@@ -2928,19 +2932,14 @@ void CCTRDoc::computeCircumnavigationDirection(Eigen::Matrix<double,6,1>& err)
 		double d3 = ::std::abs(12 - (this->actualClockfacePosition - this->desiredClockfacePosition));
 		double distance = min(d1, d2);
 		distance = min(d3, distance);
-		if (distance < epsilon)
+		if (distance < epsilon || this->hasApexToLeakConverged)
+		{
 			error3D.segment(0, 3) = ::Eigen::Vector3d::Zero();
-		//else
-		//	this->computeInitialDirection();
-
+			hasApexToLeakConverged = true;
+		}
 	}
 	
 	err.block(0, 0, 3, 1) = rot * error3D;
-	//commanded_vel[0] = err(0, 0);
-	//commanded_vel[1] = err(1, 0);
-	//::std::cout << commanded_vel[0] << "., " << commanded_vel[1] << ::std::endl;
-	//::std::cout << "centroid x:" << m_centroid[0] << " centroid y:" << m_centroid[1] << " tangent x:" << m_valve_tangent[0] << " tangent y:" << m_valve_tangent[1] << ::std::endl;
-	//::std::cout << "velocities :" << err.block(0, 0, 3, 1).transpose() << ::std::endl;
 	
 }
 
@@ -3308,7 +3307,7 @@ CCTRDoc::resetAutomation()
 	this->m_line_detected = false;
 
 	this->goToClockFace = false;
-
+	hasApexToLeakConverged = false;
 }
 
 void CCTRDoc::addPointOnValve()

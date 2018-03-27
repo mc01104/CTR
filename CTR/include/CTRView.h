@@ -74,6 +74,7 @@ public:
 	afx_msg void OnViewGraphicwin();
 	afx_msg void OnKillFocusContactRatio();
 	afx_msg void OnKillFocusSamplingPeriods();
+	afx_msg void OnKillFocusConvergenceRegion();
 
 	afx_msg void OnUpdateViewGraphicwin(CCmdUI *pCmdUI);
 	afx_msg void OnBnClickedRadioModes();

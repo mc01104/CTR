@@ -58,7 +58,7 @@
 #define new DEBUG_NEW
 #endif
 
-#define OMNI_PLUGGED 
+//#define OMNI_PLUGGED 
 // CCTRDoc
 
 IMPLEMENT_DYNCREATE(CCTRDoc, CDocument)
@@ -154,7 +154,7 @@ CCTRDoc::CCTRDoc()
 	ChunHaptic::InitDevice();		m_Omni = new ChunHaptic();		m_Omni->StartLoop();
 #endif
 
-	// CKim - Initialize motor controller	
+	// CKim - Initialize motor controller	`
 	m_motionCtrl = new ChunMotion();		m_motorConnected = false;
 	m_motorConnected = m_motionCtrl->Initialize();
 	cameraControlFlag = false;
@@ -2932,7 +2932,8 @@ void CCTRDoc::computeCircumnavigationDirection(Eigen::Matrix<double,6,1>& err)
 		double d3 = ::std::abs(12 - (this->actualClockfacePosition - this->desiredClockfacePosition));
 		double distance = min(d1, d2);
 		distance = min(d3, distance);
-		if (distance < epsilon || this->hasApexToLeakConverged)
+		//if (distance < epsilon || this->hasApexToLeakConverged)
+		if (distance < epsilon)
 		{
 			error3D.segment(0, 3) = ::Eigen::Vector3d::Zero();
 			hasApexToLeakConverged = true;

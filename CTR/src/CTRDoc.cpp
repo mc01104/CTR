@@ -58,7 +58,7 @@
 #define new DEBUG_NEW
 #endif
 
-//#define OMNI_PLUGGED 
+#define OMNI_PLUGGED 
 // CCTRDoc
 
 IMPLEMENT_DYNCREATE(CCTRDoc, CDocument)
